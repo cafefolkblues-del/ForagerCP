@@ -13,11 +13,25 @@ MonoBehaviour:
   m_Name: MapPalette
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MapPalette
   _entries:
-  - DisplayName: "\uAD11\uBB3C"
-    Prefab: {fileID: 2850393172356034341, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+  - DisplayName: "\uAD6C\uB9AC \uAD11\uC11D"
+    Prefab: {fileID: 3549679645846655743, guid: 043c65d216138ee48a96d124cf430c69, type: 3}
     Size: {x: 1, y: 1}
     HeightOffset: 0.5
-    SwatchColor: {r: 0.35, g: 0.65, b: 0.95, a: 1}
+    SwatchColor: {r: 0.85, g: 0.52, b: 0.28, a: 1}
+    Category: Minerals
+    AllowRotation: 0
+  - DisplayName: "\uCCA0 \uAD11\uC11D"
+    Prefab: {fileID: 6775141016402878700, guid: 899dd5c6bb75bbd4cac50ff782288646, type: 3}
+    Size: {x: 1, y: 1}
+    HeightOffset: 0.5
+    SwatchColor: {r: 0.62, g: 0.66, b: 0.72, a: 1}
+    Category: Minerals
+    AllowRotation: 0
+  - DisplayName: "\uC218\uC815"
+    Prefab: {fileID: 3652621570235274478, guid: 1793c23c59a79ba428c976ae59f63f15, type: 3}
+    Size: {x: 1, y: 1}
+    HeightOffset: 0.5
+    SwatchColor: {r: 0.62, g: 0.45, b: 0.95, a: 1}
     Category: Minerals
     AllowRotation: 0
   - DisplayName: "\uAD11\uBB3C \uBCC0\uD658\uAE30"

@@ -5,23 +5,19 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 광물 오브젝트. 상태: 생성 → 공격 → 체력감소 → 0 → 파괴 → 리스폰대기 → 재생성 (사양 1-3).
-    /// 보상은 여기서 직접 지급하지 않고 Harvested 이벤트만 쏜다 — 지급 순서와 인벤 제약 삽입 지점을
-    /// HarvestRewardService 한 곳에 몰아두기 위해서.
+    /// 수치는 전부 MineralDefinition에서 읽는다 — 새 광물 추가가 코드 수정 없이 끝나도록.
+    /// 보상은 여기서 지급하지 않고 Harvested 이벤트만 쏜다(지급 순서·인벤 제약은 HarvestRewardService 담당).
     public class MineralNode : MonoBehaviour, IHarvestable
     {
-        [SerializeField] int _maxHp = 30;
-        [SerializeField] float _respawnDelay = 10f;
-        [SerializeField] int _mineralReward = 1;
-        [SerializeField] int _expReward = 1;
+        [SerializeField] MineralDefinition _definition;
 
         public event Action<MineralNode> Harvested;
 
         public bool IsHarvestable => _alive;
         public Transform Transform => transform;
-        public int MineralReward => _mineralReward;
-        public int ExpReward => _expReward;
+        public MineralDefinition Definition => _definition;
         public int CurrentHp => _hp;
-        public int MaxHp => _maxHp;
+        public int MaxHp => _definition != null ? _definition.MaxHp : 0;
 
         Renderer[] _renderers;
         Collider _collider;
@@ -33,14 +29,24 @@ namespace ForagerCP
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _collider = GetComponentInChildren<Collider>(true);
-            _hp = _maxHp;
+
+            if (_definition == null)
+            {
+                Debug.LogError($"{name}: 광물 종류(MineralDefinition)가 비어 있음", this);
+                _alive = false;
+                return;
+            }
+
+            _hp = _definition.MaxHp;
         }
 
         public void Harvest(int power)
         {
             if (!_alive) return; // 예외 1-10: 이미 파괴된 광물은 추가 공격해도 보상 없음
+
             _hp -= Mathf.Max(1, power);
             if (_hp > 0) return;
+
             Break();
         }
 
@@ -56,7 +62,7 @@ namespace ForagerCP
 
         IEnumerator RespawnRoutine()
         {
-            yield return new WaitForSeconds(_respawnDelay);
+            yield return new WaitForSeconds(_definition.RespawnDelay);
             _respawnRoutine = null;
             Respawn();
         }
@@ -64,13 +70,15 @@ namespace ForagerCP
         /// 디버그 즉시 재생성(1-11)도 같은 경로를 쓴다.
         public void Respawn()
         {
+            if (_definition == null) return;
+
             if (_respawnRoutine != null)
             {
                 StopCoroutine(_respawnRoutine);
                 _respawnRoutine = null;
             }
 
-            _hp = _maxHp;
+            _hp = _definition.MaxHp;
             _alive = true;
             SetPresence(true);
         }

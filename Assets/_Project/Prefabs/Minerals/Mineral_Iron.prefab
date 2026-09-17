@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8757394230007402441
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2850393172356034341, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: m_Name
+      value: Mineral_Iron
+      objectReference: {fileID: 0}
+    - target: {fileID: 3614957548935665876, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: _definition
+      value: 
+      objectReference: {fileID: 11400000, guid: 1533369f81f1d2743af8d2e5390475a4, type: 2}
+    - target: {fileID: 6431610431012139001, guid: 31bee278dd86972469c8145906c668dc, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 2c074d833fdaa4c4cbdf62b6cf897375, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 31bee278dd86972469c8145906c668dc, type: 3}
