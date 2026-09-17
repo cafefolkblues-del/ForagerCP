@@ -23,6 +23,7 @@ namespace ForagerCP
 
         Renderer[] _renderers;
         Collider[] _colliders;
+        Rigidbody _body;
         Coroutine _respawnRoutine;
         bool _alive = true;
         int _hp;
@@ -31,10 +32,9 @@ namespace ForagerCP
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _colliders = GetComponentsInChildren<Collider>(true);
+            _body = GetComponent<Rigidbody>();
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
             if (_knockback == null) _knockback = GetComponent<Knockback>();
-
-            HomePosition = transform.position;
 
             if (_definition == null)
             {
@@ -45,6 +45,10 @@ namespace ForagerCP
 
             _hp = _definition.MaxHp;
         }
+
+        /// 스폰 위치는 Awake가 아니라 Start에서 잡는다.
+        /// GridPlacement가 OnEnable에서 칸 좌표로 위치를 맞추기 때문에, Awake 시점 값은 배치 전 좌표일 수 있다.
+        void Start() => HomePosition = transform.position;
 
         public void TakeDamage(int amount, GameObject source)
         {
@@ -88,17 +92,46 @@ namespace ForagerCP
                 _respawnRoutine = null;
             }
 
-            transform.position = HomePosition;
             _hp = _definition.MaxHp;
             _alive = true;
             SetPresence(true);
+            TeleportTo(HomePosition);
             Respawned?.Invoke(this);
+        }
+
+        /// 체력은 그대로 두고 스폰 자리로만 돌려보낸다(맵 밖으로 빠졌을 때 구제용).
+        public void ReturnHome() => TeleportTo(HomePosition);
+
+        /// transform만 옮기면 Rigidbody 내부 위치가 옛 자리에 남아 물리가 그쪽으로 되돌린다.
+        /// 위치·속도를 같이 리셋하고 SyncTransforms로 물리 쪽에 즉시 반영한다.
+        void TeleportTo(Vector3 position)
+        {
+            if (_body != null)
+            {
+                _body.linearVelocity = Vector3.zero;
+                _body.angularVelocity = Vector3.zero;
+                _body.position = position;
+            }
+
+            transform.position = position;
+            Physics.SyncTransforms();
         }
 
         void SetPresence(bool visible)
         {
             for (int i = 0; i < _renderers.Length; i++) _renderers[i].enabled = visible;
             for (int i = 0; i < _colliders.Length; i++) _colliders[i].enabled = visible;
+
+            // 🐛 죽은 동안 콜라이더가 꺼져 바닥을 못 받치는데 중력은 그대로라 맵 아래로 계속 떨어졌다.
+            // (리스폰 시간만큼 낙하 → 되살아나도 바닥 밑이라 안 보임)
+            // 죽어 있는 동안은 물리에서 빼두고, 살아날 때 다시 넣는다.
+            if (_body == null) return;
+
+            _body.isKinematic = !visible;
+            if (!visible) return;
+
+            _body.linearVelocity = Vector3.zero;
+            _body.angularVelocity = Vector3.zero;
         }
     }
 }

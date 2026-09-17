@@ -10,6 +10,10 @@ namespace ForagerCP
         [SerializeField] GameInput _input;
         [SerializeField] Camera _camera;
         [SerializeField] Knockback _knockback;
+        [SerializeField] PlayerHealth _health;
+
+        /// 이 높이 아래로 내려가면 맵을 뚫은 것으로 본다.
+        [SerializeField] float _fallSafeY = -3f;
         [SerializeField] float _moveSpeed = 5f;
 
         Rigidbody _body;
@@ -20,6 +24,7 @@ namespace ForagerCP
             if (_input == null) _input = GetComponent<GameInput>();
             if (_camera == null) _camera = Camera.main;
             if (_knockback == null) _knockback = GetComponent<Knockback>();
+            if (_health == null) _health = GetComponent<PlayerHealth>();
 
             // 조준 회전을 직접 세팅하므로 물리 회전은 막는다(충돌로 캐릭터가 돌아가는 것 방지).
             _body.freezeRotation = true;
@@ -29,6 +34,13 @@ namespace ForagerCP
 
         void FixedUpdate()
         {
+            // 몬스터와 같은 이유의 구제 — 바닥 아래로 빠지면 스스로는 못 돌아온다.
+            if (transform.position.y < _fallSafeY && _health != null)
+            {
+                _health.Respawn();
+                return;
+            }
+
             // 넉백 중에는 이동 입력을 무시한다. 안 그러면 밀림이 걸음으로 상쇄돼 아무 일도 안 일어난 것처럼 보인다.
             if (_knockback != null && _knockback.IsActive) return;
 

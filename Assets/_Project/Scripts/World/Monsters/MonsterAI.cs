@@ -14,6 +14,9 @@ namespace ForagerCP
         [SerializeField] Rigidbody _body;
         [SerializeField] Knockback _knockback;
 
+        /// 이 높이 아래로 내려가면 맵을 뚫은 것으로 본다.
+        [SerializeField] float _fallSafeY = -3f;
+
         public State Current { get; private set; } = State.Idle;
 
         Monster _monster;
@@ -47,6 +50,13 @@ namespace ForagerCP
             if (_definition == null || !_monster.IsAlive || _target == null)
             {
                 Current = State.Idle;
+                return;
+            }
+
+            // 물리 밀림으로 바닥 아래로 빠졌을 때의 구제. 한 번 빠지면 스스로는 못 돌아온다.
+            if (transform.position.y < _fallSafeY)
+            {
+                _monster.ReturnHome();
                 return;
             }
 

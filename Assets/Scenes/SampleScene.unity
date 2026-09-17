@@ -3483,7 +3483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f44fe42bda6f3bb4ca4abc61776a70bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Knockback
-  _force: 4.5
+  _force: 50
   _duration: 0.16
 --- !u!4 &1997355373 stripped
 Transform:
