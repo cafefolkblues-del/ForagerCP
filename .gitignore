@@ -42,3 +42,7 @@ crashlytics-build.properties
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# MCP 플러그인이 임포트 시 자동 설치하는 DLL 더미 (18MB). 패키지가 재생성하므로 추적 제외.
+Assets/Plugins/NuGet/
+Assets/Plugins/NuGet.meta
