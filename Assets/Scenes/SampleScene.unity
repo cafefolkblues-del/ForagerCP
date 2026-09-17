@@ -290,7 +290,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 523756503}
+  m_Father: {fileID: 1298658596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &155411302
 MonoBehaviour:
@@ -400,6 +400,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: 3, y: 16}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
 --- !u!4 &229586114 stripped
@@ -809,8 +810,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 523756503}
+  - component: {fileID: 523756504}
   m_Layer: 0
-  m_Name: MineralField
+  m_Name: "\uC124\uBE44"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -829,14 +831,24 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 229586114}
-  - {fileID: 2142968125}
-  - {fileID: 155411301}
-  - {fileID: 692722889}
-  - {fileID: 1941972191}
-  - {fileID: 1155947782}
+  - {fileID: 1608562205}
+  - {fileID: 827377724}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &523756504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523756502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83efe1bb701cdaf498363daa4b008c72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MapFolder
+  _label: "\uC124\uBE44"
+  _category: Stations
 --- !u!1 &692722888
 GameObject:
   m_ObjectHideFlags: 0
@@ -871,7 +883,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 523756503}
+  m_Father: {fileID: 1298658596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &692722890
 MonoBehaviour:
@@ -981,8 +993,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: -3, y: 20}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
+--- !u!1 &824550477
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 824550479}
+  - component: {fileID: 824550478}
+  m_Layer: 0
+  m_Name: "\uAD6C\uC870\uBB3C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &824550478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824550477}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83efe1bb701cdaf498363daa4b008c72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MapFolder
+  _label: "\uAD6C\uC870\uBB3C"
+  _category: Structures
+--- !u!4 &824550479
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824550477}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1129732637}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &827377724 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5456623733124884068, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
+  m_PrefabInstance: {fileID: 4399161457564040505}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1325,8 +1390,79 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: 0, y: 0}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 1
   _stretchToFootprint: 0
+--- !u!1001 &1129732636
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 824550479}
+    m_Modifications:
+    - target: {fileID: 861531317990559007, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: _cell.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 861531317990559007, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: _cell.y
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7338097213724243969, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_Name
+      value: Structure_2x1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+--- !u!4 &1129732637 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7552490398016400630, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+  m_PrefabInstance: {fileID: 1129732636}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1155947781
 GameObject:
   m_ObjectHideFlags: 0
@@ -1361,7 +1497,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 523756503}
+  m_Father: {fileID: 1298658596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1155947783
 MonoBehaviour:
@@ -1471,8 +1607,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: 3, y: 20}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
+--- !u!1 &1298658594
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1298658596}
+  - component: {fileID: 1298658595}
+  m_Layer: 0
+  m_Name: "\uAD11\uBB3C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1298658595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1298658594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83efe1bb701cdaf498363daa4b008c72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MapFolder
+  _label: "\uAD11\uBB3C"
+  _category: Minerals
+--- !u!4 &1298658596
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1298658594}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 155411301}
+  - {fileID: 692722889}
+  - {fileID: 229586114}
+  - {fileID: 1155947782}
+  - {fileID: 2142968125}
+  - {fileID: 1941972191}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1311946514
 GameObject:
   m_ObjectHideFlags: 0
@@ -1610,6 +1799,11 @@ RectTransform:
   m_AnchoredPosition: {x: 24, y: -20}
   m_SizeDelta: {x: 600, y: 44}
   m_Pivot: {x: 0, y: 1}
+--- !u!4 &1608562205 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
+  m_PrefabInstance: {fileID: 5942500869539842157}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1714475080
 GameObject:
   m_ObjectHideFlags: 0
@@ -1996,7 +2190,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 523756503}
+  m_Father: {fileID: 1298658596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1941972192
 MonoBehaviour:
@@ -2106,6 +2300,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: 0, y: 21}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
 --- !u!1 &1954203104
@@ -2423,7 +2618,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 523756503}
+  m_Father: {fileID: 1298658596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2142968126
 MonoBehaviour:
@@ -2533,6 +2728,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: 0, y: 15}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
 --- !u!1001 &4399161457564040505
@@ -2541,7 +2737,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 523756503}
     m_Modifications:
     - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: _gold
@@ -2569,15 +2765,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5456623733124884068, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5456623733124884068, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5456623733124884068, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5456623733124884068, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2606,7 +2802,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 523756503}
     m_Modifications:
     - target: {fileID: 4497457282674331630, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
       propertyPath: _gold
@@ -2638,15 +2834,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -2671,7 +2867,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 523756503}
+    m_TransformParent: {fileID: 1298658596}
     m_Modifications:
     - target: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2734,7 +2930,7 @@ SceneRoots:
   - {fileID: 1097160524}
   - {fileID: 1954203115}
   - {fileID: 523756503}
-  - {fileID: 5942500869539842157}
-  - {fileID: 4399161457564040505}
   - {fileID: 1742055089}
   - {fileID: 2039559014}
+  - {fileID: 824550479}
+  - {fileID: 1298658596}

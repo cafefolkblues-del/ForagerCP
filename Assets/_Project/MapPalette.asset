@@ -13,18 +13,31 @@ MonoBehaviour:
   m_Name: MapPalette
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MapPalette
   _entries:
-  - DisplayName: Mineral
+  - DisplayName: "\uAD11\uBB3C"
     Prefab: {fileID: 2850393172356034341, guid: 31bee278dd86972469c8145906c668dc, type: 3}
     Size: {x: 1, y: 1}
     HeightOffset: 0.5
     SwatchColor: {r: 0.35, g: 0.65, b: 0.95, a: 1}
-  - DisplayName: Converter
+    Category: Minerals
+    AllowRotation: 0
+  - DisplayName: "\uAD11\uBB3C \uBCC0\uD658\uAE30"
     Prefab: {fileID: 5512286143987296769, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
     Size: {x: 1, y: 1}
     HeightOffset: 1
     SwatchColor: {r: 0.25, g: 0.45, b: 0.9, a: 1}
-  - DisplayName: Shop
+    Category: Stations
+    AllowRotation: 0
+  - DisplayName: "\uC0C1\uC810"
     Prefab: {fileID: 7618285526044361411, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
     Size: {x: 1, y: 1}
     HeightOffset: 1
     SwatchColor: {r: 0.95, g: 0.78, b: 0.25, a: 1}
+    Category: Stations
+    AllowRotation: 0
+  - DisplayName: "\uAC00\uB85C 2\uCE78 \uAD6C\uC870\uBB3C"
+    Prefab: {fileID: 7338097213724243969, guid: 31da9c7b23fb6f3459b24fc5b24cffcd, type: 3}
+    Size: {x: 2, y: 1}
+    HeightOffset: 0.5
+    SwatchColor: {r: 0.75, g: 0.6, b: 0.45, a: 1}
+    Category: Structures
+    AllowRotation: 1
