@@ -46,12 +46,12 @@ namespace ForagerCP
 
         void OnMineralChanged(int count)
         {
-            if (_mineralText != null) _mineralText.text = $"Mineral {count}";
+            if (_mineralText != null) _mineralText.text = $"광물 {count}";
         }
 
         void OnGoldChanged(int gold)
         {
-            if (_goldText != null) _goldText.text = $"Gold {gold}";
+            if (_goldText != null) _goldText.text = $"골드 {gold}";
         }
     }
 }
