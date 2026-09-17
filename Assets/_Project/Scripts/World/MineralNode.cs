@@ -10,6 +10,7 @@ namespace ForagerCP
     public class MineralNode : MonoBehaviour, IHarvestable
     {
         [SerializeField] MineralDefinition _definition;
+        [SerializeField] HitFlash _hitFlash;
 
         public event Action<MineralNode> Harvested;
 
@@ -29,6 +30,7 @@ namespace ForagerCP
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _collider = GetComponentInChildren<Collider>(true);
+            if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
 
             if (_definition == null)
             {
@@ -45,8 +47,9 @@ namespace ForagerCP
             if (!_alive) return; // 예외 1-10: 이미 파괴된 광물은 추가 공격해도 보상 없음
 
             _hp -= Mathf.Max(1, power);
-            if (_hp > 0) return;
+            if (_hitFlash != null) _hitFlash.Play();
 
+            if (_hp > 0) return;
             Break();
         }
 

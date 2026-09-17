@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6431610431012139001}
   - component: {fileID: 3614957548935665876}
   - component: {fileID: 3613033480108273748}
+  - component: {fileID: 4648573258658104219}
   m_Layer: 0
   m_Name: Mineral
   m_TagString: Untagged
@@ -29,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2850393172356034341}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -3, y: 0.5, z: 16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -126,10 +127,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0057c6a1021d3e4aac26fa6b6e5f592, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralNode
-  _maxHp: 30
-  _respawnDelay: 10
-  _mineralReward: 1
-  _expReward: 1
+  _definition: {fileID: 0}
+  _hitFlash: {fileID: 4648573258658104219}
 --- !u!114 &3613033480108273748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,5 +143,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
   _cell: {x: -3, y: 16}
   _size: {x: 1, y: 1}
+  _rotationSteps: 0
   _heightOffset: 0.5
   _stretchToFootprint: 0
+--- !u!114 &4648573258658104219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2850393172356034341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2492ba674f75c824fb8aa829260804bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HitFlash
+  _flashColor: {r: 1, g: 1, b: 1, a: 1}
+  _flashDuration: 0.07
+  _punchScale: 0.18
+  _punchDuration: 0.12

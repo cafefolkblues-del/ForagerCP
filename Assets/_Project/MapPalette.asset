@@ -55,3 +55,17 @@ MonoBehaviour:
     SwatchColor: {r: 0.75, g: 0.6, b: 0.45, a: 1}
     Category: Structures
     AllowRotation: 1
+  - DisplayName: "\uC2AC\uB77C\uC784"
+    Prefab: {fileID: 3779456260382996971, guid: bd172e6dc891a8945b1843bc655de118, type: 3}
+    Size: {x: 1, y: 1}
+    HeightOffset: 0.45
+    SwatchColor: {r: 0.45, g: 0.85, b: 0.45, a: 1}
+    Category: Monsters
+    AllowRotation: 0
+  - DisplayName: "\uB300\uD615 \uC2AC\uB77C\uC784"
+    Prefab: {fileID: 3669111419358409259, guid: 12faa7681483f6449ab2d8c3efc38c27, type: 3}
+    Size: {x: 2, y: 2}
+    HeightOffset: 0.9
+    SwatchColor: {r: 0.25, g: 0.6, b: 0.35, a: 1}
+    Category: Monsters
+    AllowRotation: 0
