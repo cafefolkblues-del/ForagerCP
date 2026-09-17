@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ForagerCP
@@ -11,6 +12,9 @@ namespace ForagerCP
         [SerializeField] ShopItem[] _items = new ShopItem[1];
 
         public event Action<ShopItem> Purchased;
+
+        /// 상점 화면이 목록을 그릴 때 읽어간다.
+        public IReadOnlyList<ShopItem> Items => _items;
 
         public Transform Transform => transform;
         public string Label => "상점";

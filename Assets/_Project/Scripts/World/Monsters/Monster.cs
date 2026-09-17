@@ -15,6 +15,9 @@ namespace ForagerCP
         public event Action<Monster> Died;
         public event Action<Monster> Respawned;
 
+        /// 머리 위 체력바가 구독한다.
+        public event Action<Monster> HealthChanged;
+
         public bool IsAlive => _alive;
         public Transform Transform => transform;
         public MonsterDefinition Definition => _definition;
@@ -57,6 +60,7 @@ namespace ForagerCP
             _hp -= amount;
             if (_hitFlash != null) _hitFlash.Play();
             if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
+            HealthChanged?.Invoke(this);
 
             if (_hp > 0) return;
             Die();
@@ -96,6 +100,7 @@ namespace ForagerCP
             _alive = true;
             SetPresence(true);
             TeleportTo(HomePosition);
+            HealthChanged?.Invoke(this);
             Respawned?.Invoke(this);
         }
 

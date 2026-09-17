@@ -12,12 +12,14 @@ namespace ForagerCP
         public event Action InteractPressed;
         public event Action InventoryToggled;
         public event Action MapToggled;
+        public event Action CancelPressed;
 
         InputAction _move;
         InputAction _attack;
         InputAction _interact;
         InputAction _inventory;
         InputAction _map;
+        InputAction _cancel;
 
         public Vector2 MoveAxis => _move.ReadValue<Vector2>();
 
@@ -41,10 +43,12 @@ namespace ForagerCP
             _interact = new InputAction("Interact", InputActionType.Button, "<Keyboard>/f");
             _inventory = new InputAction("Inventory", InputActionType.Button, "<Keyboard>/i");
             _map = new InputAction("Map", InputActionType.Button, "<Keyboard>/m");
+            _cancel = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
 
             _interact.performed += OnInteractPerformed;
             _inventory.performed += OnInventoryPerformed;
             _map.performed += OnMapPerformed;
+            _cancel.performed += OnCancelPerformed;
         }
 
         void OnEnable()
@@ -54,6 +58,7 @@ namespace ForagerCP
             _interact.Enable();
             _inventory.Enable();
             _map.Enable();
+            _cancel.Enable();
         }
 
         void OnDisable()
@@ -63,6 +68,7 @@ namespace ForagerCP
             _interact.Disable();
             _inventory.Disable();
             _map.Disable();
+            _cancel.Disable();
         }
 
         void OnDestroy()
@@ -70,16 +76,19 @@ namespace ForagerCP
             _interact.performed -= OnInteractPerformed;
             _inventory.performed -= OnInventoryPerformed;
             _map.performed -= OnMapPerformed;
+            _cancel.performed -= OnCancelPerformed;
 
             _move.Dispose();
             _attack.Dispose();
             _interact.Dispose();
             _inventory.Dispose();
             _map.Dispose();
+            _cancel.Dispose();
         }
 
         void OnInteractPerformed(InputAction.CallbackContext _) => InteractPressed?.Invoke();
         void OnInventoryPerformed(InputAction.CallbackContext _) => InventoryToggled?.Invoke();
         void OnMapPerformed(InputAction.CallbackContext _) => MapToggled?.Invoke();
+        void OnCancelPerformed(InputAction.CallbackContext _) => CancelPressed?.Invoke();
     }
 }
