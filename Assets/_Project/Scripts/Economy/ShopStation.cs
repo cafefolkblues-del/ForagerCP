@@ -15,6 +15,14 @@ namespace ForagerCP
         public Transform Transform => transform;
         public string Label => "상점";
 
+        /// ConverterStation과 같은 이유의 방어 탐색(프리팹 배치 시 씬 참조가 비어 옴).
+        void Awake()
+        {
+            if (_gold == null) _gold = FindFirstObjectByType<GoldWallet>();
+            if (_harvestPower == null) _harvestPower = FindFirstObjectByType<HarvestPower>();
+            if (_gold == null || _harvestPower == null) Debug.LogError($"{name}: 상점 참조 미배선", this);
+        }
+
         public void Interact()
         {
             ShopItem item = FindPurchasableItem();

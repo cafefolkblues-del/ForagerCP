@@ -15,6 +15,15 @@ namespace ForagerCP
         public Transform Transform => transform;
         public string Label => "광물 변환기";
 
+        /// 팔레트로 찍어 넣은 프리팹은 씬 참조 슬롯이 비어 온다.
+        /// 배선을 빠뜨렸을 때 조용히 무동작이 되지 않도록 방어 탐색만 하고, 없으면 크게 알린다.
+        void Awake()
+        {
+            if (_minerals == null) _minerals = FindFirstObjectByType<MineralWallet>();
+            if (_gold == null) _gold = FindFirstObjectByType<GoldWallet>();
+            if (_minerals == null || _gold == null) Debug.LogError($"{name}: 변환기 참조 미배선", this);
+        }
+
         public void Interact()
         {
             int count = _minerals.Count;
