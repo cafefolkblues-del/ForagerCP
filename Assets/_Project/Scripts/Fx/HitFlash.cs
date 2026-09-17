@@ -10,8 +10,8 @@ namespace ForagerCP
     {
         [SerializeField] Color _flashColor = Color.white;
         [SerializeField] float _flashDuration = 0.07f;
-        [SerializeField] float _punchScale = 0.18f;
-        [SerializeField] float _punchDuration = 0.12f;
+        [SerializeField] float _punchScale = 0.34f;
+        [SerializeField] float _punchDuration = 0.16f;
 
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 

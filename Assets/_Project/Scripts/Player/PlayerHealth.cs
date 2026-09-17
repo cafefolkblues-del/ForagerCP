@@ -16,6 +16,7 @@ namespace ForagerCP
         [SerializeField] int _maxHp = 20;
         [SerializeField] Transform _respawnPoint;
         [SerializeField] HitFlash _hitFlash;
+        [SerializeField] Knockback _knockback;
 
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
         [SerializeField] float _invulnerableTime = 0.4f;
@@ -35,6 +36,7 @@ namespace ForagerCP
         {
             _hp = _maxHp;
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
+            if (_knockback == null) _knockback = GetComponent<Knockback>();
         }
 
         void Start() => Changed?.Invoke(this);
@@ -48,6 +50,7 @@ namespace ForagerCP
             _hp = Mathf.Max(0, _hp - amount);
 
             if (_hitFlash != null) _hitFlash.Play();
+            if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
             Changed?.Invoke(this);
 
             if (_hp <= 0) Die();

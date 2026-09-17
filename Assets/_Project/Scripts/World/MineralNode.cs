@@ -12,6 +12,9 @@ namespace ForagerCP
         [SerializeField] MineralDefinition _definition;
         [SerializeField] HitFlash _hitFlash;
 
+        /// 자리에 누가 서 있을 때 다시 확인하는 간격.
+        [SerializeField] float _blockedRetryInterval = 0.5f;
+
         public event Action<MineralNode> Harvested;
 
         public bool IsHarvestable => _alive;
@@ -26,11 +29,15 @@ namespace ForagerCP
         bool _alive = true;
         int _hp;
 
+        /// 콜라이더가 꺼진 뒤에는 bounds를 믿을 수 없어서, 켜져 있는 Awake 시점에 크기를 기억해둔다.
+        Vector3 _blockCheckExtents = Vector3.one * 0.5f;
+
         void Awake()
         {
             _renderers = GetComponentsInChildren<Renderer>(true);
             _collider = GetComponentInChildren<Collider>(true);
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
+            if (_collider != null) _blockCheckExtents = _collider.bounds.extents;
 
             if (_definition == null)
             {
@@ -66,8 +73,28 @@ namespace ForagerCP
         IEnumerator RespawnRoutine()
         {
             yield return new WaitForSeconds(_definition.RespawnDelay);
+
+            // 자리에 플레이어나 몬스터가 서 있으면 생성을 미룬다.
+            // 그냥 켜버리면 콜라이더가 겹친 상대를 밀어내 광물 위로 올려버린다.
+            // 통과시키지 않고 '보류'인 이유: 건너뛰면 그 칸의 광물이 영영 안 돌아온다.
+            while (IsBlocked()) yield return new WaitForSeconds(_blockedRetryInterval);
+
             _respawnRoutine = null;
             Respawn();
+        }
+
+        /// 살아있는 것(IDamageable = 플레이어·몬스터)만 방해물로 본다.
+        /// 다른 광물이나 구조물은 애초에 같은 칸에 놓이지 않으므로 볼 필요가 없다.
+        bool IsBlocked()
+        {
+            Collider[] overlaps = Physics.OverlapBox(transform.position, _blockCheckExtents, transform.rotation);
+
+            for (int i = 0; i < overlaps.Length; i++)
+            {
+                if (overlaps[i] == null) continue;
+                if (overlaps[i].GetComponentInParent<IDamageable>() != null) return true;
+            }
+            return false;
         }
 
         /// 디버그 즉시 재생성(1-11)도 같은 경로를 쓴다.

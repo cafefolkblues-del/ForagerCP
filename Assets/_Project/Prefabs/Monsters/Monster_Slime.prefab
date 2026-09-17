@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6018427450247011519}
   - component: {fileID: 8705532454693476260}
   - component: {fileID: 4046275522414308025}
+  - component: {fileID: 2984532595786280280}
   m_Layer: 0
   m_Name: Monster_Slime
   m_TagString: Untagged
@@ -158,8 +159,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HitFlash
   _flashColor: {r: 1, g: 1, b: 1, a: 1}
   _flashDuration: 0.07
-  _punchScale: 0.18
-  _punchDuration: 0.12
+  _punchScale: 0.34
+  _punchDuration: 0.16
 --- !u!114 &6018427450247011519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,6 +175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Monster
   _definition: {fileID: 11400000, guid: 980d631a6b3a44540beddbf80bf4d7e8, type: 2}
   _hitFlash: {fileID: 2196656596862203404}
+  _knockback: {fileID: 2984532595786280280}
 --- !u!114 &8705532454693476260
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,6 +190,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterAI
   _target: {fileID: 0}
   _body: {fileID: 887567567336836969}
+  _knockback: {fileID: 2984532595786280280}
 --- !u!114 &4046275522414308025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -205,3 +208,17 @@ MonoBehaviour:
   _rotationSteps: 0
   _heightOffset: 0.45
   _stretchToFootprint: 0
+--- !u!114 &2984532595786280280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3779456260382996971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44fe42bda6f3bb4ca4abc61776a70bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Knockback
+  _force: 6
+  _duration: 0.16

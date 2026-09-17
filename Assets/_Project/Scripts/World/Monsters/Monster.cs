@@ -10,6 +10,7 @@ namespace ForagerCP
     {
         [SerializeField] MonsterDefinition _definition;
         [SerializeField] HitFlash _hitFlash;
+        [SerializeField] Knockback _knockback;
 
         public event Action<Monster> Died;
         public event Action<Monster> Respawned;
@@ -31,6 +32,7 @@ namespace ForagerCP
             _renderers = GetComponentsInChildren<Renderer>(true);
             _colliders = GetComponentsInChildren<Collider>(true);
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
+            if (_knockback == null) _knockback = GetComponent<Knockback>();
 
             HomePosition = transform.position;
 
@@ -50,6 +52,7 @@ namespace ForagerCP
 
             _hp -= amount;
             if (_hitFlash != null) _hitFlash.Play();
+            if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
 
             if (_hp > 0) return;
             Die();

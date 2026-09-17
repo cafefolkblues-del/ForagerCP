@@ -9,6 +9,7 @@ namespace ForagerCP
     {
         [SerializeField] GameInput _input;
         [SerializeField] Camera _camera;
+        [SerializeField] Knockback _knockback;
         [SerializeField] float _moveSpeed = 5f;
 
         Rigidbody _body;
@@ -18,6 +19,7 @@ namespace ForagerCP
             _body = GetComponent<Rigidbody>();
             if (_input == null) _input = GetComponent<GameInput>();
             if (_camera == null) _camera = Camera.main;
+            if (_knockback == null) _knockback = GetComponent<Knockback>();
 
             // 조준 회전을 직접 세팅하므로 물리 회전은 막는다(충돌로 캐릭터가 돌아가는 것 방지).
             _body.freezeRotation = true;
@@ -27,6 +29,9 @@ namespace ForagerCP
 
         void FixedUpdate()
         {
+            // 넉백 중에는 이동 입력을 무시한다. 안 그러면 밀림이 걸음으로 상쇄돼 아무 일도 안 일어난 것처럼 보인다.
+            if (_knockback != null && _knockback.IsActive) return;
+
             Vector2 axis = _input.MoveAxis;
             Vector3 delta = new Vector3(axis.x, 0f, axis.y);
             if (delta.sqrMagnitude > 1f) delta.Normalize(); // 대각 이동 속도 보정

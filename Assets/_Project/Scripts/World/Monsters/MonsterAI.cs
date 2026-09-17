@@ -12,6 +12,7 @@ namespace ForagerCP
 
         [SerializeField] Transform _target;
         [SerializeField] Rigidbody _body;
+        [SerializeField] Knockback _knockback;
 
         public State Current { get; private set; } = State.Idle;
 
@@ -24,6 +25,7 @@ namespace ForagerCP
         {
             _monster = GetComponent<Monster>();
             if (_body == null) _body = GetComponent<Rigidbody>();
+            if (_knockback == null) _knockback = GetComponent<Knockback>();
         }
 
         void Start()
@@ -47,6 +49,9 @@ namespace ForagerCP
                 Current = State.Idle;
                 return;
             }
+
+            // 맞고 밀리는 동안은 Knockback이 위치를 맡는다. 여기서 같이 MovePosition하면 밀림이 상쇄된다.
+            if (_knockback != null && _knockback.IsActive) return;
 
             Vector3 toTarget = _target.position - transform.position;
             toTarget.y = 0f;

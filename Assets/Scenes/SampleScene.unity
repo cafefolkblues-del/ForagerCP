@@ -3220,6 +3220,7 @@ GameObject:
   - component: {fileID: 1954203106}
   - component: {fileID: 1954203117}
   - component: {fileID: 1954203116}
+  - component: {fileID: 1954203118}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -3300,6 +3301,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerMotor
   _input: {fileID: 1954203110}
   _camera: {fileID: 330585545}
+  _knockback: {fileID: 1954203118}
   _moveSpeed: 5
 --- !u!114 &1954203110
 MonoBehaviour:
@@ -3451,6 +3453,7 @@ MonoBehaviour:
   _maxHp: 20
   _respawnPoint: {fileID: 1097160524}
   _hitFlash: {fileID: 1954203117}
+  _knockback: {fileID: 1954203118}
   _invulnerableTime: 0.4
 --- !u!114 &1954203117
 MonoBehaviour:
@@ -3466,8 +3469,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HitFlash
   _flashColor: {r: 1, g: 1, b: 1, a: 1}
   _flashDuration: 0.07
-  _punchScale: 0.18
-  _punchDuration: 0.12
+  _punchScale: 0.34
+  _punchDuration: 0.16
+--- !u!114 &1954203118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954203104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f44fe42bda6f3bb4ca4abc61776a70bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Knockback
+  _force: 4.5
+  _duration: 0.16
 --- !u!4 &1997355373 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
