@@ -21,4 +21,3 @@ MonoBehaviour:
   _harvestYield: 1
   _expReward: 1
   _respawnDelay: 10
-  _tint: {r: 0.85, g: 0.52, b: 0.28, a: 1}
