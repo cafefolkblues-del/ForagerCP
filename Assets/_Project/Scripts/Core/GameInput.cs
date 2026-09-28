@@ -15,6 +15,12 @@ namespace ForagerCP
         public event Action CancelPressed;
         public event Action DashPressed;
 
+        /// 핫바 슬롯 직접 선택(0부터). 숫자키 1~9.
+        public event Action<int> HotbarSelected;
+
+        /// 휠로 한 칸씩 이동(+1 / -1).
+        public event Action<int> HotbarScrolled;
+
         /// 좌클릭을 뗀 순간. 인자는 누르고 있던 시간(차지 판정용).
         public event Action<float> AttackReleased;
 
@@ -106,7 +112,38 @@ namespace ForagerCP
             }
 
             _wasAttackHeld = held;
+
+            ReadHotbar();
         }
+
+        /// 숫자키 9개를 InputAction으로 만들면 선언만 아홉 줄이 되고, 어느 키가 눌렸는지
+        /// 다시 역추적해야 한다. 키 배열을 직접 읽는 편이 짧고 의도도 분명하다.
+        void ReadHotbar()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                for (int i = 0; i < HotbarKeys.Length; i++)
+                {
+                    if (keyboard[HotbarKeys[i]].wasPressedThisFrame) HotbarSelected?.Invoke(i);
+                }
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null) return;
+
+            float scroll = mouse.scroll.ReadValue().y;
+            if (Mathf.Abs(scroll) < 0.01f) return;
+
+            // 휠은 위로 굴리면 앞 칸으로 — 마인크래프트와 같은 방향.
+            HotbarScrolled?.Invoke(scroll > 0f ? -1 : 1);
+        }
+
+        static readonly Key[] HotbarKeys =
+        {
+            Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5,
+            Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9
+        };
 
         void OnDestroy()
         {
