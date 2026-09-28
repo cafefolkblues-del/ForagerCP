@@ -9,6 +9,7 @@ namespace ForagerCP
     {
         [SerializeField] GoldWallet _gold;
         [SerializeField] HarvestPower _harvestPower;
+        [SerializeField] PlayerWeapon _weapon;
         [SerializeField] ShopItem[] _items = new ShopItem[1];
 
         public event Action<ShopItem> Purchased;
@@ -24,6 +25,7 @@ namespace ForagerCP
         {
             if (_gold == null) _gold = FindFirstObjectByType<GoldWallet>();
             if (_harvestPower == null) _harvestPower = FindFirstObjectByType<HarvestPower>();
+            if (_weapon == null) _weapon = FindFirstObjectByType<PlayerWeapon>();
             if (_gold == null || _harvestPower == null) Debug.LogError($"{name}: 상점 참조 미배선", this);
         }
 
@@ -37,6 +39,9 @@ namespace ForagerCP
 
             item.MarkPurchased();
             _harvestPower.AddBonus(item.HarvestPowerBonus);
+
+            // 검 티어 품목이면 장착까지 여기서 끝낸다 — 공격력은 PlayerWeapon 한 곳에서만 나온다.
+            if (item.WeaponTier != null && _weapon != null) _weapon.Equip(item.WeaponTier);
             Purchased?.Invoke(item);
         }
 

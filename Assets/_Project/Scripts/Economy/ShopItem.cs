@@ -13,10 +13,14 @@ namespace ForagerCP
         [SerializeField] int _harvestPowerBonus = 5;
         [SerializeField] bool _oneTimePurchase = true;
 
+        /// 검 티어를 파는 품목이면 여기에 꽂는다. 비어 있으면 채집력 강화 같은 일반 품목.
+        [SerializeField] WeaponTier _weaponTier;
+
         public string DisplayName => _displayName;
         public int Price => _price;
         public int HarvestPowerBonus => _harvestPowerBonus;
         public bool OneTimePurchase => _oneTimePurchase;
+        public WeaponTier WeaponTier => _weaponTier;
 
         /// 세이브 미구현(재실행 시 초기화 허용)이라 런타임 플래그로만 들고 있는다.
         public bool Purchased { get; private set; }

@@ -17,12 +17,17 @@ namespace ForagerCP
         [SerializeField] Transform _respawnPoint;
         [SerializeField] HitFlash _hitFlash;
         [SerializeField] Knockback _knockback;
+        [SerializeField] PlayerShield _shield;
+        [SerializeField] PlayerDash _dash;
 
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
         [SerializeField] float _invulnerableTime = 0.4f;
 
         public event Action<PlayerHealth> Changed;
         public event Action<PlayerHealth> Died;
+
+        /// 방패로 막아낸 순간. 막기 연출·사운드가 붙을 자리.
+        public event Action<PlayerHealth> Blocked;
 
         public bool IsAlive => _hp > 0;
         public Transform Transform => transform;
@@ -37,6 +42,8 @@ namespace ForagerCP
             _hp = _maxHp;
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
             if (_knockback == null) _knockback = GetComponent<Knockback>();
+            if (_shield == null) _shield = GetComponent<PlayerShield>();
+            if (_dash == null) _dash = GetComponent<PlayerDash>();
         }
 
         void Start() => Changed?.Invoke(this);
@@ -45,6 +52,16 @@ namespace ForagerCP
         {
             if (!IsAlive || amount <= 0) return;
             if (Time.time < _invulnerableUntil) return;
+
+            // 대시 무적(기본 꺼짐). 기획이 원하면 PlayerDash에서 시간만 올리면 여기 코드는 그대로다.
+            if (_dash != null && _dash.IsInvulnerable) return;
+
+            // 방패: 정면에서 온 공격이면 데미지도 넉백도 없다(확정 스펙 — 완전 차단).
+            if (_shield != null && source != null && _shield.Blocks(source.transform.position))
+            {
+                Blocked?.Invoke(this);
+                return;
+            }
 
             _invulnerableUntil = Time.time + _invulnerableTime;
             _hp = Mathf.Max(0, _hp - amount);

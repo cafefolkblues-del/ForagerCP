@@ -37,7 +37,7 @@ MonoBehaviour:
   - DisplayName: "\uAD11\uBB3C \uBCC0\uD658\uAE30"
     Prefab: {fileID: 5512286143987296769, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
     Size: {x: 1, y: 1}
-    HeightOffset: 1
+    HeightOffset: 1.06
     SwatchColor: {r: 0.25, g: 0.45, b: 0.9, a: 1}
     Category: Stations
     AllowRotation: 0

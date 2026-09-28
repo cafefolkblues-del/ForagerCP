@@ -17,6 +17,10 @@ namespace ForagerCP
         /// 이 높이 아래로 내려가면 맵을 뚫은 것으로 본다.
         [SerializeField] float _fallSafeY = -3f;
 
+        /// 맞으면 이만큼 공격을 못 한다(경직). 넉백 0.16초보다 살짝 길게 잡아
+        /// 밀리는 동안 쌓아둔 윈드업이 끝나자마자 터지는 일이 없게 한다.
+        [SerializeField] float _hitstunTime = 0.22f;
+
         public State Current { get; private set; } = State.Idle;
 
         Monster _monster;
@@ -24,11 +28,27 @@ namespace ForagerCP
         IDamageable _targetDamageable;
         float _nextAttackTime;
 
+        public bool IsHitstunned => Time.time < _hitstunUntil;
+
+        float _hitstunUntil;
+
         void Awake()
         {
             _monster = GetComponent<Monster>();
             if (_body == null) _body = GetComponent<Rigidbody>();
             if (_knockback == null) _knockback = GetComponent<Knockback>();
+        }
+
+        void OnEnable() => GetComponent<Monster>().Damaged += OnDamaged;
+
+        void OnDisable() => GetComponent<Monster>().Damaged -= OnDamaged;
+
+        /// 확정 스펙: 넉백을 hitstun으로 승격 — 밀리는 동안 몹의 공격 윈드업을 리셋한다.
+        /// 이게 없으면 연타로 녹이는 동안에도 몹이 제 박자대로 때린다.
+        void OnDamaged(Monster monster, GameObject source)
+        {
+            _hitstunUntil = Time.time + _hitstunTime;
+            _nextAttackTime = Mathf.Max(_nextAttackTime, _hitstunUntil);
         }
 
         void Start()
@@ -59,6 +79,9 @@ namespace ForagerCP
                 _monster.ReturnHome();
                 return;
             }
+
+            // 경직 중에는 이동도 공격도 없다. 넉백이 위치를 맡는 구간과 겹친다.
+            if (IsHitstunned) return;
 
             // 맞고 밀리는 동안은 Knockback이 위치를 맡는다. 여기서 같이 MovePosition하면 밀림이 상쇄된다.
             if (_knockback != null && _knockback.IsActive) return;
