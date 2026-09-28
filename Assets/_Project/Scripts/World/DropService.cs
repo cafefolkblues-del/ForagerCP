@@ -10,6 +10,7 @@ namespace ForagerCP
     /// 넘치면 가장 오래된 것부터 치운다. 100은 임시값이라 인스펙터로 빼둔다.
     public class DropService : MonoBehaviour
     {
+        /// 종류별 모양이 없을 때 쓰는 기본 프리팹.
         [SerializeField] GameObject _dropPrefab;
         [SerializeField] Transform _dropParent;
         [SerializeField] Inventory _inventory;
@@ -38,7 +39,11 @@ namespace ForagerCP
 
         public ItemDrop Spawn(ItemDefinition definition, int count, Vector3 position)
         {
-            if (_dropPrefab == null || definition == null || count <= 0) return null;
+            if (definition == null || count <= 0) return null;
+
+            // 종류가 자기 모양을 들고 있으면 그것을 쓰고, 없으면 기본 프리팹으로 떨어진다.
+            GameObject prefab = definition.DropPrefab != null ? definition.DropPrefab : _dropPrefab;
+            if (prefab == null) return null;
 
             TrimToLimit();
 
@@ -46,16 +51,40 @@ namespace ForagerCP
             Vector3 spot = position + new Vector3(scatter.x, 0f, scatter.y);
             spot.y = position.y + _groundOffset;
 
-            GameObject instance = PoolManager.Spawn(_dropPrefab, spot, Quaternion.identity, _dropParent);
+            GameObject instance = PoolManager.Spawn(prefab, spot, Quaternion.identity, _dropParent);
             if (instance == null) return null;
 
+            // 아트가 준 모델 프리팹을 그대로 꽂아도 동작하게, 빠진 부품은 여기서 채워준다.
+            // (풀에서 재사용되므로 이 보강은 인스턴스당 한 번만 일어난다)
             var drop = instance.GetComponent<ItemDrop>();
-            if (drop == null) return null;
+            if (drop == null) drop = instance.AddComponent<ItemDrop>();
+            EnsurePickupCollider(instance);
 
             drop.Setup(definition, count, _inventory);
             drop.PickedUp += OnPickedUp;
             _active.Add(drop);
             return drop;
+        }
+
+        /// 줍기 판정은 콜라이더 기반이라 모델에 콜라이더가 없으면 영원히 못 줍는다.
+        /// 트리거로 넣어야 길을 막지 않는다.
+        static void EnsurePickupCollider(GameObject instance)
+        {
+            var collider = instance.GetComponentInChildren<Collider>(true);
+            if (collider != null)
+            {
+                collider.isTrigger = true;
+                return;
+            }
+
+            var box = instance.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+
+            var renderer = instance.GetComponentInChildren<Renderer>();
+            if (renderer == null) { box.size = Vector3.one * 0.6f; return; }
+
+            box.center = instance.transform.InverseTransformPoint(renderer.bounds.center);
+            box.size = renderer.bounds.size;
         }
 
         /// 상한을 넘기 전에 미리 한 칸 비운다. 가장 오래 놓여 있던 것이 먼저 사라진다.

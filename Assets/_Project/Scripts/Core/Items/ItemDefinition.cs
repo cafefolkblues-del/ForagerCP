@@ -17,6 +17,10 @@ namespace ForagerCP
         /// 종류마다 고정값이어야 한다 — 획득 순서로 색을 배정하면 먼저 캔 광물이 남의 색을 뒤집어쓴다(팀 리뷰).
         [SerializeField] Color _uiColor = new Color(0.78f, 0.80f, 0.85f);
 
+        /// 바닥에 떨어질 때 쓸 모양. 비워두면 DropService의 기본 프리팹을 쓴다.
+        /// 아이콘·색과 같은 이유로 여기 둔다 — 종류가 자기 겉모습을 들고 있어야 아트 교체가 에셋 수정으로 끝난다.
+        [SerializeField] GameObject _dropPrefab;
+
         /// 이름을 비워두면 에셋 파일명을 쓴다 — 디자이너가 한 군데만 고쳐도 되게.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
 
@@ -28,5 +32,6 @@ namespace ForagerCP
 
         public int SortOrder => _sortOrder;
         public Color UiColor => _uiColor;
+        public GameObject DropPrefab => _dropPrefab;
     }
 }

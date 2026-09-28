@@ -16,6 +16,9 @@ namespace ForagerCP
 
         Rigidbody _body;
         Collider[] _ownColliders;
+        Bounds _bodyBounds;
+        Vector3 _centerOffset;
+        bool _hasBounds;
         Vector3 _velocity;
         float _endTime;
         float _lockedY;
@@ -27,6 +30,18 @@ namespace ForagerCP
         {
             _body = GetComponent<Rigidbody>();
             _ownColliders = GetComponentsInChildren<Collider>(true);
+
+            // 콜라이더가 꺼진 뒤에는 bounds를 믿을 수 없어 켜져 있는 지금 크기를 기억해둔다.
+            for (int i = 0; i < _ownColliders.Length; i++)
+            {
+                if (_ownColliders[i] == null) continue;
+                if (!_hasBounds) { _bodyBounds = _ownColliders[i].bounds; _hasBounds = true; }
+                else _bodyBounds.Encapsulate(_ownColliders[i].bounds);
+            }
+
+            // 리지드바디 위치가 곧 몸통 중심은 아니다(피벗이 발밑인 모델도 있다).
+            // 중심까지의 차이를 기억해 캐스트를 항상 몸통 한가운데에서 쏜다.
+            if (_hasBounds) _centerOffset = _bodyBounds.center - transform.position;
         }
 
         public void Apply(Vector3 direction, float forceOverride = -1f)
@@ -78,13 +93,32 @@ namespace ForagerCP
             float distance = step.magnitude;
             if (distance < 0.0001f) return false;
 
-            var hits = Physics.SphereCastAll(_body.position, _blockCheckRadius, step / distance,
-                distance, ~0, QueryTriggerInteraction.Ignore);
+            // 발밑이 아니라 몸통 높이에서 쏜다. 바닥에 붙어 있는 몬스터는 발밑에서 쏘면
+            // 지면이 먼저 걸려 모든 방향이 막힌 것으로 판정된다(플레이어는 키가 커서 안 걸렸다).
+            float halfHeight = _hasBounds ? _bodyBounds.extents.y : 0.5f;
+            float radius = Mathf.Min(_blockCheckRadius, Mathf.Max(0.05f, halfHeight * 0.8f));
+            Vector3 direction = step / distance;
+
+            // 구를 반지름만큼 뒤로 물려서 쏜다. 벽에 바짝 붙은 상태로 그 자리에서 쏘면
+            // 시작부터 겹쳐 거리 0으로 잡히고, 법선이 진행 반대방향으로 나와 벽인지 알 수 없다.
+            Vector3 origin = _body.position + _centerOffset - direction * radius;
+            float castDistance = distance + radius;
+
+            var hits = Physics.SphereCastAll(origin, radius, direction,
+                castDistance, ~0, QueryTriggerInteraction.Ignore);
 
             for (int i = 0; i < hits.Length; i++)
             {
                 Collider hit = hits[i].collider;
                 if (hit == null || IsOwn(hit)) continue;
+
+                // 시작부터 겹쳐 있으면 법선이 진행 반대방향으로 나와 어느 쪽으로도 막힌 것처럼 보인다.
+                // 이미 낀 상태는 높이 고정만으로 충분하니 여기서는 세지 않는다.
+                if (hits[i].distance <= 0.0001f) continue;
+
+                // 위(바닥·경사면)나 아래(천장)를 향한 면은 벽이 아니다. 수평으로 막는 것만 본다.
+                if (Mathf.Abs(hits[i].normal.y) > 0.7f) continue;
+
                 return true;
             }
 

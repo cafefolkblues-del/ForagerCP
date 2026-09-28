@@ -31,6 +31,7 @@ namespace ForagerCP
         Inventory _inventory;
         ConverterStation _converter;
         DropService _drops;
+        CombatRewardService _combatRewards;
 
         int _lastHpSeen;
 
@@ -59,6 +60,7 @@ namespace ForagerCP
             _converter = FindFirstObjectByType<ConverterStation>();
             if (_converter != null) _converter.Converted += OnConverted;
 
+            _combatRewards = FindFirstObjectByType<CombatRewardService>();
             _drops = FindFirstObjectByType<DropService>();
             if (_drops != null) _drops.Picked += OnPicked;
         }
@@ -103,6 +105,8 @@ namespace ForagerCP
             string label = monster.Definition != null ? monster.Definition.DisplayName + " 처치" : "처치";
             Popup(monster.transform.position, label, _killColor, _bigScale);
 
+            // 처치 경험치가 꺼져 있으면 숫자도 띄우지 않는다 — 안 들어오는 보상을 보여주면 거짓말이 된다.
+            if (_combatRewards != null && !_combatRewards.GrantsExp) return;
             if (monster.Definition != null && monster.Definition.ExpReward > 0)
                 Popup(monster.transform.position, "EXP +" + monster.Definition.ExpReward, _harvestColor, _normalScale);
         }
