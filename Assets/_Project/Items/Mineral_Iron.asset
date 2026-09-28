@@ -18,6 +18,8 @@ MonoBehaviour:
   _goldValue: 30
   _sortOrder: 1
   _uiColor: {r: 0.62, g: 0.66, b: 0.72, a: 1}
+  _dropPrefab: {fileID: 0}
+  _placePrefab: {fileID: 6775141016402878700, guid: 899dd5c6bb75bbd4cac50ff782288646, type: 3}
   _maxHp: 60
   _harvestYield: 1
   _expReward: 3

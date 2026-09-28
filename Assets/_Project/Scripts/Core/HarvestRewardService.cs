@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ForagerCP
@@ -11,7 +12,8 @@ namespace ForagerCP
         [SerializeField] PlayerLevel _level;
         [SerializeField] DropService _drops;
 
-        MineralNode[] _nodes;
+        // 배열이 아니라 List인 이유: 설치한 블럭이 런타임에 노드로 끼어든다(Track).
+        readonly List<MineralNode> _nodes = new List<MineralNode>();
 
         void OnEnable()
         {
@@ -21,17 +23,26 @@ namespace ForagerCP
 
             // 맵이 고정 배치(절차적 생성 금지)라 시작 시 한 번 수집하면 충분하다.
             // 노드는 파괴가 아니라 렌더러만 끄는 방식이라 참조가 끝까지 유효함.
-            _nodes = FindObjectsByType<MineralNode>(FindObjectsSortMode.None);
-            for (int i = 0; i < _nodes.Length; i++) _nodes[i].Harvested += OnHarvested;
+            foreach (MineralNode node in FindObjectsByType<MineralNode>(FindObjectsSortMode.None)) Track(node);
         }
 
         void OnDisable()
         {
-            if (_nodes == null) return;
-            for (int i = 0; i < _nodes.Length; i++)
+            for (int i = 0; i < _nodes.Count; i++)
             {
                 if (_nodes[i] != null) _nodes[i].Harvested -= OnHarvested;
             }
+            _nodes.Clear();
+        }
+
+        /// 시작 뒤에 생긴 노드(플레이어가 설치한 블럭)를 지급 대상에 넣는다.
+        /// 이걸 안 부르면 그 블럭은 캐도 아무 일이 없다 — OnEnable의 한 번 수집에 잡히지 않으므로.
+        public void Track(MineralNode node)
+        {
+            if (node == null || _nodes.Contains(node)) return;
+
+            node.Harvested += OnHarvested;
+            _nodes.Add(node);
         }
 
         void OnHarvested(MineralNode node)
@@ -44,7 +55,8 @@ namespace ForagerCP
             if (_drops != null) _drops.Spawn(definition, definition.HarvestYield, node.transform.position);
             else _inventory.Add(definition, definition.HarvestYield);
 
-            _level.AddExp(definition.ExpReward);
+            // 설치한 블럭은 경험치를 주지 않는다 — 놓고 캐기를 반복하는 무한 파밍을 막는 쪽은 노드가 안다.
+            if (node.GrantsExp) _level.AddExp(definition.ExpReward);
         }
     }
 }

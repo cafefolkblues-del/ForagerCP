@@ -15,6 +15,9 @@ namespace ForagerCP
         public event Action CancelPressed;
         public event Action DashPressed;
 
+        /// 핫바에서 고른 것을 커서가 가리키는 칸에 놓는다.
+        public event Action PlacePressed;
+
         /// 핫바 슬롯 직접 선택(0부터). 숫자키 1~9.
         public event Action<int> HotbarSelected;
 
@@ -32,6 +35,7 @@ namespace ForagerCP
         InputAction _inventory;
         InputAction _map;
         InputAction _cancel;
+        InputAction _place;
 
         public Vector2 MoveAxis => _move.ReadValue<Vector2>();
 
@@ -66,12 +70,14 @@ namespace ForagerCP
             _inventory = new InputAction("Inventory", InputActionType.Button, "<Keyboard>/i");
             _map = new InputAction("Map", InputActionType.Button, "<Keyboard>/m");
             _cancel = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
+            _place = new InputAction("Place", InputActionType.Button, "<Keyboard>/e");
 
             _interact.performed += OnInteractPerformed;
             _inventory.performed += OnInventoryPerformed;
             _map.performed += OnMapPerformed;
             _cancel.performed += OnCancelPerformed;
             _dash.performed += OnDashPerformed;
+            _place.performed += OnPlacePerformed;
         }
 
         void OnEnable()
@@ -84,6 +90,7 @@ namespace ForagerCP
             _inventory.Enable();
             _map.Enable();
             _cancel.Enable();
+            _place.Enable();
         }
 
         void OnDisable()
@@ -96,6 +103,7 @@ namespace ForagerCP
             _inventory.Disable();
             _map.Disable();
             _cancel.Disable();
+            _place.Disable();
         }
 
         /// 홀드 시간과 릴리즈 시점은 여기 한 곳에서만 재고, 쓰는 쪽은 결과만 받는다.
@@ -152,6 +160,7 @@ namespace ForagerCP
             _map.performed -= OnMapPerformed;
             _cancel.performed -= OnCancelPerformed;
             _dash.performed -= OnDashPerformed;
+            _place.performed -= OnPlacePerformed;
 
             _move.Dispose();
             _attack.Dispose();
@@ -161,6 +170,7 @@ namespace ForagerCP
             _inventory.Dispose();
             _map.Dispose();
             _cancel.Dispose();
+            _place.Dispose();
         }
 
         void OnInteractPerformed(InputAction.CallbackContext _) => InteractPressed?.Invoke();
@@ -168,5 +178,6 @@ namespace ForagerCP
         void OnMapPerformed(InputAction.CallbackContext _) => MapToggled?.Invoke();
         void OnCancelPerformed(InputAction.CallbackContext _) => CancelPressed?.Invoke();
         void OnDashPerformed(InputAction.CallbackContext _) => DashPressed?.Invoke();
+        void OnPlacePerformed(InputAction.CallbackContext _) => PlacePressed?.Invoke();
     }
 }

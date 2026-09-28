@@ -15,6 +15,16 @@ namespace ForagerCP
         /// 자리에 누가 서 있을 때 다시 확인하는 간격.
         [SerializeField] float _blockedRetryInterval = 0.5f;
 
+        [Header("보상/재생성")]
+        /// 캤을 때 경험치를 줄지. 플레이어가 설치한 블럭은 꺼진다.
+        [SerializeField] bool _grantsExp = true;
+
+        /// 되살아날지. 맵에 원래 박혀 있던 광물만 참.
+        [SerializeField] bool _respawns = true;
+
+        /// 캐고 나면 오브젝트째 사라질지. 사라져야 그 칸이 다시 비어 다음 설치가 된다.
+        [SerializeField] bool _destroyWhenHarvested;
+
         public event Action<MineralNode> Harvested;
 
         public bool IsHarvestable => _alive;
@@ -22,6 +32,9 @@ namespace ForagerCP
         public MineralDefinition Definition => _definition;
         public int CurrentHp => _hp;
         public int MaxHp => _definition != null ? _definition.MaxHp : 0;
+
+        /// 지급 순서를 쥔 HarvestRewardService가 경험치를 줄지 판단할 때 본다.
+        public bool GrantsExp => _grantsExp;
 
         Renderer[] _renderers;
         Collider _collider;
@@ -67,7 +80,27 @@ namespace ForagerCP
             SetPresence(false);
 
             Harvested?.Invoke(this); // 보상 지급(1-4의 3~7)이 끝난 뒤에 리스폰 대기를 건다
+
+            // 지급이 끝난 뒤에 지운다. 먼저 지우면 구독자가 이 노드의 위치를 읽지 못해 드랍이 엉뚱한 데 떨어진다.
+            if (_destroyWhenHarvested)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_respawns) return;
             _respawnRoutine = StartCoroutine(RespawnRoutine());
+        }
+
+        /// 플레이어가 설치한 블럭임을 표시한다.
+        ///
+        /// 되살아나면 한 개 놓고 계속 캐는 무한 복제가 되고, 경험치까지 나오면
+        /// 놓고 캐기를 반복하는 무한 파밍이 열린다. 둘 다 여기서 막는다.
+        public void MarkAsPlaced()
+        {
+            _grantsExp = false;
+            _respawns = false;
+            _destroyWhenHarvested = true;
         }
 
         IEnumerator RespawnRoutine()

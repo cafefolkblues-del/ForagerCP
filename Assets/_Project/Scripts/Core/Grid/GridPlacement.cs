@@ -33,6 +33,8 @@ namespace ForagerCP
 
         void OnEnable() => Apply();
 
+        void OnDisable() => GridOccupancy.Unregister(this);
+
         void OnValidate()
         {
             _size = new Vector2Int(Mathf.Max(1, _size.x), Mathf.Max(1, _size.y));
@@ -80,6 +82,9 @@ namespace ForagerCP
 
         public void Apply()
         {
+            // 점유 등록은 셀 값만으로 되므로 그리드가 아직 없어도 먼저 해둔다.
+            GridOccupancy.Register(this);
+
             MapGrid grid = MapGrid.Active;
             if (grid == null) return;
 

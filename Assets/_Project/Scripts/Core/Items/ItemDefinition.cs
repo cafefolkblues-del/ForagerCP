@@ -21,6 +21,10 @@ namespace ForagerCP
         /// 아이콘·색과 같은 이유로 여기 둔다 — 종류가 자기 겉모습을 들고 있어야 아트 교체가 에셋 수정으로 끝난다.
         [SerializeField] GameObject _dropPrefab;
 
+        /// 설치했을 때 씬에 놓일 것. 비워두면 이 아이템은 설치 대상이 아니다
+        /// (무기·재료처럼 놓을 수 없는 것에 억지로 모양을 만들지 않으려고 없음을 기본으로 둔다).
+        [SerializeField] GameObject _placePrefab;
+
         /// 이름을 비워두면 에셋 파일명을 쓴다 — 디자이너가 한 군데만 고쳐도 되게.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
 
@@ -33,5 +37,7 @@ namespace ForagerCP
         public int SortOrder => _sortOrder;
         public Color UiColor => _uiColor;
         public GameObject DropPrefab => _dropPrefab;
+        public GameObject PlacePrefab => _placePrefab;
+        public bool CanPlace => _placePrefab != null;
     }
 }
