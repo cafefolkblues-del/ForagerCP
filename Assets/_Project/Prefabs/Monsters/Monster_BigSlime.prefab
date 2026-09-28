@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 2763203500518580515}
   - component: {fileID: 6861192467687903361}
   - component: {fileID: 8382653615878353898}
+  - component: {fileID: 9217489467733041437}
   m_Layer: 0
   m_Name: Monster_BigSlime
   m_TagString: Untagged
@@ -225,3 +226,17 @@ MonoBehaviour:
   _force: 5
   _duration: 0.16
   _blockCheckRadius: 0.35
+--- !u!114 &9217489467733041437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3669111419358409259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38cb96b20012c5a448bdf3583beb2da8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GroundLock
+  _lockOnStart: 1
+  _height: -Infinity

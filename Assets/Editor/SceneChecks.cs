@@ -85,7 +85,17 @@ namespace ForagerCP.EditorTools
             "InventoryPanel._inventory", "PlayerHealthBar._health",
             "InteractionPromptView._interactor", "InteractionPromptView._group",
             "ShopPanel._station", "ShopPanel._gold",
-            "MonsterHealthBarSpawner._viewCamera", "MonsterHealthBar._group", "MonsterHealthBar._fill"
+            "MonsterHealthBarSpawner._viewCamera", "MonsterHealthBar._group", "MonsterHealthBar._fill",
+
+            // 전투·드랍 확장에서 늘어난 자동탐색 필드
+            "ShopStation._weapon", "HarvestRewardService._drops", "DropService._inventory",
+            "HeartBarView._health", "CombatFeedback._viewCamera",
+            "PlayerAttacker._state", "PlayerAttacker._weapon",
+            "PlayerShield._input", "PlayerShield._state", "PlayerDash._input", "PlayerDash._state",
+            "PlayerActionState._knockback", "PlayerActionState._dash",
+            "PlayerActionState._shield", "PlayerActionState._attacker",
+            "PlayerMotor._state", "PlayerHealth._shield", "PlayerHealth._dash",
+            "ItemDrop._renderers"
         };
 
         /// 비면 그 오브젝트가 아예 기능을 못 하는 필드.
@@ -287,6 +297,21 @@ namespace ForagerCP.EditorTools
                     Vector3 expected = grid.CellToWorld(placement.Cell, placement.RotatedSize);
                     Vector3 actual = placement.transform.position;
                     float drift = Vector2.Distance(new Vector2(expected.x, expected.z), new Vector2(actual.x, actual.z));
+
+                    // 높이는 따로 본다. 지면 고정(GroundLock)은 시작 높이를 그대로 기준으로 삼기 때문에
+                    // 공중에 배치된 것은 영영 떠 있게 된다.
+                    var groundLock = placement.GetComponent<GroundLock>();
+                    if (groundLock != null && actual.y > 2.5f)
+                    {
+                        yield return new SceneIssue
+                        {
+                            Severity = IssueSeverity.Warning,
+                            Category = Category,
+                            Title = placement.name + " 가 공중에 떠 있음 (높이 " + actual.y.ToString("F2") + ")",
+                            Detail = "지면 고정이 시작 높이를 기준으로 잡기 때문에 그대로 떠 있게 됩니다.",
+                            Target = placement.gameObject
+                        };
+                    }
 
                     if (drift > 0.01f)
                     {
