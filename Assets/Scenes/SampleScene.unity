@@ -4780,6 +4780,7 @@ GameObject:
   - component: {fileID: 890792609}
   - component: {fileID: 890792610}
   - component: {fileID: 890792611}
+  - component: {fileID: 890792612}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -4848,6 +4849,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HarvestRewardService
   _inventory: {fileID: 890792609}
   _level: {fileID: 890792605}
+  _drops: {fileID: 890792612}
 --- !u!4 &890792608
 Transform:
   m_ObjectHideFlags: 0
@@ -4909,6 +4911,27 @@ MonoBehaviour:
   - Prefab: {fileID: 7190889212817125654, guid: 5b44d942f153c3549933a1041b6108db, type: 3}
     Prewarm: 12
     MaxIdle: 40
+  - Prefab: {fileID: 7385574486120205398, guid: e394eb991cde4534e93ed1d895239379, type: 3}
+    Prewarm: 16
+    MaxIdle: 120
+--- !u!114 &890792612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0afa02d24de2c8442be88f35ecd890e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.DropService
+  _dropPrefab: {fileID: 7385574486120205398, guid: e394eb991cde4534e93ed1d895239379, type: 3}
+  _dropParent: {fileID: 1963600887}
+  _inventory: {fileID: 890792609}
+  _maxDrops: 100
+  _scatterRadius: 0.45
+  _groundOffset: 0.25
 --- !u!1001 &921594117
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9763,6 +9786,37 @@ MonoBehaviour:
   _input: {fileID: 1954203110}
   _state: {fileID: 1954203120}
   _blockHalfAngle: 90
+--- !u!1 &1963600886
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1963600887}
+  m_Layer: 0
+  m_Name: Drops
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1963600887
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963600886}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1969226207 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8927734671417424920, guid: 899dd5c6bb75bbd4cac50ff782288646, type: 3}
@@ -10399,3 +10453,4 @@ SceneRoots:
   - {fileID: 310181443}
   - {fileID: 675974114}
   - {fileID: 137012041}
+  - {fileID: 1963600887}

@@ -21,4 +21,4 @@ MonoBehaviour:
   _detectRange: 8
   _leashDistance: 12
   _expReward: 2
-  _respawnDelay: 15
+  _respawnDelay: 0

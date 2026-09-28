@@ -9,6 +9,7 @@ namespace ForagerCP
     {
         [SerializeField] Inventory _inventory;
         [SerializeField] PlayerLevel _level;
+        [SerializeField] DropService _drops;
 
         MineralNode[] _nodes;
 
@@ -16,6 +17,7 @@ namespace ForagerCP
         {
             if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
             if (_level == null) _level = FindFirstObjectByType<PlayerLevel>();
+            if (_drops == null) _drops = FindFirstObjectByType<DropService>();
 
             // 맵이 고정 배치(절차적 생성 금지)라 시작 시 한 번 수집하면 충분하다.
             // 노드는 파괴가 아니라 렌더러만 끄는 방식이라 참조가 끝까지 유효함.
@@ -37,12 +39,10 @@ namespace ForagerCP
             MineralDefinition definition = node.Definition;
             if (definition == null) return;
 
-            int accepted = _inventory.Add(definition, definition.HarvestYield);
-
-            // 넘친 분 = 확장 2-4(인벤 꽉 참 → 바닥 드랍)가 들어올 자리.
-            // 규칙이 미확정이라 지금은 알리기만 하고 버린다.
-            int overflow = definition.HarvestYield - accepted;
-            if (overflow > 0) Debug.LogWarning($"인벤 초과로 {definition.DisplayName} {overflow}개 버려짐", this);
+            // 확정 스펙: 캔 자원은 인벤으로 직행하지 않고 바닥에 떨어진다. 줍는 건 F.
+            // 드랍 서비스가 없는 씬(테스트 씬 등)에서는 예전처럼 인벤에 바로 넣어 기능이 죽지 않게 한다.
+            if (_drops != null) _drops.Spawn(definition, definition.HarvestYield, node.transform.position);
+            else _inventory.Add(definition, definition.HarvestYield);
 
             _level.AddExp(definition.ExpReward);
         }
