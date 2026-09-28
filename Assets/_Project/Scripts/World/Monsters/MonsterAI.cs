@@ -45,7 +45,7 @@ namespace ForagerCP
 
         /// 확정 스펙: 넉백을 hitstun으로 승격 — 밀리는 동안 몹의 공격 윈드업을 리셋한다.
         /// 이게 없으면 연타로 녹이는 동안에도 몹이 제 박자대로 때린다.
-        void OnDamaged(Monster monster, GameObject source)
+        void OnDamaged(Monster monster, int amount, GameObject source)
         {
             _hitstunUntil = Time.time + _hitstunTime;
             _nextAttackTime = Mathf.Max(_nextAttackTime, _hitstunUntil);

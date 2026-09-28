@@ -18,8 +18,9 @@ namespace ForagerCP
         /// 머리 위 체력바가 구독한다.
         public event Action<Monster> HealthChanged;
 
-        /// 맞은 순간. MonsterAI가 받아서 경직(윈드업 리셋)을 건다.
-        public event Action<Monster, GameObject> Damaged;
+        /// 맞은 순간. (몬스터, 이번에 깎인 피해량, 때린 쪽)
+        /// MonsterAI는 경직에, 연출은 데미지 숫자에 쓴다 — 남은 체력으로 역산하면 여러 마리일 때 어긋난다.
+        public event Action<Monster, int, GameObject> Damaged;
 
         public bool IsAlive => _alive;
         public Transform Transform => transform;
@@ -65,7 +66,7 @@ namespace ForagerCP
             if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
 
             // 경직 통지는 사망 판정보다 먼저 — 죽는 타격도 윈드업을 끊어야 한다.
-            Damaged?.Invoke(this, source);
+            Damaged?.Invoke(this, amount, source);
             HealthChanged?.Invoke(this);
 
             if (_hp > 0) return;
