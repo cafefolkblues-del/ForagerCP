@@ -13,6 +13,10 @@ namespace ForagerCP
         [SerializeField] int _goldValue = 10;
         [SerializeField] int _sortOrder;
 
+        /// 아이콘이 아직 없을 때 인벤토리 칸에 쓰는 대표색.
+        /// 종류마다 고정값이어야 한다 — 획득 순서로 색을 배정하면 먼저 캔 광물이 남의 색을 뒤집어쓴다(팀 리뷰).
+        [SerializeField] Color _uiColor = new Color(0.78f, 0.80f, 0.85f);
+
         /// 이름을 비워두면 에셋 파일명을 쓴다 — 디자이너가 한 군데만 고쳐도 되게.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
 
@@ -23,5 +27,6 @@ namespace ForagerCP
         public int GoldValue => _goldValue;
 
         public int SortOrder => _sortOrder;
+        public Color UiColor => _uiColor;
     }
 }

@@ -17,6 +17,7 @@ MonoBehaviour:
   _maxStack: 99
   _goldValue: 75
   _sortOrder: 2
+  _uiColor: {r: 0.62, g: 0.45, b: 0.95, a: 1}
   _maxHp: 100
   _harvestYield: 1
   _expReward: 6

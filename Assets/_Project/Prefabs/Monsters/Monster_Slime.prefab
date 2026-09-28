@@ -191,6 +191,8 @@ MonoBehaviour:
   _target: {fileID: 0}
   _body: {fileID: 887567567336836969}
   _knockback: {fileID: 2984532595786280280}
+  _fallSafeY: -3
+  _hitstunTime: 0.22
 --- !u!114 &4046275522414308025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,5 +222,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f44fe42bda6f3bb4ca4abc61776a70bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Knockback
-  _force: 6
+  _force: 9
   _duration: 0.16
+  _blockCheckRadius: 0.35

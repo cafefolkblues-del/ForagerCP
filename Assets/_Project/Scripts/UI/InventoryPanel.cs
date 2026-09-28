@@ -13,16 +13,7 @@ namespace ForagerCP
         [SerializeField] InventorySlotView _slotTemplate;
         [SerializeField] TMP_Text _summaryText;
 
-        /// 아이콘 없는 동안 종류를 구분해줄 색. 순서대로 돌려 쓴다.
-        [SerializeField] Color[] _fallbackColors =
-        {
-            new Color(0.85f, 0.52f, 0.28f),
-            new Color(0.62f, 0.66f, 0.72f),
-            new Color(0.62f, 0.45f, 0.95f)
-        };
-
         readonly List<InventorySlotView> _slots = new List<InventorySlotView>();
-        readonly Dictionary<ItemDefinition, Color> _colorByItem = new Dictionary<ItemDefinition, Color>();
 
         void Awake()
         {
@@ -77,15 +68,7 @@ namespace ForagerCP
             for (int i = 0; i < _slots.Count; i++) _slots[i].gameObject.SetActive(i < wanted);
         }
 
-        Color ColorFor(ItemDefinition definition)
-        {
-            if (definition == null) return Color.white;
-            if (_colorByItem.TryGetValue(definition, out Color cached)) return cached;
-            if (_fallbackColors == null || _fallbackColors.Length == 0) return Color.white;
-
-            Color color = _fallbackColors[_colorByItem.Count % _fallbackColors.Length];
-            _colorByItem.Add(definition, color);
-            return color;
-        }
+        /// 색은 아이템 정의가 들고 있는 고정값을 쓴다. 표시 순서와 무관해야 한다.
+        static Color ColorFor(ItemDefinition definition) => definition != null ? definition.UiColor : Color.white;
     }
 }
