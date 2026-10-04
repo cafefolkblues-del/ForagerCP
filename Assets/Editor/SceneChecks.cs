@@ -26,6 +26,7 @@ namespace ForagerCP.EditorTools
         public GameObject[] Roots;
         public MonoBehaviour[] OurComponents;
         public GridPlacement[] Placements;
+        public RegionVolume[] RegionVolumes;
         public MapPalette Palette;
 
         public static SceneCheckContext Build()
@@ -47,6 +48,8 @@ namespace ForagerCP.EditorTools
                 Roots = scene.GetRootGameObjects(),
                 OurComponents = ours.ToArray(),
                 Placements = UnityEngine.Object.FindObjectsByType<GridPlacement>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None),
+                RegionVolumes = UnityEngine.Object.FindObjectsByType<RegionVolume>(
                     FindObjectsInactive.Include, FindObjectsSortMode.None),
                 Palette = AssetDatabase.LoadAssetAtPath<MapPalette>("Assets/_Project/MapPalette.asset")
             };
@@ -503,6 +506,112 @@ namespace ForagerCP.EditorTools
     }
 
     // ------------------------------------------------------------------ 잔여물
+
+    /// 지역 구획이 실제로 맞물려 있는지 본다.
+    /// 구획은 눈에 안 보이는 데이터라, 배치물 하나가 지역 밖에 떨어져 있어도 플레이해 보기 전에는 모른다.
+    public class RegionCheck : ISceneCheck
+    {
+        public string Category => "지역";
+
+        public IEnumerable<SceneIssue> Run(SceneCheckContext context)
+        {
+            RegionVolume[] volumes = context.RegionVolumes;
+
+            foreach (RegionVolume volume in volumes)
+            {
+                if (volume.Region != null) continue;
+
+                yield return new SceneIssue
+                {
+                    Severity = IssueSeverity.Error,
+                    Category = Category,
+                    Title = $"{volume.name} 에 지역이 지정되지 않음",
+                    Detail = "어느 지역의 범위인지 비어 있습니다. 지역 에셋을 넣어주세요.",
+                    Target = volume.gameObject
+                };
+            }
+
+            // 범위 겹침 — 같은 칸을 두 지역이 주장하면 나중에 등록된 쪽이 이겨 결과가 배치 순서에 좌우된다.
+            for (int i = 0; i < volumes.Length; i++)
+            {
+                for (int j = i + 1; j < volumes.Length; j++)
+                {
+                    RegionVolume a = volumes[i];
+                    RegionVolume b = volumes[j];
+                    if (a.Region == b.Region) continue;
+                    if (!a.Area.Overlaps(b.Area)) continue;
+
+                    yield return new SceneIssue
+                    {
+                        Severity = IssueSeverity.Error,
+                        Category = Category,
+                        Title = $"{a.name} 와 {b.name} 의 범위가 겹침",
+                        Detail = "같은 칸을 두 지역이 차지하면 어느 쪽인지 배치 순서에 따라 달라집니다.",
+                        Target = a.gameObject
+                    };
+                }
+            }
+
+            if (volumes.Length == 0) yield break;
+
+            // 어느 지역에도 속하지 않는 배치물
+            foreach (GridPlacement placement in context.Placements)
+            {
+                if (Covered(volumes, placement.Cell)) continue;
+
+                yield return new SceneIssue
+                {
+                    Severity = IssueSeverity.Warning,
+                    Category = Category,
+                    Title = $"{placement.name} 가 어느 지역에도 없음 {placement.Cell}",
+                    Detail = "지역 밖은 아무 조건 없이 드나들 수 있습니다. 의도한 게 아니면 범위를 늘려주세요.",
+                    Target = placement.gameObject
+                };
+            }
+
+            // 잠긴 지역인데 막아둔 것이 없으면 조건이 무의미해진다
+            var guarded = new HashSet<RegionDefinition>();
+            foreach (RegionBarrier barrier in UnityEngine.Object.FindObjectsByType<RegionBarrier>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                RegionDefinition region = GuardedRegion(barrier);
+                if (region != null) guarded.Add(region);
+            }
+
+            var seen = new HashSet<RegionDefinition>();
+            foreach (RegionVolume volume in volumes)
+            {
+                RegionDefinition region = volume.Region;
+                if (region == null || !region.IsLockable) continue;
+                if (!seen.Add(region)) continue;
+                if (guarded.Contains(region)) continue;
+
+                yield return new SceneIssue
+                {
+                    Severity = IssueSeverity.Warning,
+                    Category = Category,
+                    Title = $"{region.DisplayName} 에 조건은 있는데 막아둔 것이 없음",
+                    Detail = "벽이나 문이 없으면 그냥 걸어 들어갑니다(되돌려보내기만 작동). 경계에 하나 놓아주세요.",
+                    Target = volume.gameObject
+                };
+            }
+        }
+
+        static bool Covered(RegionVolume[] volumes, Vector2Int cell)
+        {
+            foreach (RegionVolume volume in volumes)
+            {
+                if (volume.Area.Contains(cell)) return true;
+            }
+            return false;
+        }
+
+        static RegionDefinition GuardedRegion(RegionBarrier barrier)
+        {
+            var serialized = new SerializedObject(barrier);
+            return serialized.FindProperty("_region")?.objectReferenceValue as RegionDefinition;
+        }
+    }
 
     public class LeftoverCheck : ISceneCheck
     {
