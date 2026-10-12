@@ -12,6 +12,8 @@ namespace ForagerCP.EditorTools
     ///
     /// 경계는 사각형 단위가 아니라 칸 단위로 본다. 한 지역을 ㄱ자로 여러 번 그렸을 때
     /// 사각형 네 변을 그대로 두르면 지역 안쪽에도 벽이 서기 때문.
+    ///
+    /// 둘레는 통째로 막기만 한다. 드나드는 구멍은 뚫지 않는다 — 벽 어디에 붙어서든 F로 열리므로.
     public static class RegionWallBuilder
     {
         const string BarrierRootName = "Barriers";
@@ -32,7 +34,6 @@ namespace ForagerCP.EditorTools
             public int Start;         // 변이 뻗은 축의 시작 칸(포함)
             public int End;           // 끝 칸(포함)
             public RegionDefinition Outside;
-            public bool IsGate;
 
             public int Length => End - Start + 1;
             public bool Horizontal => Direction.x == 0;
@@ -64,7 +65,6 @@ namespace ForagerCP.EditorTools
             if (cells.Count == 0) return 0;
 
             List<Run> runs = BuildRuns(region, cells, world);
-            MarkGates(runs);
 
             var access = Object.FindFirstObjectByType<RegionAccess>();
             int made = 0;
@@ -180,79 +180,11 @@ namespace ForagerCP.EditorTools
             return runs;
         }
 
-        /// 이웃 지역마다 가장 긴 변 하나의 한가운데를 문으로 뚫는다.
-        /// 안 뚫으면 들어갈 길이 없고, 전부 문으로 두면 아무 데서나 열려 통로라는 감각이 사라진다.
-        static void MarkGates(List<Run> runs)
-        {
-            var longest = new Dictionary<RegionDefinition, Run>();
-
-            foreach (Run run in runs)
-            {
-                // 구획하지 않은 땅 쪽에는 문을 내지 않는다 — 보통 맵 바깥이라 갈 데가 없다.
-                if (run.Outside == null) continue;
-                if (longest.TryGetValue(run.Outside, out Run best) && best.Length >= run.Length) continue;
-
-                longest[run.Outside] = run;
-            }
-
-            // 이웃 지역이 하나도 없으면(구획 안 된 땅에 둘러싸인 경우) 가장 긴 변에 하나라도 낸다.
-            if (longest.Count == 0 && runs.Count > 0)
-            {
-                Run best = runs[0];
-                foreach (Run run in runs)
-                {
-                    if (run.Length > best.Length) best = run;
-                }
-                longest[null] = best;
-            }
-
-            foreach (Run gateRun in longest.Values) Split(runs, gateRun);
-        }
-
-        /// 한 변의 가운데 한 칸을 문으로 떼어내고 양옆은 벽으로 남긴다.
-        static void Split(List<Run> runs, Run run)
-        {
-            int middle = (run.Start + run.End) / 2;
-
-            int originalEnd = run.End;
-            int originalStart = run.Start;
-
-            // 가운데 칸만 남겨 이 Run 자체를 문으로 바꾼다.
-            run.Start = middle;
-            run.End = middle;
-            run.IsGate = true;
-
-            if (originalStart <= middle - 1)
-            {
-                runs.Add(new Run
-                {
-                    Direction = run.Direction,
-                    Line = run.Line,
-                    Start = originalStart,
-                    End = middle - 1,
-                    Outside = run.Outside,
-                });
-            }
-
-            if (middle + 1 <= originalEnd)
-            {
-                runs.Add(new Run
-                {
-                    Direction = run.Direction,
-                    Line = run.Line,
-                    Start = middle + 1,
-                    End = originalEnd,
-                    Outside = run.Outside,
-                });
-            }
-        }
-
         // ------------------------------------------------------------------ 만들기
 
         static int Spawn(MapGrid grid, RegionDefinition region, RegionAccess access, Transform group, Run run)
         {
-            BarrierKind kind = run.IsGate ? BarrierKind.Gate : BarrierKind.Wall;
-            GameObject prefab = run.IsGate ? region.GatePrefab : region.WallPrefab;
+            GameObject prefab = region.WallPrefab;
 
             // 아트가 들어오면 칸마다 하나씩 — 늘려 쓰면 모델이 찌그러진다.
             // 아직 없으면 변 하나를 길쭉한 상자 하나로 때운다. 씬에 수백 개가 쌓이지 않게.
@@ -261,17 +193,17 @@ namespace ForagerCP.EditorTools
                 for (int along = run.Start; along <= run.End; along++)
                 {
                     var one = new Run { Direction = run.Direction, Line = run.Line, Start = along, End = along };
-                    SpawnPrefab(grid, region, access, group, one, prefab, kind);
+                    SpawnPrefab(grid, region, access, group, one, prefab);
                 }
                 return run.Length;
             }
 
-            SpawnBox(grid, region, access, group, run, kind);
+            SpawnBox(grid, region, access, group, run);
             return 1;
         }
 
         static void SpawnPrefab(MapGrid grid, RegionDefinition region, RegionAccess access, Transform group,
-            Run run, GameObject prefab, BarrierKind kind)
+            Run run, GameObject prefab)
         {
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, group);
             Undo.RegisterCreatedObjectUndo(instance, "경계 두르기");
@@ -280,11 +212,11 @@ namespace ForagerCP.EditorTools
             instance.transform.rotation = Quaternion.LookRotation(
                 new Vector3(run.Direction.x, 0f, run.Direction.y), Vector3.up);
 
-            Finish(instance, region, access, kind);
+            Finish(instance, region, access);
         }
 
         static void SpawnBox(MapGrid grid, RegionDefinition region, RegionAccess access, Transform group,
-            Run run, BarrierKind kind)
+            Run run)
         {
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Undo.RegisterCreatedObjectUndo(box, "경계 두르기");
@@ -298,30 +230,26 @@ namespace ForagerCP.EditorTools
                 ? new Vector3(span, region.WallHeight, thickness)
                 : new Vector3(thickness, region.WallHeight, span);
 
-            box.GetComponent<MeshRenderer>().sharedMaterial = ResolveMaterial(region, kind);
-            Finish(box, region, access, kind);
+            box.GetComponent<MeshRenderer>().sharedMaterial = ResolveMaterial(region);
+            Finish(box, region, access);
         }
 
-        /// 지역·종류마다 머티리얼 에셋을 하나씩 두고 돌려 쓴다.
+        /// 지역마다 머티리얼 에셋을 하나씩 두고 돌려 쓴다.
         ///
         /// MaterialPropertyBlock으로 색만 칠하면 안 된다 — 그건 씬에 저장되지 않는 런타임 상태라
         /// 도메인이 한 번 다시 올라오면 전부 기본 회색으로 돌아간다(실제로 그렇게 나왔다).
         /// 에셋으로 두면 디자이너가 직접 손볼 수도 있다.
-        static Material ResolveMaterial(RegionDefinition region, BarrierKind kind)
+        static Material ResolveMaterial(RegionDefinition region)
         {
             const string folder = "Assets/_Project/Art/Materials";
             System.IO.Directory.CreateDirectory(folder);
 
-            string suffix = kind == BarrierKind.Gate ? "Gate" : "Wall";
-            string path = $"{folder}/Region_{region.name}_{suffix}.mat";
+            string path = $"{folder}/Region_{region.name}_Wall.mat";
 
             var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (existing != null) return existing;
 
-            // 문은 밝게, 벽은 어둡게. 아트가 오기 전까지 어디로 들어가는지는 보여야 한다.
-            Color color = region.MapColor;
-            color.a = 1f;
-            Color shade = kind == BarrierKind.Gate ? color : color * 0.4f;
+            Color shade = region.MapColor * 0.4f;
             shade.a = 1f;
 
             var material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -331,14 +259,14 @@ namespace ForagerCP.EditorTools
             return material;
         }
 
-        static void Finish(GameObject target, RegionDefinition region, RegionAccess access, BarrierKind kind)
+        static void Finish(GameObject target, RegionDefinition region, RegionAccess access)
         {
-            target.name = kind == BarrierKind.Gate ? $"{region.DisplayName} 문" : $"{region.DisplayName} 벽";
+            target.name = $"{region.DisplayName} 벽";
 
             RegionBarrier barrier = target.GetComponent<RegionBarrier>();
             if (barrier == null) barrier = Undo.AddComponent<RegionBarrier>(target);
 
-            barrier.Setup(region, access, kind);
+            barrier.Setup(region, access);
             EditorUtility.SetDirty(barrier);
         }
 
