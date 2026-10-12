@@ -1479,10 +1479,10 @@ RectTransform:
   - {fileID: 1499128145}
   m_Father: {fileID: 95085522}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 58}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 288, y: 0}
+  m_SizeDelta: {x: 576, y: 58}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &200549235
 MonoBehaviour:
@@ -3131,10 +3131,10 @@ RectTransform:
   - {fileID: 430392623}
   m_Father: {fileID: 1351287274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 378, y: -56}
+  m_SizeDelta: {x: 112, y: 112}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &391161017
 MonoBehaviour:
@@ -4322,6 +4322,7 @@ Transform:
   - {fileID: 827377724}
   - {fileID: 285633900}
   - {fileID: 956277908}
+  - {fileID: 1591356917}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &523756504
@@ -10655,7 +10656,11 @@ PrefabInstance:
     - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: _weapon
       value: 
-      objectReference: {fileID: 1954203121}
+      objectReference: {fileID: 0}
+    - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
+      propertyPath: _equipment
+      value: 
+      objectReference: {fileID: 1954203125}
     - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: _items.Array.size
       value: 4
@@ -13684,6 +13689,159 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &1591356916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1591356917}
+  - component: {fileID: 1591356922}
+  - component: {fileID: 1591356921}
+  - component: {fileID: 1591356920}
+  - component: {fileID: 1591356919}
+  - component: {fileID: 1591356918}
+  m_Layer: 0
+  m_Name: CraftingStation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1591356917
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -12, y: 0.6, z: 0}
+  m_LocalScale: {x: 1, y: 1.2, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 523756503}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1591356918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01daa532fbd5dba4ba43b4c769a56ee7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.CraftingStation
+  _category: Tools
+  _recipes:
+  - {fileID: 11400000, guid: d33bd47499a32bf4c810cff515a68b49, type: 2}
+  - {fileID: 11400000, guid: aae338d635aee5a4daac54367fee512b, type: 2}
+  - {fileID: 11400000, guid: 79709e183f1a53a48a27da35fe9caf25, type: 2}
+  - {fileID: 11400000, guid: 90448a27caa10bd4ebfbcb5bf11d6240, type: 2}
+  _slotCount: 2
+  _inventory: {fileID: 890792609}
+  _equipment: {fileID: 1954203125}
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+--- !u!114 &1591356919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 705fa6d95db6b7a4f89f6234682216ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GridPlacement
+  _cell: {x: -12, y: 0}
+  _size: {x: 1, y: 1}
+  _rotationSteps: 0
+  _heightOffset: 0.6
+  _stretchToFootprint: 0
+--- !u!23 &1591356920
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: fb8d58cc9f2acd649b822ea99a7ebd70, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &1591356921
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!33 &1591356922
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591356916}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!4 &1608562205 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8847803515208308095, guid: ff7f4493c5d0e4343a21f34dba043e81, type: 3}
@@ -16815,9 +16973,9 @@ GameObject:
   - component: {fileID: 1954203120}
   - component: {fileID: 1954203122}
   - component: {fileID: 1954203119}
-  - component: {fileID: 1954203121}
   - component: {fileID: 1954203123}
   - component: {fileID: 1954203124}
+  - component: {fileID: 1954203125}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -16838,6 +16996,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HarvestPower
   _basePower: 5
+  _equipment: {fileID: 1954203125}
 --- !u!114 &1954203106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16882,7 +17041,7 @@ MonoBehaviour:
   _input: {fileID: 1954203110}
   _state: {fileID: 1954203120}
   _power: {fileID: 1954203105}
-  _weapon: {fileID: 1954203121}
+  _equipment: {fileID: 1954203125}
   _flags: {fileID: 890792615}
   _range: 2.5
   _halfAngle: 45
@@ -17068,6 +17227,7 @@ MonoBehaviour:
   _knockback: {fileID: 1954203118}
   _shield: {fileID: 1954203122}
   _dash: {fileID: 1954203119}
+  _equipment: {fileID: 1954203125}
   _invulnerableTime: 1
   _knockbackWhenBlocked: 0
 --- !u!114 &1954203117
@@ -17137,21 +17297,6 @@ MonoBehaviour:
   _attacker: {fileID: 1954203108}
   _shieldMoveMultiplier: 0.8
   _chargeMoveMultiplier: 0.45
---- !u!114 &1954203121
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1954203104}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce4ef7cb853eeba40b2ce459992d1062, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerWeapon
-  _equipped: {fileID: 11400000, guid: 289fd405a7dda3441a2bc9bc04662904, type: 2}
-  _fallbackDamage: 4
-  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
 --- !u!114 &1954203122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17204,6 +17349,21 @@ MonoBehaviour:
   _ghost: {fileID: 986951347}
   _allowedColor: {r: 0.35, g: 1, b: 0.5, a: 0.35}
   _blockedColor: {r: 1, g: 0.35, b: 0.3, a: 0.35}
+--- !u!114 &1954203125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954203104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7aa42931b30e4304a90f7b6043a97dd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerEquipment
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+  _startingGear:
+  - {fileID: 11400000, guid: a668d2596eadf3b47bdce765a66821ff, type: 2}
 --- !u!1 &1963461213
 GameObject:
   m_ObjectHideFlags: 0
@@ -18262,6 +18422,10 @@ PrefabInstance:
       propertyPath: _gold
       value: 
       objectReference: {fileID: 890792603}
+    - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
+      propertyPath: _equipment
+      value: 
+      objectReference: {fileID: 1954203125}
     - target: {fileID: 1941691066597527995, guid: ebbd2149e97344a478ae966706c2d834, type: 3}
       propertyPath: _harvestPower
       value: 

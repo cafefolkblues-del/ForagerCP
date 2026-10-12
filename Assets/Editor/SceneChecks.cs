@@ -109,7 +109,11 @@ namespace ForagerCP.EditorTools
             "QuickBar._input", "QuickBar._inventory", "QuickBarView._quickBar",
             "SkillBoard._level", "SkillBoard._harvest", "SkillBoard._health",
             "SkillBoard._flags", "SkillBoard._inventory",
-            "SkillPanelView._board", "UiMenuButton._router", "PlayerAttacker._flags"
+            "SkillPanelView._board", "UiMenuButton._router", "PlayerAttacker._flags",
+
+            // 장비·제작에서 늘어난 자동탐색 필드
+            "PlayerAttacker._equipment", "PlayerHealth._equipment", "HarvestPower._equipment",
+            "ShopStation._equipment", "CraftingStation._inventory", "CraftingStation._equipment"
         };
 
         /// 비워두는 것 자체가 뜻인 필드. 알릴 것이 없으므로 아예 건너뛴다.

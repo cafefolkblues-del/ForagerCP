@@ -19,6 +19,7 @@ namespace ForagerCP
         [SerializeField] Knockback _knockback;
         [SerializeField] PlayerShield _shield;
         [SerializeField] PlayerDash _dash;
+        [SerializeField] PlayerEquipment _equipment;
 
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
         [SerializeField] float _invulnerableTime = 1f;
@@ -35,18 +36,21 @@ namespace ForagerCP
         public bool IsAlive => _hp > 0;
         public Transform Transform => transform;
         public int CurrentHp => _hp;
-        public int MaxHp => _maxHp;
+        /// 방어구가 올린 몫까지 더한 값. 최대 체력을 묻는 곳은 전부 여기를 봐야
+        /// 갑옷을 낀 뒤 체력바가 옛 칸 수로 남는 일이 없다.
+        public int MaxHp => _maxHp + (_equipment != null ? _equipment.MaxHpBonus : 0);
 
         int _hp;
         float _invulnerableUntil;
 
         void Awake()
         {
-            _hp = _maxHp;
+            _hp = MaxHp;
             if (_hitFlash == null) _hitFlash = GetComponent<HitFlash>();
             if (_knockback == null) _knockback = GetComponent<Knockback>();
             if (_shield == null) _shield = GetComponent<PlayerShield>();
             if (_dash == null) _dash = GetComponent<PlayerDash>();
+            if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
         }
 
         void Start() => Changed?.Invoke(this);
@@ -73,8 +77,13 @@ namespace ForagerCP
                 return;
             }
 
+            // 방어구는 들어온 피해를 깎는다. 다만 0으로는 못 만든다 —
+            // 방어구만으로 무적이 되면 전투가 성립하지 않는다.
+            int reduction = _equipment != null ? _equipment.DamageReduction : 0;
+            int taken = Mathf.Max(1, amount - reduction);
+
             _invulnerableUntil = Time.time + _invulnerableTime;
-            _hp = Mathf.Max(0, _hp - amount);
+            _hp = Mathf.Max(0, _hp - taken);
 
             if (_hitFlash != null) _hitFlash.Play();
             if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
@@ -87,7 +96,7 @@ namespace ForagerCP
         {
             if (amount <= 0 || !IsAlive) return;
 
-            _hp = Mathf.Min(_maxHp, _hp + amount);
+            _hp = Mathf.Min(MaxHp, _hp + amount);
             Changed?.Invoke(this);
         }
 
@@ -110,7 +119,7 @@ namespace ForagerCP
                 transform.position = _respawnPoint.position;
             }
 
-            _hp = _maxHp;
+            _hp = MaxHp;
             _invulnerableUntil = Time.time + _invulnerableTime;
             Changed?.Invoke(this);
         }
@@ -133,7 +142,7 @@ namespace ForagerCP
             var save = JsonUtility.FromJson<Save>(payload);
             if (save == null) return;
 
-            _hp = Mathf.Clamp(save.Hp, 1, _maxHp);
+            _hp = Mathf.Clamp(save.Hp, 1, MaxHp);
 
             // transform만 옮기면 Rigidbody가 옛 자리로 되돌린다 — 몬스터 순간이동과 같은 함정.
             if (TryGetComponent(out Rigidbody body))

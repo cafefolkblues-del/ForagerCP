@@ -16,7 +16,8 @@ namespace ForagerCP.EditorTools
         static readonly string[] Kinds =
         {
             "ItemDefinition",   // 광물 등 모든 아이템(MineralDefinition 포함)
-            "WeaponTier",
+            "EquipmentDefinition",
+            "CraftRecipe",
             "SkillDefinition",
             "RegionDefinition",
         };

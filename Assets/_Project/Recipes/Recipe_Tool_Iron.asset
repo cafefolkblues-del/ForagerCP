@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a235e8106d008824292c2aa453a4b5b6, type: 3}
+  m_Name: Recipe_Tool_Iron
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.CraftRecipe
+  _displayName: "\uCCA0 \uACE1\uAD2D\uC774"
+  _equipment: {fileID: 11400000, guid: 1856667b0f22ecc43a591b3d49a47f6d, type: 2}
+  _item: {fileID: 0}
+  _itemCount: 1
+  _ingredients:
+  - Item: {fileID: 11400000, guid: 1533369f81f1d2743af8d2e5390475a4, type: 2}
+    Count: 5
+  _seconds: 8
+  _category: Tools

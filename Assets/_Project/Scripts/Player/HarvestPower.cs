@@ -7,12 +7,22 @@ namespace ForagerCP
     /// 성장 요소가 늘어도 수정 범위가 여기로 묶인다.
     public class HarvestPower : MonoBehaviour, ISaveable
     {
+        void Awake()
+        {
+            if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
+        }
+
         [SerializeField] int _basePower = 5;
+        [SerializeField] PlayerEquipment _equipment;
 
         public event Action<int> Changed;
 
+        /// 스킬·상점이 올린 몫. 도구에서 나오는 몫과 따로 둔다 —
+        /// 섞으면 불러올 때 도구 수치가 두 번 들어간다(장비도 따로 저장하므로).
         public int Bonus { get; private set; }
-        public int Value => _basePower + Bonus;
+
+        public int FromTool => _equipment != null ? _equipment.HarvestPower : 0;
+        public int Value => _basePower + FromTool + Bonus;
 
         public void AddBonus(int amount)
         {
