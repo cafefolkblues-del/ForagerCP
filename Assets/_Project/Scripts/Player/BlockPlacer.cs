@@ -24,16 +24,13 @@ namespace ForagerCP
         [SerializeField] GameInput _input;
         [SerializeField] QuickBar _quickBar;
         [SerializeField] Inventory _inventory;
-        [SerializeField] HarvestRewardService _rewards;
+        [SerializeField] PlacedBlocks _blocks;
         [SerializeField] Camera _camera;
         [SerializeField] Transform _player;
 
         [Header("규칙")]
         /// 플레이어로부터 이 거리(m)까지만 놓을 수 있다.
         [SerializeField] float _range = 4f;
-
-        /// 놓인 것의 바닥이 지면에 닿도록 올리는 높이. 1m 큐브 기준 0.5.
-        [SerializeField] float _heightOffset = 0.5f;
 
         /// 그 칸에 살아있는 것이 서 있는지 볼 반경. 셀 반폭보다 살짝 작게 둬야
         /// 옆 칸에 붙어 선 플레이어까지 걸려 못 놓는 일이 없다.
@@ -44,9 +41,6 @@ namespace ForagerCP
         [SerializeField] Transform _ghost;
         [SerializeField] Color _allowedColor = new Color(0.35f, 1f, 0.5f, 0.35f);
         [SerializeField] Color _blockedColor = new Color(1f, 0.35f, 0.3f, 0.35f);
-
-        [Header("놓은 것을 담을 그룹")]
-        [SerializeField] MapFolder _folder;
 
         public event Action<ItemDefinition, Vector2Int> Placed;
         public event Action<PlaceResult> Rejected;
@@ -67,7 +61,7 @@ namespace ForagerCP
             if (_input == null) _input = FindFirstObjectByType<GameInput>();
             if (_quickBar == null) _quickBar = FindFirstObjectByType<QuickBar>();
             if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
-            if (_rewards == null) _rewards = FindFirstObjectByType<HarvestRewardService>();
+            if (_blocks == null) _blocks = FindFirstObjectByType<PlacedBlocks>();
             if (_camera == null) _camera = Camera.main;
             if (_player == null) _player = transform;
 
@@ -135,10 +129,13 @@ namespace ForagerCP
             if (!GridOccupancy.IsFree(new RectInt(cell.x, cell.y, size.x, size.y))) return PlaceResult.CellTaken;
 
             // 살아있는 것은 그리드에 매이지 않아 레지스트리에 없다. 이것만 물리로 확인한다.
-            if (HasOccupant(center + Vector3.up * _heightOffset)) return PlaceResult.Occupied;
+            if (HasOccupant(center + Vector3.up * HeightOffset)) return PlaceResult.Occupied;
 
             return PlaceResult.Ok;
         }
+
+        /// 놓는 높이는 만드는 쪽이 들고 있다. 여기서 따로 두면 두 값이 어긋나 미리보기와 결과가 달라진다.
+        float HeightOffset => _blocks != null ? _blocks.HeightOffset : 0.5f;
 
         /// 프리팹이 들고 있는 크기를 그대로 쓴다(2칸 구조물 대비). 인스턴스를 만들지 않고 읽는다.
         static Vector2Int FootprintOf(ItemDefinition item)
@@ -174,21 +171,8 @@ namespace ForagerCP
             // 먼저 빼고 나중에 만든다. 반대로 하면 빼기가 실패했을 때 블럭만 남아 복제가 된다.
             if (_inventory.Remove(item, 1) < 1) return;
 
-            Transform parent = _folder != null ? _folder.transform : null;
-            GameObject instance = Instantiate(item.PlacePrefab, parent);
-            instance.name = item.DisplayName;
-
-            if (!instance.TryGetComponent(out GridPlacement placement)) placement = instance.AddComponent<GridPlacement>();
-            placement.Configure(TargetCell, placement.Size, _heightOffset);
-
-            if (instance.TryGetComponent(out MineralNode node))
-            {
-                // 되살아나거나 경험치를 주면 무한 복제·무한 파밍이 된다.
-                node.MarkAsPlaced();
-
-                // 시작 뒤에 생긴 노드라 보상 서비스가 아직 모른다. 등록해야 캤을 때 드랍이 나온다.
-                if (_rewards != null) _rewards.Track(node);
-            }
+            // 만드는 일은 PlacedBlocks가 한다 — 저장에서 돌아올 때도 같은 길을 타야 하므로.
+            _blocks.Place(item, TargetCell);
 
             Placed?.Invoke(item, TargetCell);
         }

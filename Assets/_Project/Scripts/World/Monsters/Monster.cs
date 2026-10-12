@@ -87,6 +87,17 @@ namespace ForagerCP
             if (_definition.RespawnDelay > 0f) _respawnRoutine = StartCoroutine(RespawnRoutine());
         }
 
+        /// 저장에서 돌려받을 때 쓴다. 보상도 연출도 없이 '죽은 모양'만 만든다.
+        /// Die를 부르면 처치 보상과 떠오르는 숫자가 불러올 때마다 다시 나간다.
+        public void MarkDeadSilently()
+        {
+            if (!_alive) return;
+
+            _alive = false;
+            _hp = 0;
+            SetPresence(false);
+        }
+
         IEnumerator RespawnRoutine()
         {
             yield return new WaitForSeconds(_definition.RespawnDelay);

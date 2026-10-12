@@ -7042,6 +7042,8 @@ GameObject:
   - component: {fileID: 890792616}
   - component: {fileID: 890792617}
   - component: {fileID: 890792618}
+  - component: {fileID: 890792619}
+  - component: {fileID: 890792620}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -7291,10 +7293,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.SaveService
   _slotCount: 3
-  _pollSeconds: 3
+  _autoSaveInterval: 180
   _minSecondsBetweenSaves: 10
   _autoSave: 1
   _autoSlot: 0
+--- !u!114 &890792619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf15658812dee264bac9a2b231dc7ec3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlacedBlocks
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+  _rewards: {fileID: 890792607}
+  _folder: {fileID: 434186772}
+  _heightOffset: 0.5
+--- !u!114 &890792620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 268607b25c5f21e40a253a4539778af1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDeaths
 --- !u!1 &910489838
 GameObject:
   m_ObjectHideFlags: 0
@@ -15228,16 +15258,14 @@ MonoBehaviour:
   _input: {fileID: 1954203110}
   _quickBar: {fileID: 890792613}
   _inventory: {fileID: 890792609}
-  _rewards: {fileID: 890792607}
+  _blocks: {fileID: 890792619}
   _camera: {fileID: 330585545}
   _player: {fileID: 1954203115}
   _range: 4
-  _heightOffset: 0.5
   _occupantCheckRadius: 0.4
   _ghost: {fileID: 986951347}
   _allowedColor: {r: 0.35, g: 1, b: 0.5, a: 0.35}
   _blockedColor: {r: 1, g: 0.35, b: 0.3, a: 0.35}
-  _folder: {fileID: 434186772}
 --- !u!1 &1963461213
 GameObject:
   m_ObjectHideFlags: 0
