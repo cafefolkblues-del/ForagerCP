@@ -18,6 +18,7 @@ namespace ForagerCP.EditorTools
             "ItemDefinition",   // 광물 등 모든 아이템(MineralDefinition 포함)
             "EquipmentDefinition",
             "CraftRecipe",
+            "ShopGood",
             "SkillDefinition",
             "RegionDefinition",
         };

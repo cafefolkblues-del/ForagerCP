@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 광물 → 골드 변환기(사양 1-7). 보유 광물 전량 일괄 변환.
-    /// 광물 종류가 늘어난 뒤로는 개수 × 고정가가 아니라 종류별 GoldValue를 합산한다.
+    /// 광물 → 골드 변환기. 종류와 수량을 골라 판다.
+    ///
+    /// 전량 일괄에서 바뀐 이유: 팔 수 없는 광물(특수·엔딩)이 생겼고, 아껴둘 재료와 팔 재료가
+    /// 갈리기 시작했다. 한 번에 다 털어버리면 제작 재료까지 날아간다.
     public class ConverterStation : MonoBehaviour, IInteractable, ISaveMilestone
     {
         [SerializeField] Inventory _inventory;
@@ -19,11 +21,12 @@ namespace ForagerCP
         /// 판 자원은 되돌아오지 않는다. 거래와 같은 취급.
         public event Action<string> Milestone;
 
-        public Transform Transform => transform;
-        public string Label => "광물 변환기";
+        /// F를 눌렀다. 화면이 이걸 듣고 자기를 연다.
+        public event Action<ConverterStation> OpenRequested;
 
-        /// 팔레트로 찍어 넣은 프리팹은 씬 참조 슬롯이 비어 온다.
-        /// 배선을 빠뜨렸을 때 조용히 무동작이 되지 않도록 방어 탐색만 하고, 없으면 크게 알린다.
+        public Transform Transform => transform;
+        public string Label => "광물 변환기 열기";
+
         void Awake()
         {
             if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
@@ -31,27 +34,46 @@ namespace ForagerCP
             if (_inventory == null || _gold == null) Debug.LogError($"{name}: 변환기 참조 미배선", this);
         }
 
-        public void Interact()
+        /// 개당 받는 골드. 화면이 '예상 골드'를 뽑을 때도 이걸 쓴다 —
+        /// 보여준 값과 실제 받는 값이 어긋나지 않게 계산을 한 곳에 둔다.
+        public int UnitPrice(ItemDefinition item)
+            => item == null ? 0 : Mathf.RoundToInt(item.GoldValue * _priceMultiplier);
+
+        public int PriceFor(ItemDefinition item, int count) => UnitPrice(item) * Mathf.Max(0, count);
+
+        /// 팔 수 있는 것만 모은다. 화면이 줄을 그릴 때 쓴다.
+        public void CollectSellable(List<ItemStack> into)
         {
-            if (_inventory.TotalCount <= 0) return; // 예외 1-10: 보유 0개면 무발생
+            into.Clear();
+            if (_inventory == null) return;
 
-            // 먼저 꺼내고(차감) 그 다음 지급 — 사양 1-7의 고정 순서.
-            List<ItemStack> taken = _inventory.TakeAll();
-
-            int count = 0;
-            int reward = 0;
-            for (int i = 0; i < taken.Count; i++)
+            IReadOnlyList<ItemStack> stacks = _inventory.Stacks;
+            for (int i = 0; i < stacks.Count; i++)
             {
-                ItemStack stack = taken[i];
-                if (stack.Definition == null) continue;
+                ItemStack stack = stacks[i];
+                if (stack.Definition == null || !stack.Definition.Sellable) continue;
 
-                count += stack.Count;
-                reward += Mathf.RoundToInt(stack.Count * stack.Definition.GoldValue * _priceMultiplier);
+                into.Add(stack);
             }
-
-            _gold.Add(reward);
-            Converted?.Invoke(count, reward);
-            Milestone?.Invoke($"판매: {count}개 {reward}골드");
         }
+
+        public bool Sell(ItemDefinition item, int count)
+        {
+            if (item == null || count <= 0) return false;
+            if (!item.Sellable) return false;
+
+            // 먼저 빼고 그 다음 지급 — 실제로 빠진 만큼만 값을 쳐준다.
+            int removed = _inventory.Remove(item, count);
+            if (removed <= 0) return false;
+
+            int reward = PriceFor(item, removed);
+            _gold.Add(reward);
+
+            Converted?.Invoke(removed, reward);
+            Milestone?.Invoke($"판매: {item.DisplayName} {removed}개 {reward}골드");
+            return true;
+        }
+
+        public void Interact() => OpenRequested?.Invoke(this);
     }
 }

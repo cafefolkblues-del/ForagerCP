@@ -14,6 +14,7 @@ namespace ForagerCP
         [SerializeField] UiWindow _skillPanel;
         [SerializeField] UiWindow _savePanel;
         [SerializeField] UiWindow _craftPanel;
+        [SerializeField] UiWindow _sellPanel;
 
         /// 한 번에 하나만 열리게 할지. 창이 늘어나면 기본값으로 두는 게 안전하다.
         [SerializeField] bool _exclusive = true;
@@ -42,6 +43,7 @@ namespace ForagerCP
             if (_skillPanel != null) _panels.Add(_skillPanel);
             if (_savePanel != null) _panels.Add(_savePanel);
             if (_craftPanel != null) _panels.Add(_craftPanel);
+            if (_sellPanel != null) _panels.Add(_sellPanel);
         }
 
         void OnEnable()

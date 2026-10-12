@@ -13,6 +13,10 @@ namespace ForagerCP
         [SerializeField] int _goldValue = 10;
         [SerializeField] int _sortOrder;
 
+        /// 변환기에 넘길 수 있는지. 특수·엔딩 광물은 꺼둔다.
+        /// 기획이 '등급'이라 했는데 등급 목록이 아직 없어 우선 둘로만 가른다 — 목록이 오면 그때 올린다.
+        [SerializeField] bool _sellable = true;
+
         /// 아이콘이 아직 없을 때 인벤토리 칸에 쓰는 대표색.
         /// 종류마다 고정값이어야 한다 — 획득 순서로 색을 배정하면 먼저 캔 광물이 남의 색을 뒤집어쓴다(팀 리뷰).
         [SerializeField] Color _uiColor = new Color(0.78f, 0.80f, 0.85f);
@@ -35,6 +39,7 @@ namespace ForagerCP
         public int GoldValue => _goldValue;
 
         public int SortOrder => _sortOrder;
+        public bool Sellable => _sellable;
         public Color UiColor => _uiColor;
         public GameObject DropPrefab => _dropPrefab;
         public GameObject PlacePrefab => _placePrefab;

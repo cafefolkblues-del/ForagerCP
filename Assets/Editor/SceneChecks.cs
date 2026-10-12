@@ -87,7 +87,10 @@ namespace ForagerCP.EditorTools
             "MonsterAI._body", "MonsterAI._knockback", "MonsterAI._target",
             "InventoryPanel._inventory", "PlayerHealthBar._health",
             "InteractionPromptView._interactor", "InteractionPromptView._group",
-            "ShopPanel._station", "ShopPanel._gold",
+            "ShopPanelView._window", "ShopPanelView._router", "ShopPanelView._gold",
+            "SellPanelView._window", "SellPanelView._router",
+            "SellPanelView._inventory", "SellPanelView._gold",
+            "ShopStation._inventory", "ShopStation._harvest", "ConverterStation._inventory",
             "MonsterHealthBarSpawner._viewCamera", "MonsterHealthBar._group", "MonsterHealthBar._fill",
 
             // 전투·드랍 확장에서 늘어난 자동탐색 필드
