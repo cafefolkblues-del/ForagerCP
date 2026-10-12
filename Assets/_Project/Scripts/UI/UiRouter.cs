@@ -12,6 +12,7 @@ namespace ForagerCP
         [SerializeField] UiWindow _inventoryPanel;
         [SerializeField] UiWindow _shopPanel;
         [SerializeField] UiWindow _skillPanel;
+        [SerializeField] UiWindow _savePanel;
 
         /// 한 번에 하나만 열리게 할지. 창이 늘어나면 기본값으로 두는 게 안전하다.
         [SerializeField] bool _exclusive = true;
@@ -38,6 +39,7 @@ namespace ForagerCP
             if (_inventoryPanel != null) _panels.Add(_inventoryPanel);
             if (_shopPanel != null) _panels.Add(_shopPanel);
             if (_skillPanel != null) _panels.Add(_skillPanel);
+            if (_savePanel != null) _panels.Add(_savePanel);
         }
 
         void OnEnable()
@@ -58,6 +60,7 @@ namespace ForagerCP
 
         public void OpenShop() => OpenPanel(_shopPanel);
         public void OpenSkills() => OpenPanel(_skillPanel);
+        public void OpenSaves() => OpenPanel(_savePanel);
 
         /// ESC 한 번에 다 닫아버리면 메뉴에서 들어간 화면을 빠져나올 때마다 처음부터 다시 열어야 한다.
         /// 하위 화면이 열려 있으면 메뉴로 돌아가고, 메뉴만 있으면 그때 닫는다.

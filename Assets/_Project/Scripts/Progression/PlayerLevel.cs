@@ -75,6 +75,8 @@ namespace ForagerCP
             Changed?.Invoke(this);
         }
 
+        public int SummaryOrder => 0;
+
         public string Describe() => $"Lv.{Level}";
     }
 }

@@ -67,6 +67,9 @@ namespace ForagerCP
 
         public int SlotCount => Mathf.Max(1, _slotCount);
 
+        /// 자동 저장이 쓰는 칸. 슬롯 목록이 "여기는 덮어써진다"고 알리는 데 쓴다.
+        public int AutoSlot => _autoSlot;
+
         readonly List<ISaveable> _saveables = new List<ISaveable>();
         readonly List<ISaveMilestone> _milestones = new List<ISaveMilestone>();
         readonly Dictionary<string, string> _lastWritten = new Dictionary<string, string>();
@@ -318,16 +321,17 @@ namespace ForagerCP
 
         string BuildSummary()
         {
-            var parts = new List<string>();
+            var parts = new List<ISaveSummary>();
 
             foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (behaviour is ISaveSummary summary) parts.Add(summary.Describe());
+                if (behaviour is ISaveSummary summary) parts.Add(summary);
             }
 
-            parts.Sort(StringComparer.Ordinal);
-            return string.Join(" · ", parts.Where(part => !string.IsNullOrEmpty(part)));
+            parts.Sort((a, b) => a.SummaryOrder - b.SummaryOrder);
+            return string.Join(" · ", parts.Select(part => part.Describe())
+                .Where(text => !string.IsNullOrEmpty(text)));
         }
     }
 }

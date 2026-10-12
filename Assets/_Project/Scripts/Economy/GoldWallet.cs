@@ -54,6 +54,8 @@ namespace ForagerCP
             Changed?.Invoke(Gold);
         }
 
+        public int SummaryOrder => 20;
+
         public string Describe() => $"{Gold}G";
     }
 }

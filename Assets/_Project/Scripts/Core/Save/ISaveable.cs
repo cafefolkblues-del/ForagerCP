@@ -37,6 +37,9 @@ namespace ForagerCP
     /// 슬롯 목록에 한 줄로 뭘 보여줄지. 구현하지 않아도 된다.
     public interface ISaveSummary
     {
+        /// 작을수록 앞. 글자로 정렬하면 숫자가 앞서서 읽는 순서가 뒤집힌다.
+        int SummaryOrder { get; }
+
         string Describe();
     }
 }
