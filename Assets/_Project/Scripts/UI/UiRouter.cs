@@ -8,8 +8,10 @@ namespace ForagerCP
     public class UiRouter : MonoBehaviour
     {
         [SerializeField] GameInput _input;
+        [SerializeField] UiWindow _menuPanel;
         [SerializeField] UiWindow _inventoryPanel;
         [SerializeField] UiWindow _shopPanel;
+        [SerializeField] UiWindow _skillPanel;
 
         /// 한 번에 하나만 열리게 할지. 창이 늘어나면 기본값으로 두는 게 안전하다.
         [SerializeField] bool _exclusive = true;
@@ -32,27 +34,62 @@ namespace ForagerCP
         {
             if (_input == null) _input = FindFirstObjectByType<GameInput>();
 
+            if (_menuPanel != null) _panels.Add(_menuPanel);
             if (_inventoryPanel != null) _panels.Add(_inventoryPanel);
             if (_shopPanel != null) _panels.Add(_shopPanel);
+            if (_skillPanel != null) _panels.Add(_skillPanel);
         }
 
         void OnEnable()
         {
             if (_input == null) return;
             _input.InventoryToggled += ToggleInventory;
-            _input.CancelPressed += CloseAll;
+            _input.CancelPressed += OnCancel;
         }
 
         void OnDisable()
         {
             if (_input == null) return;
             _input.InventoryToggled -= ToggleInventory;
-            _input.CancelPressed -= CloseAll;
+            _input.CancelPressed -= OnCancel;
         }
 
         public void ToggleInventory() => TogglePanel(_inventoryPanel);
 
         public void OpenShop() => OpenPanel(_shopPanel);
+        public void OpenSkills() => OpenPanel(_skillPanel);
+
+        /// ESC 한 번에 다 닫아버리면 메뉴에서 들어간 화면을 빠져나올 때마다 처음부터 다시 열어야 한다.
+        /// 하위 화면이 열려 있으면 메뉴로 돌아가고, 메뉴만 있으면 그때 닫는다.
+        void OnCancel()
+        {
+            if (AnyOpenExcept(_menuPanel))
+            {
+                // 한 번에 하나만 여는 설정이면 OpenPanel이 나머지를 알아서 닫는다.
+                OpenPanel(_menuPanel);
+                if (!_exclusive) CloseAllExcept(_menuPanel);
+                return;
+            }
+
+            TogglePanel(_menuPanel);
+        }
+
+        bool AnyOpenExcept(UiWindow keep)
+        {
+            for (int i = 0; i < _panels.Count; i++)
+            {
+                if (_panels[i] != null && _panels[i] != keep && _panels[i].IsOpen) return true;
+            }
+            return false;
+        }
+
+        void CloseAllExcept(UiWindow keep)
+        {
+            for (int i = 0; i < _panels.Count; i++)
+            {
+                if (_panels[i] != null && _panels[i] != keep) _panels[i].Close();
+            }
+        }
 
         public void TogglePanel(UiWindow panel)
         {
