@@ -6256,6 +6256,7 @@ GameObject:
   - component: {fileID: 890792615}
   - component: {fileID: 890792614}
   - component: {fileID: 890792616}
+  - component: {fileID: 890792617}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -6469,6 +6470,26 @@ MonoBehaviour:
   _access: {fileID: 890792614}
   _knockback: {fileID: 1954203118}
   _pushBackFromLocked: 1
+--- !u!114 &890792617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94240ca06e7261241bb6b7544b961b74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.SkillBoard
+  _tree: {fileID: 11400000, guid: 9a39558e1842214468556630d942cc2a, type: 2}
+  _level: {fileID: 890792605}
+  _harvest: {fileID: 1954203105}
+  _health: {fileID: 1954203116}
+  _flags: {fileID: 890792615}
+  _inventory: {fileID: 890792609}
+  _pointsPerLevel: 1
+  _startingPoints: 0
 --- !u!1001 &921594117
 PrefabInstance:
   m_ObjectHideFlags: 0
