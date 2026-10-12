@@ -98,7 +98,32 @@ namespace ForagerCP.EditorTools
             "PlayerActionState._knockback", "PlayerActionState._dash",
             "PlayerActionState._shield", "PlayerActionState._attacker",
             "PlayerMotor._state", "PlayerHealth._shield", "PlayerHealth._dash",
-            "ItemDrop._renderers"
+            "ItemDrop._renderers",
+
+            // 지역·스킬·설치에서 늘어난 자동탐색 필드
+            "RegionAccess._level", "RegionAccess._inventory", "RegionAccess._gold", "RegionAccess._flags",
+            "RegionTracker._player", "RegionTracker._access", "RegionTracker._knockback",
+            "RegionBarrier._access", "RegionBannerView._tracker", "RegionBannerView._access",
+            "BlockPlacer._input", "BlockPlacer._quickBar", "BlockPlacer._inventory",
+            "BlockPlacer._rewards", "BlockPlacer._camera", "BlockPlacer._player",
+            "QuickBar._input", "QuickBar._inventory", "QuickBarView._quickBar",
+            "SkillBoard._level", "SkillBoard._harvest", "SkillBoard._health",
+            "SkillBoard._flags", "SkillBoard._inventory",
+            "SkillPanelView._board", "UiMenuButton._router"
+        };
+
+        /// 비워두는 것 자체가 뜻인 필드. 알릴 것이 없으므로 아예 건너뛴다.
+        static readonly HashSet<string> OptionalByDesign = new HashSet<string>
+        {
+            // 열 창이 없는 버튼 = 닫기 버튼
+            "UiMenuButton._target",
+
+            // 씬에 그 창이 없을 수도 있다(테스트 씬 등)
+            "UiRouter._menuPanel", "UiRouter._inventoryPanel",
+            "UiRouter._shopPanel", "UiRouter._skillPanel",
+
+            // 미리보기 표식과 담을 그룹은 없어도 설치 자체는 돈다
+            "BlockPlacer._ghost", "BlockPlacer._folder"
         };
 
         /// 비면 그 오브젝트가 아예 기능을 못 하는 필드.
@@ -126,6 +151,7 @@ namespace ForagerCP.EditorTools
                     if (property.objectReferenceValue != null) continue;
 
                     string key = behaviour.GetType().Name + "." + property.propertyPath;
+                    if (OptionalByDesign.Contains(key)) continue;
 
                     IssueSeverity severity;
                     string detail;
