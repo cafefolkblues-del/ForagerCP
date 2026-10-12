@@ -6,7 +6,7 @@ namespace ForagerCP
 {
     /// 광물 → 골드 변환기(사양 1-7). 보유 광물 전량 일괄 변환.
     /// 광물 종류가 늘어난 뒤로는 개수 × 고정가가 아니라 종류별 GoldValue를 합산한다.
-    public class ConverterStation : MonoBehaviour, IInteractable
+    public class ConverterStation : MonoBehaviour, IInteractable, ISaveMilestone
     {
         [SerializeField] Inventory _inventory;
         [SerializeField] GoldWallet _gold;
@@ -15,6 +15,9 @@ namespace ForagerCP
         [SerializeField] float _priceMultiplier = 1f;
 
         public event Action<int, int> Converted; // (넘긴 개수, 받은 골드)
+
+        /// 판 자원은 되돌아오지 않는다. 거래와 같은 취급.
+        public event Action<string> Milestone;
 
         public Transform Transform => transform;
         public string Label => "광물 변환기";
@@ -48,6 +51,7 @@ namespace ForagerCP
 
             _gold.Add(reward);
             Converted?.Invoke(count, reward);
+            Milestone?.Invoke($"판매: {count}개 {reward}골드");
         }
     }
 }

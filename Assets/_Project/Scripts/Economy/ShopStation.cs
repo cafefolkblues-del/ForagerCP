@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 아이템 구매(사양 1-8). MVP는 상점 UI 없이 F 한 번에 구매 가능한 첫 품목을 산다.
-    public class ShopStation : MonoBehaviour, IInteractable
+    public class ShopStation : MonoBehaviour, IInteractable, ISaveMilestone
     {
         [SerializeField] GoldWallet _gold;
         [SerializeField] HarvestPower _harvestPower;
@@ -13,6 +13,9 @@ namespace ForagerCP
         [SerializeField] ShopItem[] _items = new ShopItem[1];
 
         public event Action<ShopItem> Purchased;
+
+        /// 기획서가 콕 집은 자리 — 거래 직후에는 저장한다.
+        public event Action<string> Milestone;
 
         /// 상점 화면이 목록을 그릴 때 읽어간다.
         public IReadOnlyList<ShopItem> Items => _items;
@@ -43,6 +46,7 @@ namespace ForagerCP
             // 검 티어 품목이면 장착까지 여기서 끝낸다 — 공격력은 PlayerWeapon 한 곳에서만 나온다.
             if (item.WeaponTier != null && _weapon != null) _weapon.Equip(item.WeaponTier);
             Purchased?.Invoke(item);
+            Milestone?.Invoke($"구매: {item.DisplayName}");
         }
 
         ShopItem FindPurchasableItem()

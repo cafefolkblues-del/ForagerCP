@@ -4,13 +4,16 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 필요 경험치 = _expBase + 현재 레벨 (Lv1→2: 6, Lv2→3: 7 ...). 사양 1-5.
-    public class PlayerLevel : MonoBehaviour, ISaveable, ISaveSummary
+    public class PlayerLevel : MonoBehaviour, ISaveable, ISaveSummary, ISaveMilestone
     {
         [SerializeField] int _startLevel = 1;
         [SerializeField] int _maxLevel = 10;
         [SerializeField] int _expBase = 5;
 
         public event Action<PlayerLevel> Changed;
+
+        /// 레벨업은 스킬 포인트를 주므로 되돌리기 어렵다. 경험치만 오른 것은 사건이 아니다.
+        public event Action<string> Milestone;
 
         public int Level { get; private set; }
         public int Exp { get; private set; }
@@ -30,6 +33,7 @@ namespace ForagerCP
             Exp += amount;
 
             // while: 한 번에 여러 레벨 조건을 넘기면 연속 레벨업, 초과분은 그대로 이월(사양 1-5).
+            int before = Level;
             while (!IsMaxLevel && Exp >= ExpToNext)
             {
                 Exp -= ExpToNext;
@@ -37,6 +41,7 @@ namespace ForagerCP
             }
 
             Changed?.Invoke(this);
+            if (Level > before) Milestone?.Invoke($"레벨 {Level}");
         }
 
         /// 디버그 전용(사양 1-11). 경험치와 무관하게 레벨만 올린다.

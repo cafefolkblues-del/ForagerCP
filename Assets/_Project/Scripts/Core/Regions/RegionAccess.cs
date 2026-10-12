@@ -8,7 +8,7 @@ namespace ForagerCP
     ///
     /// 해금 여부는 런타임 상태라 지역 에셋이 아니라 여기가 들고 있다.
     /// ScriptableObject에 담으면 에디터에서 연 상태가 저장돼 다음 플레이에 그대로 남는다.
-    public class RegionAccess : MonoBehaviour, ISaveable
+    public class RegionAccess : MonoBehaviour, ISaveable, ISaveMilestone
     {
         [SerializeField] PlayerLevel _level;
         [SerializeField] Inventory _inventory;
@@ -17,6 +17,9 @@ namespace ForagerCP
         [SerializeField] SaveCatalog _catalog;
 
         public event Action<RegionDefinition> Unlocked;
+
+        /// 구역 개방은 골드를 치르는 일이라 되돌릴 수 없다.
+        public event Action<string> Milestone;
 
         /// 조건을 못 채워 막혔을 때. 인자는 걸린 조건 — 화면에 이유를 그대로 띄울 수 있다.
         public event Action<RegionDefinition, RegionRequirement> Refused;
@@ -122,6 +125,7 @@ namespace ForagerCP
             if (region.PermanentUnlock) _unlocked.Add(region);
 
             Unlocked?.Invoke(region);
+            Milestone?.Invoke($"구역 개방: {region.DisplayName}");
             return true;
         }
 

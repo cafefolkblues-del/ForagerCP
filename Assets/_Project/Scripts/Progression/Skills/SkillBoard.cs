@@ -12,7 +12,7 @@ namespace ForagerCP
     ///  - 하나를 배우면 그 노드와 맞닿은 칸이 고를 수 있게 열린다(공짜로 배워지는 것은 아니다)
     ///
     /// RegionAccess와 같은 자리다 — 정의는 에셋, 진행은 여기.
-    public class SkillBoard : MonoBehaviour, ISaveable
+    public class SkillBoard : MonoBehaviour, ISaveable, ISaveMilestone
     {
         [SerializeField] SkillTree _tree;
         [SerializeField] PlayerLevel _level;
@@ -33,6 +33,9 @@ namespace ForagerCP
 
         public event Action<SkillBoard> Changed;
         public event Action<SkillDefinition> Learned;
+
+        /// 포인트를 치르고 배우는 일이라 되돌릴 수 없다.
+        public event Action<string> Milestone;
 
         /// 포인트가 모자라거나 아직 안 열린 노드를 눌렀을 때. 화면이 이유를 띄운다.
         public event Action<SkillDefinition, string> Refused;
@@ -169,6 +172,7 @@ namespace ForagerCP
 
             Learned?.Invoke(skill);
             Changed?.Invoke(this);
+            Milestone?.Invoke($"스킬: {skill.DisplayName}");
             return true;
         }
 

@@ -37,9 +37,9 @@ namespace ForagerCP
     /// 저장할 '내용'은 하나도 모른다. ISaveable을 구현한 것들을 모아 각자의 묶음을 받아 적을 뿐이라,
     /// 제작·방어구·보관함이 들어와도 이 파일은 그대로다.
     ///
-    /// 언제 저장하는가: 몇 초마다 모든 묶음을 떠보고 직전과 다르면 쓴다.
-    /// 시스템마다 "나 바뀌었어"를 알리게 하면 새 시스템이 생길 때마다 그 연결을 빠뜨리는데,
-    /// 떠서 비교하면 빠뜨릴 것이 없다. 데이터가 작아(몇 KB) 비용도 무시할 만하다.
+    /// 언제 저장하는가: 일정 간격마다 한 번, 그리고 되돌리기 어려운 일(ISaveMilestone)이 있을 때 바로.
+    /// 채집이나 인벤 숫자 같은 잔 변화는 신호로 삼지 않는다 — 그러면 한 번 캘 때마다 디스크를 때린다.
+    /// 그런 것들은 다음 주기 저장에 묻어간다(강제 종료로 몇 분이 날아가는 것은 감수하는 범위).
     public class SaveService : MonoBehaviour
     {
         /// 저장 파일 형식의 판. 형식을 바꾸면 올린다.
@@ -48,11 +48,11 @@ namespace ForagerCP
         [SerializeField] int _slotCount = 3;
 
         [Header("자동 저장")]
-        /// 바뀐 게 있는지 떠보는 간격.
-        [SerializeField] float _pollSeconds = 3f;
+        /// 주기 저장 간격.
+        [SerializeField] float _autoSaveInterval = 180f;
 
-        /// 연달아 저장하지 않도록 두는 최소 간격. 채집처럼 잦은 변화를 묶어준다.
-        [SerializeField] float _minSecondsBetweenSaves = 10f;
+        /// 큰 사건이 잇따를 때 연달아 쓰지 않도록 두는 최소 간격.
+        [SerializeField] float _minSecondsBetweenSaves = 5f;
 
         [SerializeField] bool _autoSave = true;
 
@@ -68,30 +68,84 @@ namespace ForagerCP
         public int SlotCount => Mathf.Max(1, _slotCount);
 
         readonly List<ISaveable> _saveables = new List<ISaveable>();
+        readonly List<ISaveMilestone> _milestones = new List<ISaveMilestone>();
         readonly Dictionary<string, string> _lastWritten = new Dictionary<string, string>();
 
-        float _nextPollTime;
+        float _nextAutoSaveTime;
         float _nextAllowedSaveTime;
+
+        /// 사건이 났는데 직전 저장과 너무 가까워 미뤄둔 상태.
+        bool _pending;
+        string _pendingReason;
 
         /// 불러오는 중에는 떠보기를 멈춘다. 안 그러면 복원 도중의 어중간한 상태가 저장될 수 있다.
         bool _restoring;
 
         void Awake() => Collect();
 
+        void OnEnable()
+        {
+            Listen(true);
+            _nextAutoSaveTime = Time.unscaledTime + Mathf.Max(5f, _autoSaveInterval);
+        }
+
+        void OnDisable() => Listen(false);
+
+        void Listen(bool on)
+        {
+            for (int i = 0; i < _milestones.Count; i++)
+            {
+                if (_milestones[i] == null) continue;
+
+                if (on) _milestones[i].Milestone += OnMilestone;
+                else _milestones[i].Milestone -= OnMilestone;
+            }
+            _listening = on;
+        }
+
+        bool _listening;
+
+        /// 되돌리기 어려운 일이 났다. 너무 잦으면 미뤘다가 간격이 지나면 쓴다.
+        void OnMilestone(string reason) => RequestSave(reason);
+
+        public void RequestSave(string reason)
+        {
+            if (!_autoSave || _restoring) return;
+
+            if (Time.unscaledTime < _nextAllowedSaveTime)
+            {
+                _pending = true;
+                _pendingReason = reason;
+                return;
+            }
+
+            if (Save(_autoSlot)) LastReason = reason;
+        }
+
+        /// 마지막으로 저장하게 만든 사유. 로그·디버그용.
+        public string LastReason { get; private set; }
+
         /// 씬에 있는 ISaveable을 전부 모은다. 비활성 오브젝트도 포함 —
         /// 창처럼 꺼둔 채 상태를 들고 있는 것이 있기 때문.
         public void Collect()
         {
+            // 다시 모으기 전에 듣던 것을 놓는다. 안 놓으면 옛 구독이 남아 두 번 불린다.
+            if (_listening) Listen(false);
+
             _saveables.Clear();
+            _milestones.Clear();
 
             foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (behaviour is ISaveable saveable) _saveables.Add(saveable);
+                if (behaviour is ISaveMilestone milestone) _milestones.Add(milestone);
             }
 
             // 저장 파일의 칸 순서가 실행마다 흔들리면 파일 비교가 어려워진다.
             _saveables.Sort((a, b) => string.CompareOrdinal(a.SaveKey, b.SaveKey));
+
+            if (isActiveAndEnabled) Listen(true);
         }
 
         public string PathFor(int slot) => Path.Combine(Application.persistentDataPath, $"save_{slot}.json");
@@ -221,14 +275,23 @@ namespace ForagerCP
         void Update()
         {
             if (!_autoSave || _restoring) return;
-            if (Time.unscaledTime < _nextPollTime) return;
-
-            _nextPollTime = Time.unscaledTime + Mathf.Max(0.5f, _pollSeconds);
-
             if (Time.unscaledTime < _nextAllowedSaveTime) return;
+
+            // 미뤄둔 사건이 있으면 간격이 지나는 대로 먼저 쓴다.
+            if (_pending)
+            {
+                _pending = false;
+                if (HasChanges() && Save(_autoSlot)) LastReason = _pendingReason;
+                return;
+            }
+
+            if (Time.unscaledTime < _nextAutoSaveTime) return;
+            _nextAutoSaveTime = Time.unscaledTime + Mathf.Max(5f, _autoSaveInterval);
+
+            // 바뀐 게 없으면 같은 내용을 다시 쓰지 않는다.
             if (!HasChanges()) return;
 
-            Save(_autoSlot);
+            if (Save(_autoSlot)) LastReason = "주기 저장";
         }
 
         bool HasChanges()
