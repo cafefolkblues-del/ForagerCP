@@ -113,7 +113,8 @@ namespace ForagerCP.EditorTools
 
             // 장비·제작에서 늘어난 자동탐색 필드
             "PlayerAttacker._equipment", "PlayerHealth._equipment", "HarvestPower._equipment",
-            "ShopStation._equipment", "CraftingStation._inventory", "CraftingStation._equipment"
+            "ShopStation._equipment", "CraftingStation._inventory", "CraftingStation._equipment",
+            "CraftPanelView._window", "CraftPanelView._router", "CraftPanelView._equipment"
         };
 
         /// 비워두는 것 자체가 뜻인 필드. 알릴 것이 없으므로 아예 건너뛴다.
@@ -125,6 +126,7 @@ namespace ForagerCP.EditorTools
             // 씬에 그 창이 없을 수도 있다(테스트 씬 등)
             "UiRouter._menuPanel", "UiRouter._inventoryPanel",
             "UiRouter._shopPanel", "UiRouter._skillPanel",
+            "UiRouter._savePanel", "UiRouter._craftPanel",
 
             // 미리보기 표식과 담을 그룹은 없어도 설치 자체는 돈다
             "BlockPlacer._ghost", "BlockPlacer._folder"

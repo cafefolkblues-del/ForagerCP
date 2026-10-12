@@ -32,6 +32,10 @@ namespace ForagerCP
         /// 장비를 새로 얻는 것은 되돌리기 어렵다.
         public event Action<string> Milestone;
 
+        /// F를 눌렀다. 화면이 이걸 듣고 자기를 연다 —
+        /// 제작대가 UI를 직접 참조하면 화면을 갈아끼울 때 제작대가 따라 깨진다.
+        public event Action<CraftingStation> OpenRequested;
+
         public string Category => _category;
         public IReadOnlyList<CraftRecipe> Recipes => _recipes;
         public int SlotCount => Mathf.Max(1, _slotCount);
@@ -198,14 +202,7 @@ namespace ForagerCP
             return true;
         }
 
-        public void Interact()
-        {
-            // 화면이 붙기 전까지는 F가 '완성된 것 받기'로만 동작한다.
-            for (int i = 0; i < _slots.Count; i++)
-            {
-                if (_slots[i].Done) { TryCollect(i); return; }
-            }
-        }
+        public void Interact() => OpenRequested?.Invoke(this);
 
         // ------------------------------------------------------------------ 재료
 
