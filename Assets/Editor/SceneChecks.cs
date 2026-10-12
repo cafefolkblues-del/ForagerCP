@@ -109,7 +109,7 @@ namespace ForagerCP.EditorTools
             "QuickBar._input", "QuickBar._inventory", "QuickBarView._quickBar",
             "SkillBoard._level", "SkillBoard._harvest", "SkillBoard._health",
             "SkillBoard._flags", "SkillBoard._inventory",
-            "SkillPanelView._board", "UiMenuButton._router"
+            "SkillPanelView._board", "UiMenuButton._router", "PlayerAttacker._flags"
         };
 
         /// 비워두는 것 자체가 뜻인 필드. 알릴 것이 없으므로 아예 건너뛴다.

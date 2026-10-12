@@ -8,7 +8,8 @@ namespace ForagerCP
     ///
     /// 확정 스펙:
     /// - 검은 선딜 → 액티브 → 후딜의 세 구간을 가지며, 액티브 동안에만 판정이 산다.
-    /// - 액티브 동안 부채꼴 안의 몬스터를 전부 때린다(다단히트). 같은 대상은 한 스윙에 한 번만.
+    /// - 기본 평타는 부채꼴 안의 '가장 가까운 하나'만 때린다. 다중타격은 스킬로 해금한다.
+    /// - 스윙을 시작할 때 사거리 안 최근접 적 쪽으로 한 번 돌아본다(자동 방향 보정).
     /// - 좌클릭을 누르고 있으면 차지가 차고, 떼는 순간 발동한다.
     ///   완충이면 원형 360° 광역, 덜 찼으면 일반 스윙.
     /// - 정면에 광물이 있으면 차지를 누르고 채집으로 분기한다(캐다가 원치 않는 차지가 걸리지 않게).
@@ -21,6 +22,7 @@ namespace ForagerCP
         [SerializeField] PlayerActionState _state;
         [SerializeField] HarvestPower _power;
         [SerializeField] PlayerWeapon _weapon;
+        [SerializeField] ProgressFlags _flags;
 
         [Header("검 판정")]
         [SerializeField] float _range = 2.5f;
@@ -30,6 +32,16 @@ namespace ForagerCP
         [SerializeField] float _windupTime = 0.10f;
         [SerializeField] float _activeTime = 0.12f;
         [SerializeField] float _recoveryTime = 0.18f;
+
+        [Header("자동 방향 보정")]
+        /// 커서가 가리키는 쪽에서 이 각도 안에 있는 적만 겨냥한다(전체 각). 360이면 전방위.
+        /// 뒤에 선 적까지 집으면 칼이 홱 돌아가 조작이 손에서 떠난다.
+        [SerializeField, Range(0f, 360f)] float _aimConeDegrees = 120f;
+
+        [Header("다중타격")]
+        /// 이 기록이 서 있으면 부채꼴 안을 전부 때린다. 스킬이 세운다(FlagSkillEffect).
+        /// 문자열을 코드에 박지 않는 이유는 기획이 스킬 구성을 바꿔도 코드가 안 따라가게 하려는 것.
+        [SerializeField] string _multiHitFlag = "attack_multi";
 
         [Header("차지")]
         [SerializeField] float _chargeTime = 0.8f;
@@ -46,6 +58,14 @@ namespace ForagerCP
 
         /// 차지가 차고 있는 중인지. 이동 배율을 깎는 근거라 PlayerActionState가 읽는다.
         public bool IsCharging { get; private set; }
+
+        /// 스윙이 조준을 쥐고 있는 동안 참. PlayerMotor가 커서 조준에서 손을 떼는 근거다.
+        public bool HasAimLock { get; private set; }
+
+        /// 다중타격이 열렸는지. 차지는 이것과 무관하게 언제나 광역이다(확정 예외).
+        public bool MultiHitUnlocked => _flags != null
+            && !string.IsNullOrEmpty(_multiHitFlag)
+            && _flags.Has(_multiHitFlag);
 
         public float ChargeRatio => _chargeTime <= 0f ? 1f : Mathf.Clamp01(_input.AttackHoldTime / _chargeTime);
 
@@ -64,6 +84,7 @@ namespace ForagerCP
             if (_state == null) _state = GetComponent<PlayerActionState>();
             if (_power == null) _power = GetComponent<HarvestPower>();
             if (_weapon == null) _weapon = GetComponent<PlayerWeapon>();
+            if (_flags == null) _flags = FindFirstObjectByType<ProgressFlags>();
         }
 
         void OnEnable() => _input.AttackReleased += OnAttackReleased;
@@ -156,6 +177,13 @@ namespace ForagerCP
             _swingIsCharged = charged;
             _hitThisSwing.Clear();
 
+            // 겨눌 상대를 못 찾으면 아래에서 손대지 않으므로 여기서 먼저 내려둔다.
+            // 안 그러면 '직전 스윙이 켜둔 잠금'이 남아 커서 조준이 영영 안 돌아온다.
+            HasAimLock = false;
+
+            // 차지는 어차피 360°라 겨눌 이유가 없다.
+            if (!charged) AimAtNearestEnemy();
+
             Current = Phase.Windup;
             _phaseEndTime = Time.time + _windupTime;
             SwingStarted?.Invoke(charged);
@@ -185,6 +213,7 @@ namespace ForagerCP
                 case Phase.Recovery:
                     if (Time.time < _phaseEndTime) return;
                     Current = Phase.Idle;
+                    HasAimLock = false;
                     return;
             }
         }
@@ -194,8 +223,30 @@ namespace ForagerCP
             Current = Phase.Idle;
             _hitThisSwing.Clear();
             _harvestLock = false;
+            HasAimLock = false;
             SetCharging(false);
         }
+
+        /// 스윙을 시작할 때 한 번만 겨눈다.
+        ///
+        /// 액티브 동안 계속 다시 겨누면 적을 따라 칼이 휘는 유도탄이 된다.
+        /// 스펙은 '방향 보정'이지 추적이 아니다.
+        void AimAtNearestEnemy()
+        {
+            IDamageable target = FindNearestEnemy(_range, _aimConeDegrees * 0.5f);
+            if (target == null) return;
+
+            Vector3 look = target.Transform.position - transform.position;
+            look.y = 0f;
+            if (look.sqrMagnitude < 0.0001f) return;
+
+            // 겨눌 때는 8방향 스냅을 쓰지 않는다. 스냅하면 보정한 각이 도로 어긋난다.
+            transform.rotation = Quaternion.LookRotation(look);
+            HasAimLock = true;
+        }
+
+        /// 광역이냐 단일이냐. 차지는 확정 예외라 해금과 무관하게 언제나 광역이다.
+        bool HitsEveryone => _swingIsCharged || MultiHitUnlocked;
 
         void ApplyHits()
         {
@@ -203,6 +254,20 @@ namespace ForagerCP
             float halfAngle = _swingIsCharged ? 180f : _halfAngle; // 차지는 원형 360°
             int damage = Mathf.RoundToInt((_weapon != null ? _weapon.Damage : 1)
                                           * (_swingIsCharged ? _chargeDamageMultiplier : 1f));
+
+            if (!HitsEveryone)
+            {
+                // 한 스윙에 한 명. 액티브가 여러 프레임이라, '아직 안 때린 것 중 최근접'을 매 프레임
+                // 고르면 한 번 휘둘러 여러 명을 차례로 베게 된다 — 단일 타격이 이름뿐이 된다.
+                if (_hitThisSwing.Count > 0) return;
+
+                IDamageable single = FindNearestEnemy(range, halfAngle);
+                if (single == null) return;
+
+                _hitThisSwing.Add(single);
+                single.TakeDamage(damage, gameObject);
+                return;
+            }
 
             int count = Physics.OverlapSphereNonAlloc(transform.position, range, _overlapBuffer);
             Vector3 facing = transform.forward;
@@ -221,6 +286,37 @@ namespace ForagerCP
                 _hitThisSwing.Add(damageable);
                 damageable.TakeDamage(damage, gameObject);
             }
+        }
+
+        /// 겨눌 때와 때릴 때가 같은 규칙을 써야 "돌아봤는데 안 맞는다"가 안 생긴다.
+        /// halfAngle은 반각(45면 부채꼴 90도).
+        IDamageable FindNearestEnemy(float range, float halfAngle)
+        {
+            int count = Physics.OverlapSphereNonAlloc(transform.position, range, _overlapBuffer);
+            Vector3 facing = transform.forward;
+
+            IDamageable best = null;
+            float bestSqrDistance = float.MaxValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                var damageable = _overlapBuffer[i].GetComponentInParent<IDamageable>();
+                if (damageable == null || !damageable.IsAlive) continue;
+                if (damageable.Transform == transform) continue;
+                if (_hitThisSwing.Contains(damageable)) continue;
+
+                Vector3 toTarget = damageable.Transform.position - transform.position;
+                toTarget.y = 0f;
+                if (halfAngle < 180f && Vector3.Angle(facing, toTarget) > halfAngle) continue;
+
+                float sqrDistance = toTarget.sqrMagnitude;
+                if (sqrDistance >= bestSqrDistance) continue;
+
+                bestSqrDistance = sqrDistance;
+                best = damageable;
+            }
+
+            return best;
         }
 
         // ---------------- 대상 탐색 ----------------

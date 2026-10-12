@@ -35,7 +35,12 @@ namespace ForagerCP
             _body.freezeRotation = true;
         }
 
-        void Update() => AimAtPointer();
+        void Update()
+        {
+            // 스윙이 적 쪽으로 겨눠둔 동안에는 건드리지 않는다(PlayerActionState가 판단).
+            if (_state != null && _state.AimOwnedByOther) return;
+            AimAtPointer();
+        }
 
         void FixedUpdate()
         {

@@ -38,6 +38,10 @@ namespace ForagerCP
         /// 대시는 '순간이동'이 아니라 이속 부스트라 이동 소유권은 그대로 둔다.
         public bool MovementOwnedByOther => IsKnockback;
 
+        /// 스윙이 적 쪽으로 돌려놓은 동안에는 커서 조준이 손을 뗀다.
+        /// 안 그러면 다음 프레임에 8방향 스냅이 덮어써서 보정이 한 프레임 만에 사라진다.
+        public bool AimOwnedByOther => _attacker != null && _attacker.HasAimLock;
+
         public float MoveSpeedMultiplier
         {
             get
