@@ -24,10 +24,25 @@ namespace ForagerCP
         /// 기획이 어느 쪽을 고르든 이 스위치 하나로 흡수되도록 둔다.
         [SerializeField] bool _permanentUnlock = true;
 
+        [Header("경계")]
+        /// 경계를 두를 벽의 모양. 비우면 지역 색을 입힌 기본 벽을 쓴다.
+        /// 아이템이 DropPrefab을 들고 있는 것과 같은 이유 — 지역이 자기 겉모습을 들어야 아트 교체가 에셋 수정으로 끝난다.
+        [SerializeField] GameObject _wallPrefab;
+
+        /// 드나드는 문의 모양. 비우면 기본 문(벽과 같은 모양에 색만 다르게)을 쓴다.
+        [SerializeField] GameObject _gatePrefab;
+
+        [SerializeField] float _wallHeight = 2f;
+        [SerializeField] float _wallThickness = 0.5f;
+
         /// 이름을 비워두면 에셋 파일명을 쓴다 — ItemDefinition과 같은 규칙.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
 
         public Color MapColor => _mapColor;
+        public GameObject WallPrefab => _wallPrefab;
+        public GameObject GatePrefab => _gatePrefab;
+        public float WallHeight => Mathf.Max(0.2f, _wallHeight);
+        public float WallThickness => Mathf.Max(0.05f, _wallThickness);
         public IReadOnlyList<RegionRequirement> Requirements => _requirements;
         public bool PermanentUnlock => _permanentUnlock;
 

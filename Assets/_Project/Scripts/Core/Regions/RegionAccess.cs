@@ -23,20 +23,34 @@ namespace ForagerCP
         readonly HashSet<RegionDefinition> _unlocked = new HashSet<RegionDefinition>();
         RegionContext _context;
 
+        /// 늦게 만든다. Awake에서만 채우면 에디터 도구가 물었을 때 null이 되는데,
+        /// 조건은 context를 믿고 쓰므로 그대로 터진다(문 안내 문구를 씬에서 미리 볼 때 실제로 터졌다).
+        RegionContext Context
+        {
+            get
+            {
+                if (_context != null) return _context;
+
+                if (_level == null) _level = FindFirstObjectByType<PlayerLevel>();
+                if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
+                if (_gold == null) _gold = FindFirstObjectByType<GoldWallet>();
+                if (_flags == null) _flags = FindFirstObjectByType<ProgressFlags>();
+
+                _context = new RegionContext
+                {
+                    Level = _level,
+                    Inventory = _inventory,
+                    Gold = _gold,
+                    Flags = _flags,
+                };
+                return _context;
+            }
+        }
+
         void Awake()
         {
-            if (_level == null) _level = FindFirstObjectByType<PlayerLevel>();
-            if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
-            if (_gold == null) _gold = FindFirstObjectByType<GoldWallet>();
-            if (_flags == null) _flags = FindFirstObjectByType<ProgressFlags>();
-
-            _context = new RegionContext
-            {
-                Level = _level,
-                Inventory = _inventory,
-                Gold = _gold,
-                Flags = _flags,
-            };
+            // 참조를 여기서 한 번 확정해 둔다. 실제 조립은 Context가 한다.
+            _ = Context;
         }
 
         /// 레벨이 오르거나 사건이 일어나면 그때만 다시 따져본다.
@@ -77,7 +91,7 @@ namespace ForagerCP
             for (int i = 0; i < requirements.Count; i++)
             {
                 RegionRequirement requirement = requirements[i];
-                if (requirement == null || requirement.IsMet(_context)) continue;
+                if (requirement == null || requirement.IsMet(Context)) continue;
 
                 blocking = requirement;
                 return false;
@@ -101,7 +115,7 @@ namespace ForagerCP
             IReadOnlyList<RegionRequirement> requirements = region.Requirements;
             for (int i = 0; i < requirements.Count; i++)
             {
-                if (requirements[i] != null) requirements[i].Consume(_context);
+                if (requirements[i] != null) requirements[i].Consume(Context);
             }
 
             if (region.PermanentUnlock) _unlocked.Add(region);
