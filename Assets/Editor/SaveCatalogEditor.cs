@@ -19,6 +19,7 @@ namespace ForagerCP.EditorTools
             "EquipmentDefinition",
             "CraftRecipe",
             "ShopGood",
+            "BuffDefinition",
             "SkillDefinition",
             "RegionDefinition",
         };

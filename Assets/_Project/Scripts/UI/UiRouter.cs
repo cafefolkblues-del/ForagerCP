@@ -48,6 +48,9 @@ namespace ForagerCP
 
         void OnEnable()
         {
+            for (int i = 0; i < _panels.Count; i++) _panels[i].OpenedChanged += OnPanelChanged;
+            PushInputState();
+
             if (_input == null) return;
             _input.InventoryToggled += ToggleInventory;
             _input.CancelPressed += OnCancel;
@@ -55,9 +58,26 @@ namespace ForagerCP
 
         void OnDisable()
         {
+            for (int i = 0; i < _panels.Count; i++)
+            {
+                if (_panels[i] != null) _panels[i].OpenedChanged -= OnPanelChanged;
+            }
+
+            // 꺼질 때 막아둔 채로 두면 입력이 영영 안 돌아온다.
+            if (_input != null) _input.GameplayBlocked = false;
+
             if (_input == null) return;
             _input.InventoryToggled -= ToggleInventory;
             _input.CancelPressed -= OnCancel;
+        }
+
+        void OnPanelChanged(UiWindow panel) => PushInputState();
+
+        /// 창이 하나라도 떠 있으면 게임 입력을 끊는다. 입력이 UI를 묻는 게 아니라
+        /// 창을 아는 쪽이 밀어 넣는다 — 그래야 아는 곳이 여기 하나로 남는다.
+        void PushInputState()
+        {
+            if (_input != null) _input.GameplayBlocked = AnyOpen;
         }
 
         public void ToggleInventory() => TogglePanel(_inventoryPanel);

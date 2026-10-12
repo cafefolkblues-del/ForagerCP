@@ -20,6 +20,7 @@ namespace ForagerCP
         [SerializeField] PlayerShield _shield;
         [SerializeField] PlayerDash _dash;
         [SerializeField] PlayerEquipment _equipment;
+        [SerializeField] PlayerBuffs _buffs;
 
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
         [SerializeField] float _invulnerableTime = 1f;
@@ -51,6 +52,7 @@ namespace ForagerCP
             if (_shield == null) _shield = GetComponent<PlayerShield>();
             if (_dash == null) _dash = GetComponent<PlayerDash>();
             if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
+            if (_buffs == null) _buffs = FindFirstObjectByType<PlayerBuffs>();
         }
 
         void Start() => Changed?.Invoke(this);
@@ -79,7 +81,8 @@ namespace ForagerCP
 
             // 방어구는 들어온 피해를 깎는다. 다만 0으로는 못 만든다 —
             // 방어구만으로 무적이 되면 전투가 성립하지 않는다.
-            int reduction = _equipment != null ? _equipment.DamageReduction : 0;
+            int reduction = (_equipment != null ? _equipment.DamageReduction : 0)
+                          + (_buffs != null ? _buffs.DamageReduction : 0);
             int taken = Mathf.Max(1, amount - reduction);
 
             _invulnerableUntil = Time.time + _invulnerableTime;

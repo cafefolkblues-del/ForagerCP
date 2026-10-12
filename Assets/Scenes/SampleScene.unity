@@ -5536,7 +5536,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294768114
   m_fontColor: {r: 0.95, g: 0.96, b: 0.99, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -5549,7 +5549,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -7767,7 +7767,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -8865,7 +8865,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -13815,7 +13815,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -14706,7 +14706,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294768114
   m_fontColor: {r: 0.95, g: 0.96, b: 0.99, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -14719,7 +14719,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -16630,7 +16630,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -18590,6 +18590,7 @@ MonoBehaviour:
   _inventory: {fileID: 890792609}
   _equipment: {fileID: 1954203125}
   _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+  _drops: {fileID: 890792612}
 --- !u!114 &1591356919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22847,6 +22848,8 @@ GameObject:
   - component: {fileID: 1954203123}
   - component: {fileID: 1954203124}
   - component: {fileID: 1954203125}
+  - component: {fileID: 1954203126}
+  - component: {fileID: 1954203127}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -22868,6 +22871,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HarvestPower
   _basePower: 5
   _equipment: {fileID: 1954203125}
+  _buffs: {fileID: 1954203126}
 --- !u!114 &1954203106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22913,6 +22917,7 @@ MonoBehaviour:
   _state: {fileID: 1954203120}
   _power: {fileID: 1954203105}
   _equipment: {fileID: 1954203125}
+  _buffs: {fileID: 1954203126}
   _flags: {fileID: 890792615}
   _range: 2.5
   _halfAngle: 45
@@ -23099,6 +23104,7 @@ MonoBehaviour:
   _shield: {fileID: 1954203122}
   _dash: {fileID: 1954203119}
   _equipment: {fileID: 1954203125}
+  _buffs: {fileID: 1954203126}
   _invulnerableTime: 1
   _knockbackWhenBlocked: 0
 --- !u!114 &1954203117
@@ -23235,6 +23241,36 @@ MonoBehaviour:
   _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
   _startingGear:
   - {fileID: 11400000, guid: a668d2596eadf3b47bdce765a66821ff, type: 2}
+--- !u!114 &1954203126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954203104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e4fd8da0c3a9484bb9449f24ff29731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerBuffs
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+--- !u!114 &1954203127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1954203104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3c4181a875659a4795c74f172c024cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.ConsumableUser
+  _input: {fileID: 1954203110}
+  _quickBar: {fileID: 890792613}
+  _inventory: {fileID: 890792609}
+  _health: {fileID: 1954203116}
+  _buffs: {fileID: 1954203126}
 --- !u!1 &1957925185
 GameObject:
   m_ObjectHideFlags: 0

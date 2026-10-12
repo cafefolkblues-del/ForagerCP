@@ -10,10 +10,12 @@ namespace ForagerCP
         void Awake()
         {
             if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
+            if (_buffs == null) _buffs = FindFirstObjectByType<PlayerBuffs>();
         }
 
         [SerializeField] int _basePower = 5;
         [SerializeField] PlayerEquipment _equipment;
+        [SerializeField] PlayerBuffs _buffs;
 
         public event Action<int> Changed;
 
@@ -22,7 +24,8 @@ namespace ForagerCP
         public int Bonus { get; private set; }
 
         public int FromTool => _equipment != null ? _equipment.HarvestPower : 0;
-        public int Value => _basePower + FromTool + Bonus;
+        public int FromBuff => _buffs != null ? _buffs.HarvestPower : 0;
+        public int Value => _basePower + FromTool + FromBuff + Bonus;
 
         public void AddBonus(int amount)
         {

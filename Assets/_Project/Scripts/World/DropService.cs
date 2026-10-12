@@ -74,6 +74,22 @@ namespace ForagerCP
             return drop;
         }
 
+        /// 가방에 넣되 안 들어간 만큼은 바닥에 떨군다.
+        ///
+        /// 돌려주는 자리(제작 취소 환불, 제작 수령)는 '넣지 못하면 막는다'가 답이 아니다 —
+        /// 취소를 못 하게 되면 자리가 영영 묶이고, 그냥 버리면 재료가 증발한다.
+        /// 반환값은 가방에 들어간 수.
+        public int GiveOrDrop(ItemDefinition definition, int count, Vector3 position)
+        {
+            if (definition == null || count <= 0) return 0;
+
+            int accepted = _inventory != null ? _inventory.Add(definition, count) : 0;
+            int overflow = count - accepted;
+            if (overflow > 0) Spawn(definition, overflow, position);
+
+            return accepted;
+        }
+
         /// 줍기 판정은 콜라이더 기반이라 모델에 콜라이더가 없으면 영원히 못 줍는다.
         /// 트리거로 넣어야 길을 막지 않는다.
         static void EnsurePickupCollider(GameObject instance)

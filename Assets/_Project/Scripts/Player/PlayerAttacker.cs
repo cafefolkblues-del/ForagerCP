@@ -22,6 +22,7 @@ namespace ForagerCP
         [SerializeField] PlayerActionState _state;
         [SerializeField] HarvestPower _power;
         [SerializeField] PlayerEquipment _equipment;
+        [SerializeField] PlayerBuffs _buffs;
         [SerializeField] ProgressFlags _flags;
 
         [Header("검 판정")]
@@ -84,6 +85,7 @@ namespace ForagerCP
             if (_state == null) _state = GetComponent<PlayerActionState>();
             if (_power == null) _power = GetComponent<HarvestPower>();
             if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
+            if (_buffs == null) _buffs = FindFirstObjectByType<PlayerBuffs>();
             if (_flags == null) _flags = FindFirstObjectByType<ProgressFlags>();
         }
 
@@ -253,7 +255,8 @@ namespace ForagerCP
             float range = _swingIsCharged ? _chargeRange : _range;
             float halfAngle = _swingIsCharged ? 180f : _halfAngle; // 차지는 원형 360°
             // 공격력은 장비 한 곳에서만 나온다. 여기 숫자를 박으면 무기 티어를 늘릴 때 코드를 고쳐야 한다.
-            int weapon = _equipment != null ? _equipment.AttackPower : 1;
+            int weapon = (_equipment != null ? _equipment.AttackPower : 1)
+                       + (_buffs != null ? _buffs.AttackPower : 0);
             int damage = Mathf.RoundToInt(Mathf.Max(1, weapon)
                                           * (_swingIsCharged ? _chargeDamageMultiplier : 1f));
 

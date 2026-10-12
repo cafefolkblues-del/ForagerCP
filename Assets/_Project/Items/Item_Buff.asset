@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8647dcec917e984c93dcbfb9f714d8b, type: 3}
+  m_Script: {fileID: 11500000, guid: 9fd774a9b6f28924bab9d09a30bdc563, type: 3}
   m_Name: Item_Buff
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.ItemDefinition
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.ConsumableDefinition
   _displayName: "\uD798\uC758 \uBB3C\uC57D"
   _icon: {fileID: 0}
   _maxStack: 10
@@ -21,3 +21,6 @@ MonoBehaviour:
   _uiColor: {r: 0.72, g: 0.55, b: 0.95, a: 1}
   _dropPrefab: {fileID: 0}
   _placePrefab: {fileID: 0}
+  _effects:
+  - {fileID: 11400000, guid: d15dbb2411dc06340bcf738d68cf241d, type: 2}
+  _costPerUse: 1

@@ -37,14 +37,21 @@ namespace ForagerCP
         InputAction _cancel;
         InputAction _place;
 
-        public Vector2 MoveAxis => _move.ReadValue<Vector2>();
+        /// 창이 떠 있는 동안 참. UiRouter가 밀어 넣는다 —
+        /// 입력이 UI를 참조하면 입력만 떼어 시험할 수가 없어진다.
+        ///
+        /// 휠이 핫바로 새는 것만 막아서는 부족하다. 상점에서 버튼을 눌러도 칼이 나가고
+        /// WASD로 걸어다니므로, 게임 쪽 입력을 한 자리에서 통째로 끊는다.
+        public bool GameplayBlocked { get; set; }
+
+        public Vector2 MoveAxis => GameplayBlocked ? Vector2.zero : _move.ReadValue<Vector2>();
 
         /// 채집은 누르고 있는 동안 쿨다운 간격으로 반복되게 둔다(6타 연타 피로 감소).
         /// 1타당 판정은 PlayerAttacker의 쿨다운이 담당.
-        public bool AttackHeld => _attack.IsPressed();
+        public bool AttackHeld => !GameplayBlocked && _attack.IsPressed();
 
         /// 방패는 누르고 있는 동안만 유지(토글 아님).
-        public bool ShieldHeld => _shield.IsPressed();
+        public bool ShieldHeld => !GameplayBlocked && _shield.IsPressed();
 
         /// 좌클릭을 누르고 있는 시간. 떼면 0으로 돌아간다. 차지 게이지가 이 값을 본다.
         public float AttackHoldTime { get; private set; }
@@ -128,6 +135,8 @@ namespace ForagerCP
         /// 다시 역추적해야 한다. 키 배열을 직접 읽는 편이 짧고 의도도 분명하다.
         void ReadHotbar()
         {
+            if (GameplayBlocked) return;
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null)
             {
@@ -173,11 +182,21 @@ namespace ForagerCP
             _place.Dispose();
         }
 
-        void OnInteractPerformed(InputAction.CallbackContext _) => InteractPressed?.Invoke();
+        /// ESC와 가방 열기는 막지 않는다 — 창을 닫을 길까지 끊으면 빠져나올 수가 없다.
+        void OnInteractPerformed(InputAction.CallbackContext _)
+        {
+            if (!GameplayBlocked) InteractPressed?.Invoke();
+        }
         void OnInventoryPerformed(InputAction.CallbackContext _) => InventoryToggled?.Invoke();
         void OnMapPerformed(InputAction.CallbackContext _) => MapToggled?.Invoke();
         void OnCancelPerformed(InputAction.CallbackContext _) => CancelPressed?.Invoke();
-        void OnDashPerformed(InputAction.CallbackContext _) => DashPressed?.Invoke();
-        void OnPlacePerformed(InputAction.CallbackContext _) => PlacePressed?.Invoke();
+        void OnDashPerformed(InputAction.CallbackContext _)
+        {
+            if (!GameplayBlocked) DashPressed?.Invoke();
+        }
+        void OnPlacePerformed(InputAction.CallbackContext _)
+        {
+            if (!GameplayBlocked) PlacePressed?.Invoke();
+        }
     }
 }

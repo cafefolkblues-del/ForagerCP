@@ -22,6 +22,7 @@ namespace ForagerCP
         [SerializeField] Inventory _inventory;
         [SerializeField] PlayerEquipment _equipment;
         [SerializeField] SaveCatalog _catalog;
+        [SerializeField] DropService _drops;
 
         public event Action<CraftingStation> Changed;
         public event Action<CraftRecipe> Finished;
@@ -73,6 +74,7 @@ namespace ForagerCP
         {
             if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
             if (_equipment == null) _equipment = FindFirstObjectByType<PlayerEquipment>();
+            if (_drops == null) _drops = FindFirstObjectByType<DropService>();
 
             for (int i = 0; i < SlotCount; i++) _slots.Add(new Slot());
         }
@@ -168,7 +170,7 @@ namespace ForagerCP
                 return false;
             }
 
-            if (recipe.Item != null) _inventory.Add(recipe.Item, recipe.ItemCount);
+            if (recipe.Item != null) Give(recipe.Item, recipe.ItemCount);
 
             slot.Recipe = null;
             slot.Remaining = 0f;
@@ -195,11 +197,18 @@ namespace ForagerCP
                 CraftRecipe.Ingredient ingredient = recipe.Ingredients[i];
                 if (ingredient?.Item == null) continue;
 
-                _inventory.Add(ingredient.Item, ingredient.Count);
+                Give(ingredient.Item, ingredient.Count);
             }
 
             Changed?.Invoke(this);
             return true;
+        }
+
+        /// 가방이 꽉 찼으면 바닥에 떨군다. 돌려줄 것을 버리면 안 된다.
+        void Give(ItemDefinition item, int count)
+        {
+            if (_drops != null) _drops.GiveOrDrop(item, count, transform.position);
+            else _inventory.Add(item, count);
         }
 
         public void Interact() => OpenRequested?.Invoke(this);
