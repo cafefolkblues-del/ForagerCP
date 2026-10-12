@@ -7,12 +7,14 @@ namespace ForagerCP
     /// 슬롯 + 스택 구조의 인벤토리. 배열이 아니라 List라 칸 수를 런타임에 늘려도 된다
     /// (확장 2-3 보관함, 2-4 용량 제약이 여기 위에 얹힌다).
     ///
-    /// ⚠️ 용량 제약은 기본으로 꺼져 있다. 1장 사양이 "인벤토리 불필요"이고,
-    /// 인벤 셔틀 악용 보완책이 아직 미확정이라 규칙을 코드가 먼저 정하면 안 되기 때문.
+    /// 용량 제한이 켜져 있다(기본 20칸, 상점에서 10칸씩 두 번 확장).
+    /// 넘치는 분은 버리지 않는다 — 돌려주는 자리는 DropService.GiveOrDrop으로 바닥에 떨구고,
+    /// 사는 자리는 SpaceFor로 미리 막는다. 캔 자원은 애초에 바닥에 떨어지므로
+    /// 가방이 꽉 차 못 주우면 그대로 두었다가 수명이 다해 사라진다(확정).
     public class Inventory : MonoBehaviour, ISaveable
     {
-        [SerializeField] int _slotCount = 12;
-        [SerializeField] bool _enforceCapacity;
+        [SerializeField] int _slotCount = 20;
+        [SerializeField] bool _enforceCapacity = true;
         [SerializeField] SaveCatalog _catalog;
 
         readonly List<ItemStack> _stacks = new List<ItemStack>();
@@ -48,8 +50,30 @@ namespace ForagerCP
             return total;
         }
 
+        /// 지금 이 종류를 몇 개까지 받을 수 있는지.
+        ///
+        /// Add를 불러보고 반환값으로 아는 방법은 쓸 수 없는 자리가 있다 — 사는 쪽은
+        /// 돈을 내기 전에 알아야 하므로. 기존 칸의 남은 자리와 새로 만들 수 있는 칸을 함께 센다.
+        public int SpaceFor(ItemDefinition definition)
+        {
+            if (definition == null) return 0;
+            if (!_enforceCapacity) return int.MaxValue;
+
+            int space = 0;
+            for (int i = 0; i < _stacks.Count; i++)
+            {
+                if (_stacks[i].Definition == definition) space += _stacks[i].Space;
+            }
+
+            int freeSlots = Mathf.Max(0, _slotCount - _stacks.Count);
+            return space + freeSlots * definition.MaxStack;
+        }
+
         /// 반환값 = 실제로 담긴 수량. amount보다 적으면 그만큼이 넘친 것이다.
-        /// 넘친 분의 처리(바닥 드랍 등)는 호출하는 쪽 몫 — 규칙이 확정되면 그쪽만 고치면 된다.
+        ///
+        /// 넘친 분을 어떻게 할지는 호출하는 쪽이 정한다. 돌려주는 자리(제작 환불·수령)는
+        /// DropService.GiveOrDrop을 거쳐 바닥에 떨구고, 사는 자리는 SpaceFor로 미리 막는다.
+        /// ⚠️ 그냥 Add만 부르고 반환값을 버리면 그 수량이 조용히 증발한다.
         public int Add(ItemDefinition definition, int amount)
         {
             if (definition == null || amount <= 0) return 0;
