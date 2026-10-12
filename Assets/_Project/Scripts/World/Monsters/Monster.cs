@@ -57,7 +57,8 @@ namespace ForagerCP
         /// GridPlacement가 OnEnable에서 칸 좌표로 위치를 맞추기 때문에, Awake 시점 값은 배치 전 좌표일 수 있다.
         void Start() => HomePosition = transform.position;
 
-        public void TakeDamage(int amount, GameObject source)
+        /// 몬스터는 막는 수단이 없어 kind를 보지 않는다. 인터페이스를 맞추기 위해서만 받는다.
+        public void TakeDamage(int amount, GameObject source, DamageKind kind = DamageKind.Normal)
         {
             if (!_alive || amount <= 0) return;
 

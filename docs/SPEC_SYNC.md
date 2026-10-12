@@ -40,7 +40,7 @@
 | C2 | 기본 평타 = 단일 타겟 | **최근접 하나만**(차지는 360° 예외) | ✅ | 완료 | `PlayerAttacker.ApplyHits` | [x] |
 | C6 | 평타 자동 방향 보정(사거리 내 최근접) | **스윙 시작 시 1회 보정** | ✅ | 완료 | `PlayerAttacker`, `PlayerActionState`, `PlayerMotor` | [x] |
 | C3 | 다중타격을 스킬로 해금 | **격자·효과·화면 완성.** `attack_multi` 해금 시 광역 | ✅ | 완료 | `SkillTree`, `SkillBoard`, `FlagSkillEffect` | [x] |
-| C5 | 방패: 전방 일반공격만 0 / 방어불가·후방은 피격 / 이동 80% | 이동 **80%** 적용 / 판정은 아직 완전차단 | 🟡 | 갈기(판정만 남음) | `PlayerShield`, `PlayerHealth` | [ ] |
+| C5 | 방패: 전방 일반공격만 0 / 방어불가·후방은 피격 / 이동 80% | **전부 적용.** 방어불가를 쓰는 공격은 C8 대기 | ✅ | 완료 | `PlayerShield`, `PlayerHealth`, `IDamageable` | [x] |
 | C4 | 점프(Space, 이동용) | 점프 없음(대시만) | ⚠️ | **보류 권고** | `GameInput`, `PlayerMotor` | [ ] |
 | C8 | 몬스터 유형 5종 + 공격 예고 + 투사체 + 방어불가 | 단일 종류(추적+근접) | 🆕 | 신설 | `MonsterDefinition`, `MonsterAI` | [ ] |
 | C9 | 사망 시 점령 구역 전투 초기화 | 구역별 일괄 처리 없음 | 🆕 | 신설 — **선행 조건 풀림** | `MonsterAI` + `RegionMap` | [ ] |
@@ -51,6 +51,13 @@
 > - 자동조준은 스윙 시작에 한 번만. 액티브 내내 다시 겨누면 적을 따라 칼이 휘는 유도탄이 된다.
 >   커서 방향 ±60°(`_aimConeDegrees`) 안의 적만 — 뒤에 선 적까지 집으면 조작이 손에서 떠난다.
 >   조준 소유권은 `PlayerActionState.AimOwnedByOther`가 중재한다(넉백이 이동을 가져가는 것과 같은 패턴).
+> - 방패는 각도만 답하고(`PlayerShield.Blocks`) 막히는지의 최종 판단은 `PlayerHealth`가 한다.
+>   조건이 두 군데로 갈리면 연출(Blocked 이벤트)과 판정이 어긋난다.
+>   방어불가는 각도를 따지기 전에 통과시킨다 — `Blocks`를 불러두고 결과만 무시하면 막는 연출이 잘못 나간다.
+> - `DamageKind`(Normal / Unblockable)를 `IDamageable.TakeDamage`에 기본값으로 얹었다.
+>   **방어불가를 실제로 쓰는 공격은 C8이 들고 온다.** 지금은 이음새만 있다.
+> - 막아냈을 때 밀려날지는 `PlayerHealth._knockbackWhenBlocked`(기본 끔 = 완전 차단).
+>   새 문서가 넉백을 언급하지 않아 앞서 확정된 쪽을 유지했다 — **다르면 알려주세요.**
 > - 다중타격은 `attack_multi` 기록으로 열린다. 스킬 "휘두르기"가 그 기록을 세운다.
 >   기록 이름은 `PlayerAttacker._multiHitFlag`로 인스펙터에 노출.
 >
@@ -133,8 +140,8 @@
 
 1. ~~수치/토글: C7, C5 이동, I4, E3 골드~~ ✅ 완료 (`83a543d`)
 2. ~~C3 스킬 격자 + 화면~~ ✅ 완료 (`0704927`, `7f0ca51`)
-3. ~~C2 + C6 평타 규칙~~ ✅ 완료 / **C5 방어 판정** ← 다음
-4. 세이브 계약(S1 틀만)
+3. ~~C2 + C6 평타 규칙 / C5 방어 판정~~ ✅ 완료
+4. **세이브 계약(S1 틀만)** ← 다음
 5. M1 제작 → M2 도구 티어 → E1 판매 → E4 상점 품목 → I6 보관함 → I5 소모품 → C8 몬스터 유형
 6. M6 보스 → C9 구역 전투 초기화 → E5 거래 자동저장
 

@@ -23,6 +23,9 @@ namespace ForagerCP
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
         [SerializeField] float _invulnerableTime = 1f;
 
+        /// 막아냈을 때도 밀려날지. 끄면 데미지도 넉백도 없는 완전 차단.
+        [SerializeField] bool _knockbackWhenBlocked;
+
         public event Action<PlayerHealth> Changed;
         public event Action<PlayerHealth> Died;
 
@@ -48,7 +51,7 @@ namespace ForagerCP
 
         void Start() => Changed?.Invoke(this);
 
-        public void TakeDamage(int amount, GameObject source)
+        public void TakeDamage(int amount, GameObject source, DamageKind kind = DamageKind.Normal)
         {
             if (!IsAlive || amount <= 0) return;
             if (Time.time < _invulnerableUntil) return;
@@ -56,10 +59,17 @@ namespace ForagerCP
             // 대시 무적(기본 꺼짐). 기획이 원하면 PlayerDash에서 시간만 올리면 여기 코드는 그대로다.
             if (_dash != null && _dash.IsInvulnerable) return;
 
-            // 방패: 정면에서 온 공격이면 데미지도 넉백도 없다(확정 스펙 — 완전 차단).
-            if (_shield != null && source != null && _shield.Blocks(source.transform.position))
+            // 방패는 '정면에서 온 일반공격'만 걷어낸다.
+            // 방어불가는 각도를 따지기 전에 통과시킨다 — 막는 시늉조차 하면 안 되므로 Blocks도 부르지 않는다
+            // (Blocks는 성공하면 Blocked 이벤트를 쏘기 때문에, 불러두고 결과만 무시하면 연출이 잘못 나간다).
+            if (kind == DamageKind.Normal
+                && _shield != null && source != null
+                && _shield.Blocks(source.transform.position))
             {
                 Blocked?.Invoke(this);
+
+                // 막아낸 뒤 밀려날지. 기본은 완전 차단(앞서 확정된 쪽)이고, 기획이 원하면 켜면 된다.
+                if (_knockbackWhenBlocked && _knockback != null) _knockback.ApplyFrom(source.transform);
                 return;
             }
 

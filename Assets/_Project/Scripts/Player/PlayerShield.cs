@@ -5,9 +5,11 @@ namespace ForagerCP
 {
     /// 우클릭을 누르고 있는 동안 정면 180°의 피해를 막는다.
     ///
-    /// 확정 스펙: 막으면 데미지 0 + 넉백도 없음(완전 차단). 방패 중에는 저속 이동만 되고
-    /// 공격·대시는 막힌다 — 그 판단은 PlayerActionState가 한다.
-    /// 등 뒤나 옆에서 들어온 공격은 그대로 맞는다.
+    /// 막아내는 것은 '정면에서 온 일반공격'뿐이다. 방어불가 공격은 정면이어도 그대로 들어오고,
+    /// 등 뒤나 옆에서 온 것도 그대로 맞는다. 막히는지 아닌지의 최종 판단은 PlayerHealth가 하고,
+    /// 여기는 각도만 답한다 — 조건이 두 군데로 갈리면 연출과 판정이 어긋난다.
+    ///
+    /// 방패 중에는 저속 이동만 되고 공격·대시는 막힌다 — 그 판단은 PlayerActionState가 한다.
     public class PlayerShield : MonoBehaviour
     {
         [SerializeField] GameInput _input;
