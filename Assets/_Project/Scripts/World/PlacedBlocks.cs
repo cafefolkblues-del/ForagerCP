@@ -29,7 +29,9 @@ namespace ForagerCP
 
         // ------------------------------------------------------------------ 만들기
 
-        public GameObject Place(ItemDefinition item, Vector2Int cell)
+        /// state를 주면 만든 직후 그 블럭에 되돌려 넣는다(보관함 내용 등).
+        /// 복원도 이 길을 타게 해야 '놓기'와 '불러오기'가 어긋나지 않는다.
+        public GameObject Place(ItemDefinition item, Vector2Int cell, string state = null)
         {
             if (item == null || item.PlacePrefab == null) return null;
 
@@ -52,6 +54,8 @@ namespace ForagerCP
                 if (_rewards != null) _rewards.Track(node);
             }
 
+            mark.RestoreState(state);
+
             Created?.Invoke(mark);
             return instance;
         }
@@ -64,6 +68,9 @@ namespace ForagerCP
             public string Item;
             public int X;
             public int Y;
+
+            /// 블럭이 더 들고 있는 상태. 아무것도 없으면 빈 문자열이라 저장 글자가 늘지 않는다.
+            public string State;
         }
 
         [Serializable]
@@ -89,6 +96,7 @@ namespace ForagerCP
                     Item = SaveCatalog.NameOf(block.Source),
                     X = placement.Cell.x,
                     Y = placement.Cell.y,
+                    State = block.CaptureState(),
                 });
             }
 
@@ -116,7 +124,7 @@ namespace ForagerCP
                 ItemDefinition item = _catalog != null ? _catalog.Find<ItemDefinition>(saved.Item) : null;
                 if (item == null) continue;
 
-                Place(item, new Vector2Int(saved.X, saved.Y));
+                Place(item, new Vector2Int(saved.X, saved.Y), saved.State);
             }
         }
 

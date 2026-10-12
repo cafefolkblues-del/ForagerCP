@@ -12,6 +12,10 @@ namespace ForagerCP
     {
         [SerializeField] RegionTracker _tracker;
         [SerializeField] RegionAccess _access;
+
+        /// 설치 거부 중 '구역 규칙' 때문인 것만 여기서 띄운다. 이 줄은 결국
+        /// '한 줄 알림'이고, 알림 띄우는 자리를 둘로 만들면 둘이 겹쳐 뜬다.
+        [SerializeField] BlockPlacer _placer;
         [SerializeField] TMP_Text _label;
         [SerializeField] CanvasGroup _group;
 
@@ -27,6 +31,7 @@ namespace ForagerCP
         {
             if (_tracker == null) _tracker = FindFirstObjectByType<RegionTracker>();
             if (_access == null) _access = FindFirstObjectByType<RegionAccess>();
+            if (_placer == null) _placer = FindFirstObjectByType<BlockPlacer>();
             if (_group != null) _group.alpha = 0f;
         }
 
@@ -37,6 +42,8 @@ namespace ForagerCP
                 _tracker.Changed += OnRegionChanged;
                 _tracker.PushedBack += OnPushedBack;
             }
+
+            if (_placer != null) _placer.Rejected += OnPlaceRejected;
 
             if (_access == null) return;
 
@@ -52,10 +59,21 @@ namespace ForagerCP
                 _tracker.PushedBack -= OnPushedBack;
             }
 
+            if (_placer != null) _placer.Rejected -= OnPlaceRejected;
+
             if (_access == null) return;
 
             _access.Refused -= OnRefused;
             _access.Unlocked -= OnUnlocked;
+        }
+
+        /// 거부 사유 대부분은 미리보기가 빨개져서 보인다. 구역 규칙만은 눈에 안 보여 글로 알린다.
+        void OnPlaceRejected(ItemDefinition item, PlaceResult result)
+        {
+            string what = item != null ? item.DisplayName : "그것";
+
+            if (result == PlaceResult.RegionLimit) Show($"이 구역엔 {what}이 이미 있습니다", _refusedColor);
+            else if (result == PlaceResult.NoRegion) Show($"{what}은 구역 안에만 놓을 수 있습니다", _refusedColor);
         }
 
         void OnRegionChanged(RegionDefinition region)

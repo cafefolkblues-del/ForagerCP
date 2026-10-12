@@ -117,7 +117,11 @@ namespace ForagerCP.EditorTools
             // 장비·제작에서 늘어난 자동탐색 필드
             "PlayerAttacker._equipment", "PlayerHealth._equipment", "HarvestPower._equipment",
             "ShopStation._equipment", "CraftingStation._inventory", "CraftingStation._equipment",
-            "CraftPanelView._window", "CraftPanelView._router", "CraftPanelView._equipment"
+            "CraftPanelView._window", "CraftPanelView._router", "CraftPanelView._equipment",
+
+            // 보관함에서 늘어난 자동탐색 필드
+            "RegionBannerView._placer",
+            "StoragePanelView._window", "StoragePanelView._router", "StoragePanelView._inventory"
         };
 
         /// 비워두는 것 자체가 뜻인 필드. 알릴 것이 없으므로 아예 건너뛴다.

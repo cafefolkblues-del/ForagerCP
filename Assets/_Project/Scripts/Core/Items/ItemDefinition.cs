@@ -29,6 +29,11 @@ namespace ForagerCP
         /// (무기·재료처럼 놓을 수 없는 것에 억지로 모양을 만들지 않으려고 없음을 기본으로 둔다).
         [SerializeField] GameObject _placePrefab;
 
+        /// 한 구역에 놓을 수 있는 개수. 0이면 제한 없음(블럭 대부분).
+        /// 보관함이 '구역당 1개'라서 생긴 값인데, 종류가 아니라 수치로 둔 것은
+        /// 같은 제약이 다른 설치물에 또 오면 필드 하나로 끝나기 때문이다.
+        [SerializeField] int _maxPerRegion;
+
         /// 이름을 비워두면 에셋 파일명을 쓴다 — 디자이너가 한 군데만 고쳐도 되게.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
 
@@ -44,5 +49,8 @@ namespace ForagerCP
         public GameObject DropPrefab => _dropPrefab;
         public GameObject PlacePrefab => _placePrefab;
         public bool CanPlace => _placePrefab != null;
+
+        public int MaxPerRegion => Mathf.Max(0, _maxPerRegion);
+        public bool HasRegionLimit => _maxPerRegion > 0;
     }
 }

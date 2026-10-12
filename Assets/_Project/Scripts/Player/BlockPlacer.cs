@@ -13,6 +13,8 @@ namespace ForagerCP
         OutOfRange,
         CellTaken,     // 이미 뭔가 놓여 있는 칸
         Occupied,      // 플레이어나 몬스터가 서 있는 칸
+        RegionLimit,   // 이 구역에 허용 개수만큼 이미 놓여 있다(보관함)
+        NoRegion,      // 구역 밖 — 구역당 제한이 있는 것은 아무 땅에나 놓을 수 없다
     }
 
     /// 핫바에서 고른 것을 커서가 가리키는 칸에 놓는다(E).
@@ -43,7 +45,9 @@ namespace ForagerCP
         [SerializeField] Color _blockedColor = new Color(1f, 0.35f, 0.3f, 0.35f);
 
         public event Action<ItemDefinition, Vector2Int> Placed;
-        public event Action<PlaceResult> Rejected;
+        /// 무엇이 왜 거부됐는지. 아이템까지 같이 주는 이유: 사유만으로는
+        /// "이 구역엔 이미 있습니다"의 '이것'이 무엇인지 쓸 수가 없다.
+        public event Action<ItemDefinition, PlaceResult> Rejected;
 
         /// 지금 커서가 가리키는 칸. 미리보기와 설치가 같은 값을 보도록 프레임당 한 번만 계산한다.
         public Vector2Int TargetCell { get; private set; }
@@ -131,7 +135,30 @@ namespace ForagerCP
             // 살아있는 것은 그리드에 매이지 않아 레지스트리에 없다. 이것만 물리로 확인한다.
             if (HasOccupant(center + Vector3.up * HeightOffset)) return PlaceResult.Occupied;
 
-            return PlaceResult.Ok;
+            return CheckRegionLimit(item, cell);
+        }
+
+        /// 구역당 개수 제한. 제한이 있는 것을 들고 있을 때만 씬을 센다 —
+        /// 이 판정은 매 프레임(고스트 색) 돌기 때문에, 평소에는 비용이 0이어야 한다.
+        PlaceResult CheckRegionLimit(ItemDefinition item, Vector2Int cell)
+        {
+            if (!item.HasRegionLimit) return PlaceResult.Ok;
+
+            RegionDefinition region = RegionMap.At(cell);
+            if (region == null) return PlaceResult.NoRegion;
+
+            int placed = 0;
+            foreach (PlacedBlock block in FindObjectsByType<PlacedBlock>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (block.Source != item) continue;
+                if (!block.TryGetComponent(out GridPlacement placement)) continue;
+                if (RegionMap.At(placement.Cell) != region) continue;
+
+                placed++;
+            }
+
+            return placed >= item.MaxPerRegion ? PlaceResult.RegionLimit : PlaceResult.Ok;
         }
 
         /// 놓는 높이는 만드는 쪽이 들고 있다. 여기서 따로 두면 두 값이 어긋나 미리보기와 결과가 달라진다.
@@ -164,7 +191,7 @@ namespace ForagerCP
             PlaceResult result = Evaluate(TargetCell, out ItemDefinition item);
             if (result != PlaceResult.Ok)
             {
-                Rejected?.Invoke(result);
+                Rejected?.Invoke(item, result);
                 return;
             }
 
