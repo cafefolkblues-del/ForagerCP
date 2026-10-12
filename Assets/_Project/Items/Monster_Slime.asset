@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDefinition
   _displayName: "\uC2AC\uB77C\uC784"
   _maxHp: 20
-  _attackPower: 2
-  _attackInterval: 1.2
-  _attackRange: 1.2
+  _attacks:
+  - {fileID: 11400000, guid: 59b300e6648722342b68c7f497d8f223, type: 2}
   _moveSpeed: 2.5
   _detectRange: 8
   _leashDistance: 12

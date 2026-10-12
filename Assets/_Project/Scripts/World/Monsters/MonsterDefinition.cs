@@ -1,8 +1,13 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ForagerCP
 {
     /// 몬스터 한 종류의 수치. 새 몬스터 = 이 에셋 + 프리팹 + 배치 팔레트 등록, 코드 수정 없음.
+    ///
+    /// 공격은 여기 수치로 들고 있지 않고 MonsterAttack 에셋 목록으로 든다.
+    /// '유형'이란 결국 공격 조합이고, 조합을 수치 필드로 적으면 한 마리가 공격을 둘 이상
+    /// 가지는 순간(근접 + 투사체) 필드를 통째로 복제해야 한다.
     [CreateAssetMenu(menuName = "ForagerCP/몬스터", fileName = "Monster")]
     public class MonsterDefinition : ScriptableObject
     {
@@ -10,9 +15,10 @@ namespace ForagerCP
 
         [Header("전투")]
         [SerializeField] int _maxHp = 20;
-        [SerializeField] int _attackPower = 2;
-        [SerializeField] float _attackInterval = 1.2f;
-        [SerializeField] float _attackRange = 1.2f;
+
+        /// 쓸 수 있는 공격들. 매번 사거리에 맞고 재사용 대기가 끝난 것 중 앞쪽을 고르므로,
+        /// 먼저 쓰이길 바라는 것을 위에 둔다(원거리 → 근접 순이 보통).
+        [SerializeField] List<MonsterAttack> _attacks = new List<MonsterAttack>();
 
         [Header("이동 / 인지")]
         [SerializeField] float _moveSpeed = 2.5f;
@@ -28,13 +34,56 @@ namespace ForagerCP
 
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
         public int MaxHp => Mathf.Max(1, _maxHp);
-        public int AttackPower => Mathf.Max(0, _attackPower);
-        public float AttackInterval => Mathf.Max(0.05f, _attackInterval);
-        public float AttackRange => Mathf.Max(0.1f, _attackRange);
+        public IReadOnlyList<MonsterAttack> Attacks => _attacks;
         public float MoveSpeed => Mathf.Max(0f, _moveSpeed);
         public float DetectRange => Mathf.Max(0f, _detectRange);
         public float LeashDistance => Mathf.Max(0f, _leashDistance);
         public int ExpReward => Mathf.Max(0, _expReward);
         public float RespawnDelay => Mathf.Max(0f, _respawnDelay);
+
+        /// 목록의 첫 공격. 마법사·검사기처럼 '대표 한 방'이 필요한 쪽이 쓴다.
+        public MonsterAttack PrimaryAttack
+        {
+            get
+            {
+                for (int i = 0; i < _attacks.Count; i++)
+                {
+                    if (_attacks[i] != null) return _attacks[i];
+                }
+                return null;
+            }
+        }
+
+        /// 모든 공격을 쉬지 않고 쓸 수 있다고 봤을 때의 초당 피해.
+        /// 공격이 여럿이면 '공격력' 하나로 말할 수가 없어서 밸런스 표는 이쪽을 본다.
+        public float Dps
+        {
+            get
+            {
+                float total = 0f;
+                for (int i = 0; i < _attacks.Count; i++)
+                {
+                    if (_attacks[i] == null) continue;
+                    total += _attacks[i].Damage / _attacks[i].Cooldown;
+                }
+                return total;
+            }
+        }
+
+        /// 가장 먼 공격의 사거리. AI가 '어디까지 다가가야 하는지'를 여기서 묻는다 —
+        /// 공격마다 사거리가 다르므로 접근 거리를 수치로 따로 들면 둘이 어긋난다.
+        public float MaxAttackRange
+        {
+            get
+            {
+                float best = 0f;
+                for (int i = 0; i < _attacks.Count; i++)
+                {
+                    if (_attacks[i] == null) continue;
+                    best = Mathf.Max(best, _attacks[i].Range);
+                }
+                return best;
+            }
+        }
     }
 }

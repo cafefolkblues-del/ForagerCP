@@ -18,6 +18,7 @@ namespace ForagerCP.EditorTools
 
         const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
         const string ItemFolder = "Assets/_Project/Items";
+        const string AttackFolder = "Assets/_Project/Monsters/Attacks";
         const string MaterialFolder = "Assets/_Project/Materials";
         const string PalettePath = "Assets/_Project/MapPalette.asset";
         const string MineralBasePrefab = "Assets/_Project/Prefabs/Minerals/Mineral.prefab";
@@ -235,6 +236,7 @@ namespace ForagerCP.EditorTools
         IEnumerable<string> PlannedPaths()
         {
             if (_kind != ContentKind.Structure) yield return $"{ItemFolder}/{_assetId}.asset";
+            if (_kind == ContentKind.Monster) yield return $"{AttackFolder}/{_assetId}_Melee.asset";
             if (_model == null) yield return $"{MaterialFolder}/{_assetId}.mat";
             yield return $"{PrefabFolder()}/{_assetId}.prefab";
         }
@@ -248,6 +250,7 @@ namespace ForagerCP.EditorTools
             EnsureFolder(ItemFolder);
             EnsureFolder(MaterialFolder);
             EnsureFolder(PrefabFolder());
+            if (_kind == ContentKind.Monster) EnsureFolder(AttackFolder);
 
             GameObject prefab = null;
             Object definition = null;
@@ -304,9 +307,7 @@ namespace ForagerCP.EditorTools
             var definition = ScriptableObject.CreateInstance<MonsterDefinition>();
             Set(definition, "_displayName", DisplayNameOrId());
             Set(definition, "_maxHp", Mathf.Max(1, _monsterHp));
-            Set(definition, "_attackPower", Mathf.Max(0, _attackPower));
-            Set(definition, "_attackInterval", Mathf.Max(0.05f, _attackInterval));
-            Set(definition, "_attackRange", Mathf.Max(0.1f, _attackRange));
+            Set(definition, "_attacks", new List<MonsterAttack> { CreateMeleeAttack() });
             Set(definition, "_moveSpeed", Mathf.Max(0f, _moveSpeed));
             Set(definition, "_detectRange", Mathf.Max(0f, _detectRange));
             Set(definition, "_leashDistance", Mathf.Max(0f, _leashDistance));
@@ -317,6 +318,22 @@ namespace ForagerCP.EditorTools
             AssetDatabase.CreateAsset(definition, path);
             _createdPaths.Add(path);
             return definition;
+        }
+
+        /// 공격은 따로 에셋이다. 마법사는 근접 하나를 만들어 끼워주고, 원거리·방어불가는
+        /// 디자이너가 공격 에셋을 더 만들어 목록에 추가하면 된다 — 마법사를 안 고쳐도 된다.
+        MeleeAttack CreateMeleeAttack()
+        {
+            var attack = ScriptableObject.CreateInstance<MeleeAttack>();
+            Set(attack, "_displayName", DisplayNameOrId() + " 근접");
+            Set(attack, "_damage", Mathf.Max(0, _attackPower));
+            Set(attack, "_cooldown", Mathf.Max(0.05f, _attackInterval));
+            Set(attack, "_range", Mathf.Max(0.1f, _attackRange));
+
+            string path = $"{AttackFolder}/{_assetId}_Melee.asset";
+            AssetDatabase.CreateAsset(attack, path);
+            _createdPaths.Add(path);
+            return attack;
         }
 
         /// 모델이 없으면 기본 광물 프리팹의 '변형'으로 만든다 — 공통 구조 수정이 전부에 내려가도록.
@@ -513,9 +530,18 @@ namespace ForagerCP.EditorTools
             else if (_template is MonsterDefinition monster)
             {
                 _monsterHp = monster.MaxHp;
-                _attackPower = monster.AttackPower;
-                _attackInterval = monster.AttackInterval;
-                _attackRange = monster.AttackRange;
+
+                // 대표 한 방만 불러온다. 공격이 여럿인 몬스터를 본으로 삼으면 나머지는
+                // 디자이너가 목록에 직접 넣어야 한다 — 마법사가 통째로 복제하면
+                // 같은 공격 에셋이 이름만 다르게 늘어난다.
+                MonsterAttack primary = monster.PrimaryAttack;
+                if (primary != null)
+                {
+                    _attackPower = primary.Damage;
+                    _attackInterval = primary.Cooldown;
+                    _attackRange = primary.Range;
+                }
+
                 _moveSpeed = monster.MoveSpeed;
                 _detectRange = monster.DetectRange;
                 _leashDistance = monster.LeashDistance;

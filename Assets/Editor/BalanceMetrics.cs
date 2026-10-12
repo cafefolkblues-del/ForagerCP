@@ -94,12 +94,8 @@ namespace ForagerCP.EditorTools
                     new Metric
                     {
                         Name = "몹 DPS",
-                        Tooltip = "공격력 ÷ 공격 간격",
-                        Evaluate = o =>
-                        {
-                            var m = (MonsterDefinition)o;
-                            return (m.AttackPower / m.AttackInterval).ToString("F2");
-                        }
+                        Tooltip = "공격마다 피해 ÷ 재사용 대기, 전부 더한 값",
+                        Evaluate = o => ((MonsterDefinition)o).Dps.ToString("F2")
                     },
                     new Metric
                     {
@@ -107,10 +103,8 @@ namespace ForagerCP.EditorTools
                         Tooltip = "가만히 맞고만 있을 때 플레이어(체력 20)가 죽기까지 걸리는 시간",
                         Evaluate = o =>
                         {
-                            var m = (MonsterDefinition)o;
-                            if (m.AttackPower <= 0) return "-";
-                            int hits = Mathf.CeilToInt((float)PlayerMaxHp / m.AttackPower);
-                            return (hits * m.AttackInterval).ToString("F1") + "s";
+                            float dps = ((MonsterDefinition)o).Dps;
+                            return dps <= 0f ? "-" : (PlayerMaxHp / dps).ToString("F1") + "s";
                         }
                     },
                     new Metric

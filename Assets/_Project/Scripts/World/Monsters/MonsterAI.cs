@@ -1,14 +1,18 @@
+using System;
 using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 몬스터의 이동·공격. 상태: 대기 → 추적 → 공격 → 복귀.
+    /// 몬스터의 이동·공격. 상태: 대기 → 추적 → 예고 → 공격 → 복귀.
     /// 경로 탐색은 아직 직선 추적이다 — 맵에 장애물이 드물어서 NavMesh를 굽는 비용이 더 크다.
     /// 슬라임이 구조물에 끼기 시작하면 NavMeshAgent로 갈아끼우면 되고, 그때 바꿀 곳은 MoveTowards 하나다.
+    ///
+    /// 무엇을 내지를지는 여기가 정하지 않는다 — MonsterDefinition이 든 공격 목록에서
+    /// 지금 쓸 수 있는 것을 고를 뿐이다. 공격 종류가 늘어도 이 파일은 안 늘어난다.
     [RequireComponent(typeof(Monster))]
     public class MonsterAI : MonoBehaviour
     {
-        public enum State { Idle, Chase, Attack, Return }
+        public enum State { Idle, Chase, Windup, Attack, Return }
 
         [SerializeField] Transform _target;
         [SerializeField] Rigidbody _body;
@@ -21,12 +25,25 @@ namespace ForagerCP
         /// 밀리는 동안 쌓아둔 윈드업이 끝나자마자 터지는 일이 없게 한다.
         [SerializeField] float _hitstunTime = 0.22f;
 
+        /// 공격 예고가 시작될 때 한 번. 지금은 아무도 듣지 않는다 —
+        /// 기획에 공격 예고가 있는지 확인되면 연출이 이걸 들으면 된다.
+        /// 이음새만 두는 이유: 예고 시간이 0이면 이 이벤트도 안 나가 지금 동작이 그대로다.
+        public event Action<MonsterAI, MonsterAttack> Telegraphing;
+
         public State Current { get; private set; } = State.Idle;
+
+        /// 지금 예고 중인 공격. 없으면 null.
+        public MonsterAttack Winding { get; private set; }
 
         Monster _monster;
         MonsterDefinition _definition;
         IDamageable _targetDamageable;
-        float _nextAttackTime;
+
+        /// 공격마다 따로 센다. 하나로 묶으면 근접을 쓴 뒤 원거리까지 같이 잠긴다.
+        float[] _readyAt;
+
+        float _windupEndsAt;
+        int _windingIndex = -1;
 
         public bool IsHitstunned => Time.time < _hitstunUntil;
 
@@ -48,12 +65,13 @@ namespace ForagerCP
         void OnDamaged(Monster monster, int amount, GameObject source)
         {
             _hitstunUntil = Time.time + _hitstunTime;
-            _nextAttackTime = Mathf.Max(_nextAttackTime, _hitstunUntil);
+            CancelWindup();
         }
 
         void Start()
         {
             _definition = _monster.Definition;
+            _readyAt = new float[_definition != null ? _definition.Attacks.Count : 0];
 
             // 플레이어는 씬에 하나뿐이라 시작할 때 한 번만 찾는다.
             if (_target == null)
@@ -70,12 +88,14 @@ namespace ForagerCP
             if (_definition == null || !_monster.IsAlive || _target == null)
             {
                 Current = State.Idle;
+                CancelWindup();
                 return;
             }
 
             // 물리 밀림으로 바닥 아래로 빠졌을 때의 구제. 한 번 빠지면 스스로는 못 돌아온다.
             if (transform.position.y < _fallSafeY)
             {
+                CancelWindup();
                 _monster.ReturnHome();
                 return;
             }
@@ -92,6 +112,18 @@ namespace ForagerCP
 
             Vector3 toHome = _monster.HomePosition - transform.position;
             toHome.y = 0f;
+
+            // 예고 중에는 제자리에서 표적만 본다. 쫓아가며 때리면 예고가 피할 시간이 못 된다.
+            if (_windingIndex >= 0)
+            {
+                Current = State.Windup;
+                FaceTowards(toTarget);
+
+                if (Time.time < _windupEndsAt) return;
+
+                Fire(_windingIndex, distanceToTarget);
+                return;
+            }
 
             // 확장 2-2: 지금은 스폰 지점 기준 거리로 대신한다.
             // 구역(아일랜드) 개념이 들어오면 "플레이어가 구역을 넘었는가"로 바꾸고,
@@ -111,17 +143,82 @@ namespace ForagerCP
                 return;
             }
 
-            if (distanceToTarget <= _definition.AttackRange)
+            int choice = PickAttack(distanceToTarget);
+            if (choice >= 0)
             {
                 Current = State.Attack;
                 FaceTowards(toTarget);
-                TryAttack();
+                Begin(choice, distanceToTarget);
+                return;
+            }
+
+            // 사거리 안인데 쓸 것이 없으면(재사용 대기) 제자리에서 기다린다.
+            // 더 다가가면 원거리 몬스터가 코앞까지 붙는다.
+            if (distanceToTarget <= _definition.MaxAttackRange)
+            {
+                Current = State.Attack;
+                FaceTowards(toTarget);
                 return;
             }
 
             Current = State.Chase;
             FaceTowards(toTarget);
             MoveTowards(toTarget);
+        }
+
+        /// 쓸 수 있는 것 중 목록에서 앞선 것. 우선순위를 코드가 아니라 에셋 순서가 정한다.
+        int PickAttack(float distance)
+        {
+            if (_targetDamageable == null || !_targetDamageable.IsAlive) return -1;
+
+            var context = new MonsterAttackContext(_monster, _targetDamageable, _target, distance);
+
+            for (int i = 0; i < _definition.Attacks.Count; i++)
+            {
+                MonsterAttack attack = _definition.Attacks[i];
+                if (attack == null) continue;
+                if (Time.time < _readyAt[i]) continue;
+                if (!attack.CanUse(context)) continue;
+
+                return i;
+            }
+            return -1;
+        }
+
+        /// 예고가 0이면 그 자리에서 바로 내지른다 — 지금 슬라임들이 이 길을 탄다.
+        void Begin(int index, float distance)
+        {
+            MonsterAttack attack = _definition.Attacks[index];
+            if (attack.Windup <= 0f)
+            {
+                Fire(index, distance);
+                return;
+            }
+
+            _windingIndex = index;
+            _windupEndsAt = Time.time + attack.Windup;
+            Winding = attack;
+            Current = State.Windup;
+
+            Telegraphing?.Invoke(this, attack);
+        }
+
+        void Fire(int index, float distance)
+        {
+            MonsterAttack attack = _definition.Attacks[index];
+
+            // 재사용 대기는 내지른 때부터 센다. 예고 시작부터 세면 예고가 긴 공격이
+            // 사실상 더 자주 나간다.
+            _readyAt[index] = Time.time + attack.Cooldown;
+            CancelWindup();
+
+            attack.Execute(new MonsterAttackContext(_monster, _targetDamageable, _target, distance));
+        }
+
+        void CancelWindup()
+        {
+            _windingIndex = -1;
+            Winding = null;
         }
 
         void MoveTowards(Vector3 direction)
@@ -141,15 +238,6 @@ namespace ForagerCP
             transform.rotation = Quaternion.LookRotation(direction.normalized);
         }
 
-        void TryAttack()
-        {
-            if (Time.time < _nextAttackTime) return;
-            if (_targetDamageable == null || !_targetDamageable.IsAlive) return;
-
-            _nextAttackTime = Time.time + _definition.AttackInterval;
-            _targetDamageable.TakeDamage(_definition.AttackPower, gameObject);
-        }
-
         void OnDrawGizmosSelected()
         {
             MonsterDefinition definition = _definition != null
@@ -160,8 +248,14 @@ namespace ForagerCP
             Gizmos.color = new Color(1f, 0.5f, 0.2f, 0.6f);
             Gizmos.DrawWireSphere(transform.position, definition.DetectRange);
 
+            // 공격마다 사거리가 다르므로 전부 그린다. 하나만 그리면 원거리 몬스터가
+            // 어디서부터 쏘는지가 안 보인다.
             Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.8f);
-            Gizmos.DrawWireSphere(transform.position, definition.AttackRange);
+            for (int i = 0; i < definition.Attacks.Count; i++)
+            {
+                if (definition.Attacks[i] == null) continue;
+                Gizmos.DrawWireSphere(transform.position, definition.Attacks[i].Range);
+            }
         }
     }
 }
