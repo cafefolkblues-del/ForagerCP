@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 필요 경험치 = _expBase + 현재 레벨 (Lv1→2: 6, Lv2→3: 7 ...). 사양 1-5.
-    public class PlayerLevel : MonoBehaviour
+    public class PlayerLevel : MonoBehaviour, ISaveable, ISaveSummary
     {
         [SerializeField] int _startLevel = 1;
         [SerializeField] int _maxLevel = 10;
@@ -46,5 +46,30 @@ namespace ForagerCP
             Level = Mathf.Min(_maxLevel, Level + amount);
             Changed?.Invoke(this);
         }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public int Level;
+            public int Exp;
+        }
+
+        public string SaveKey => "level";
+
+        public string Capture() => JsonUtility.ToJson(new Save { Level = Level, Exp = Exp });
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            Level = Mathf.Clamp(save.Level, 1, _maxLevel);
+            Exp = Mathf.Max(0, save.Exp);
+            Changed?.Invoke(this);
+        }
+
+        public string Describe() => $"Lv.{Level}";
     }
 }

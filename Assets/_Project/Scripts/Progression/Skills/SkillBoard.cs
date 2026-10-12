@@ -12,7 +12,7 @@ namespace ForagerCP
     ///  - 하나를 배우면 그 노드와 맞닿은 칸이 고를 수 있게 열린다(공짜로 배워지는 것은 아니다)
     ///
     /// RegionAccess와 같은 자리다 — 정의는 에셋, 진행은 여기.
-    public class SkillBoard : MonoBehaviour
+    public class SkillBoard : MonoBehaviour, ISaveable
     {
         [SerializeField] SkillTree _tree;
         [SerializeField] PlayerLevel _level;
@@ -28,6 +28,8 @@ namespace ForagerCP
 
         /// 시작 포인트. 테스트용으로 열어둔다.
         [SerializeField] int _startingPoints;
+
+        [SerializeField] SaveCatalog _catalog;
 
         public event Action<SkillBoard> Changed;
         public event Action<SkillDefinition> Learned;
@@ -179,6 +181,53 @@ namespace ForagerCP
             Points += Spent;
             Spent = 0;
             _learned.Clear();
+            Changed?.Invoke(this);
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public int Points;
+            public int Spent;
+            public int LastLevel;
+            public List<string> Learned = new List<string>();
+        }
+
+        public string SaveKey => "skills";
+
+        public string Capture()
+        {
+            var save = new Save { Points = Points, Spent = Spent, LastLevel = _lastLevel };
+            foreach (SkillDefinition skill in _learned) save.Learned.Add(SaveCatalog.NameOf(skill));
+
+            // 집합은 도는 순서를 보장하지 않는다. 정렬해야 같은 상태가 늘 같은 글자로 나온다.
+            save.Learned.Sort(StringComparer.Ordinal);
+            return JsonUtility.ToJson(save);
+        }
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            Points = Mathf.Max(0, save.Points);
+            Spent = Mathf.Max(0, save.Spent);
+
+            // 불러온 레벨로 기준을 다시 잡는다. 안 하면 복원 직후 레벨 차이만큼 포인트가 또 들어온다.
+            _lastLevel = save.LastLevel;
+            _levelKnown = true;
+
+            _learned.Clear();
+            for (int i = 0; i < save.Learned.Count; i++)
+            {
+                SkillDefinition skill = _catalog != null ? _catalog.Find<SkillDefinition>(save.Learned[i]) : null;
+                if (skill != null) _learned.Add(skill);
+            }
+
+            // 효과는 다시 걸지 않는다. 효과가 올린 수치(채집력 등)는 그 시스템이 따로 저장하므로
+            // 여기서 또 적용하면 두 번 들어간다.
             Changed?.Invoke(this);
         }
     }

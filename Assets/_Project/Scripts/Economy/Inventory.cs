@@ -9,10 +9,11 @@ namespace ForagerCP
     ///
     /// ⚠️ 용량 제약은 기본으로 꺼져 있다. 1장 사양이 "인벤토리 불필요"이고,
     /// 인벤 셔틀 악용 보완책이 아직 미확정이라 규칙을 코드가 먼저 정하면 안 되기 때문.
-    public class Inventory : MonoBehaviour
+    public class Inventory : MonoBehaviour, ISaveable
     {
         [SerializeField] int _slotCount = 12;
         [SerializeField] bool _enforceCapacity;
+        [SerializeField] SaveCatalog _catalog;
 
         readonly List<ItemStack> _stacks = new List<ItemStack>();
 
@@ -122,6 +123,61 @@ namespace ForagerCP
             if (extraSlots <= 0) return;
 
             _slotCount += extraSlots;
+            Changed?.Invoke(this);
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class SavedStack
+        {
+            public string Item;
+            public int Count;
+        }
+
+        [Serializable]
+        class Save
+        {
+            public int SlotCount;
+            public List<SavedStack> Stacks = new List<SavedStack>();
+        }
+
+        public string SaveKey => "inventory";
+
+        public string Capture()
+        {
+            var save = new Save { SlotCount = _slotCount };
+            for (int i = 0; i < _stacks.Count; i++)
+            {
+                save.Stacks.Add(new SavedStack
+                {
+                    Item = SaveCatalog.NameOf(_stacks[i].Definition),
+                    Count = _stacks[i].Count,
+                });
+            }
+            return JsonUtility.ToJson(save);
+        }
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            _slotCount = Mathf.Max(1, save.SlotCount);
+            _stacks.Clear();
+
+            for (int i = 0; i < save.Stacks.Count; i++)
+            {
+                SavedStack saved = save.Stacks[i];
+
+                // 에셋이 사라졌으면 그 칸만 버린다. 저장 전체를 거부하면 아이템 하나 지웠다고
+                // 세이브가 통째로 죽어서 개발이 막힌다.
+                ItemDefinition definition = _catalog != null ? _catalog.Find<ItemDefinition>(saved.Item) : null;
+                if (definition == null) continue;
+
+                _stacks.Add(new ItemStack(definition, saved.Count));
+            }
+
             Changed?.Invoke(this);
         }
     }

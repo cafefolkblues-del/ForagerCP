@@ -11,7 +11,7 @@ namespace ForagerCP
     ///   예) DeathPenaltyService.OnDied → 채집 배율 디버프 N초 부여
     ///   예) HudView.OnDied → 사망 연출 / 페이드
     ///   예) SoundService.OnDied → 사망음
-    public class PlayerHealth : MonoBehaviour, IDamageable
+    public class PlayerHealth : MonoBehaviour, IDamageable, ISaveable
     {
         [SerializeField] int _maxHp = 20;
         [SerializeField] Transform _respawnPoint;
@@ -111,6 +111,42 @@ namespace ForagerCP
             }
 
             _hp = _maxHp;
+            _invulnerableUntil = Time.time + _invulnerableTime;
+            Changed?.Invoke(this);
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public int Hp;
+            public Vector3 Position;
+        }
+
+        public string SaveKey => "player";
+
+        public string Capture() => JsonUtility.ToJson(new Save { Hp = _hp, Position = transform.position });
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            _hp = Mathf.Clamp(save.Hp, 1, _maxHp);
+
+            // transform만 옮기면 Rigidbody가 옛 자리로 되돌린다 — 몬스터 순간이동과 같은 함정.
+            if (TryGetComponent(out Rigidbody body))
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                body.position = save.Position;
+            }
+
+            transform.position = save.Position;
+            Physics.SyncTransforms();
+
+            // 불러오자마자 맞지 않도록 잠깐 무적을 준다.
             _invulnerableUntil = Time.time + _invulnerableTime;
             Changed?.Invoke(this);
         }

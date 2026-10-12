@@ -9,7 +9,7 @@ namespace ForagerCP
     /// 전용 클래스를 종류마다 만들지 않는 이유: 기획이 어떤 사건을 조건으로 삼을지 모른다.
     /// 문자열이면 디자이너가 에셋에 적는 것만으로 새 조건이 생긴다.
     /// 세이브가 붙으면 이 집합 하나만 저장하면 된다.
-    public class ProgressFlags : MonoBehaviour
+    public class ProgressFlags : MonoBehaviour, ISaveable
     {
         /// 시작부터 켜둘 것. 테스트나 디버그 진입용.
         [SerializeField] List<string> _initialFlags = new List<string>();
@@ -37,6 +37,36 @@ namespace ForagerCP
         {
             if (string.IsNullOrEmpty(flag)) return;
             _flags.Remove(flag);
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public List<string> Flags = new List<string>();
+        }
+
+        public string SaveKey => "flags";
+
+        public string Capture()
+        {
+            var save = new Save();
+            save.Flags.AddRange(_flags);
+
+            // HashSet은 도는 순서를 보장하지 않는다. 정렬하지 않으면 내용이 같아도 글자가 달라져
+            // 서비스가 '바뀌었다'고 오해하고 계속 저장한다.
+            save.Flags.Sort(StringComparer.Ordinal);
+            return JsonUtility.ToJson(save);
+        }
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            _flags.Clear();
+            for (int i = 0; i < save.Flags.Count; i++) _flags.Add(save.Flags[i]);
         }
     }
 }

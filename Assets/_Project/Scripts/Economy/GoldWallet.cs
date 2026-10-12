@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    public class GoldWallet : MonoBehaviour
+    public class GoldWallet : MonoBehaviour, ISaveable, ISaveSummary
     {
         [SerializeField] int _startGold = 0;
 
@@ -32,5 +32,28 @@ namespace ForagerCP
             Changed?.Invoke(Gold);
             return true;
         }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public int Gold;
+        }
+
+        public string SaveKey => "gold";
+
+        public string Capture() => JsonUtility.ToJson(new Save { Gold = Gold });
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            Gold = Mathf.Max(0, save.Gold);
+            Changed?.Invoke(Gold);
+        }
+
+        public string Describe() => $"{Gold}G";
     }
 }

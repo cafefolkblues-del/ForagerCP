@@ -1477,10 +1477,10 @@ RectTransform:
   - {fileID: 1499128145}
   m_Father: {fileID: 95085522}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 58}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 288, y: 0}
+  m_SizeDelta: {x: 576, y: 58}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &200549235
 MonoBehaviour:
@@ -2866,10 +2866,10 @@ RectTransform:
   - {fileID: 430392623}
   m_Father: {fileID: 1351287274}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 378, y: -56}
+  m_SizeDelta: {x: 112, y: 112}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &391161017
 MonoBehaviour:
@@ -7041,6 +7041,7 @@ GameObject:
   - component: {fileID: 890792614}
   - component: {fileID: 890792616}
   - component: {fileID: 890792617}
+  - component: {fileID: 890792618}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -7139,6 +7140,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Inventory
   _slotCount: 12
   _enforceCapacity: 0
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
 --- !u!114 &890792610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7225,6 +7227,7 @@ MonoBehaviour:
   _inventory: {fileID: 890792609}
   _gold: {fileID: 890792603}
   _flags: {fileID: 890792615}
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
 --- !u!114 &890792615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7274,6 +7277,24 @@ MonoBehaviour:
   _inventory: {fileID: 890792609}
   _pointsPerLevel: 1
   _startingPoints: 0
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
+--- !u!114 &890792618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c42b913705aad14ca201803913bae1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.SaveService
+  _slotCount: 3
+  _pollSeconds: 3
+  _minSecondsBetweenSaves: 10
+  _autoSave: 1
+  _autoSlot: 0
 --- !u!1 &910489838
 GameObject:
   m_ObjectHideFlags: 0
@@ -15080,6 +15101,7 @@ MonoBehaviour:
   _shield: {fileID: 1954203122}
   _dash: {fileID: 1954203119}
   _invulnerableTime: 1
+  _knockbackWhenBlocked: 0
 --- !u!114 &1954203117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15161,6 +15183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerWeapon
   _equipped: {fileID: 11400000, guid: 289fd405a7dda3441a2bc9bc04662904, type: 2}
   _fallbackDamage: 4
+  _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
 --- !u!114 &1954203122
 MonoBehaviour:
   m_ObjectHideFlags: 0

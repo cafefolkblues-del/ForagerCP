@@ -5,7 +5,7 @@ namespace ForagerCP
 {
     /// 채집 공격력(기본 5). 상점 아이템 효과가 건드리는 유일한 지점이라
     /// 성장 요소가 늘어도 수정 범위가 여기로 묶인다.
-    public class HarvestPower : MonoBehaviour
+    public class HarvestPower : MonoBehaviour, ISaveable
     {
         [SerializeField] int _basePower = 5;
 
@@ -18,6 +18,27 @@ namespace ForagerCP
         {
             if (amount == 0) return;
             Bonus += amount;
+            Changed?.Invoke(Value);
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public int Bonus;
+        }
+
+        public string SaveKey => "harvestPower";
+
+        public string Capture() => JsonUtility.ToJson(new Save { Bonus = Bonus });
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            Bonus = save.Bonus;
             Changed?.Invoke(Value);
         }
     }

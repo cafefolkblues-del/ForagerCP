@@ -8,12 +8,13 @@ namespace ForagerCP
     ///
     /// 해금 여부는 런타임 상태라 지역 에셋이 아니라 여기가 들고 있다.
     /// ScriptableObject에 담으면 에디터에서 연 상태가 저장돼 다음 플레이에 그대로 남는다.
-    public class RegionAccess : MonoBehaviour
+    public class RegionAccess : MonoBehaviour, ISaveable
     {
         [SerializeField] PlayerLevel _level;
         [SerializeField] Inventory _inventory;
         [SerializeField] GoldWallet _gold;
         [SerializeField] ProgressFlags _flags;
+        [SerializeField] SaveCatalog _catalog;
 
         public event Action<RegionDefinition> Unlocked;
 
@@ -152,6 +153,44 @@ namespace ForagerCP
                 if (requirements[i] != null && requirements[i].HasCost) return true;
             }
             return false;
+        }
+
+        // ---------------- 저장 ----------------
+
+        [Serializable]
+        class Save
+        {
+            public List<string> Unlocked = new List<string>();
+        }
+
+        public string SaveKey => "regions";
+
+        public string Capture()
+        {
+            var save = new Save();
+            foreach (RegionDefinition region in _unlocked) save.Unlocked.Add(SaveCatalog.NameOf(region));
+
+            save.Unlocked.Sort(StringComparer.Ordinal);
+            return JsonUtility.ToJson(save);
+        }
+
+        public void Restore(string payload)
+        {
+            var save = JsonUtility.FromJson<Save>(payload);
+            if (save == null) return;
+
+            _unlocked.Clear();
+            for (int i = 0; i < save.Unlocked.Count; i++)
+            {
+                RegionDefinition region = _catalog != null
+                    ? _catalog.Find<RegionDefinition>(save.Unlocked[i])
+                    : null;
+
+                if (region == null) continue;
+
+                _unlocked.Add(region);
+                Unlocked?.Invoke(region); // 벽이 이걸 듣고 사라진다
+            }
         }
     }
 }
