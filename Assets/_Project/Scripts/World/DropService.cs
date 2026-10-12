@@ -6,8 +6,8 @@ namespace ForagerCP
 {
     /// 바닥 드랍의 생성과 개수 관리.
     ///
-    /// 확정 스펙: 드랍은 시간이 지나도 사라지지 않는다. 대신 바닥에 쌓일 수 있는 최대 개수를 두고,
-    /// 넘치면 가장 오래된 것부터 치운다. 100은 임시값이라 인스펙터로 빼둔다.
+    /// 떨어진 자원은 일정 시간이 지나면 사라진다. 개수 상한도 그대로 둔다 —
+    /// 한 번에 왕창 떨어지면 수명이 다하기 전에 쌓이므로 둘 다 필요하다.
     public class DropService : MonoBehaviour
     {
         /// 종류별 모양이 없을 때 쓰는 기본 프리팹.
@@ -19,6 +19,9 @@ namespace ForagerCP
         /// 넘으면 가장 오래된 것을 치운다. 무한히 쌓이면 상호작용 탐색 비용이 계속 늘어난다.
         [SerializeField] int _maxDrops = 100;
 
+        /// 떨어진 뒤 이 시간이 지나면 사라진다. 0 이하면 사라지지 않는다.
+        [SerializeField] float _lifetime = 30f;
+
         /// 같은 자리에 겹쳐 쌓이지 않게 흩뿌리는 반경.
         [SerializeField] float _scatterRadius = 0.45f;
         [SerializeField] float _groundOffset = 0.25f;
@@ -27,6 +30,9 @@ namespace ForagerCP
         public event Action<ItemDefinition, int, Vector3> Picked;
 
         readonly List<ItemDrop> _active = new List<ItemDrop>();
+
+        /// 각 드랍이 사라질 시각. 드랍 자신에게 들리면 풀에서 재사용될 때 값이 따라다녀 꼬인다.
+        readonly Dictionary<ItemDrop, float> _expiry = new Dictionary<ItemDrop, float>();
 
         public int ActiveCount => _active.Count;
         public int MaxDrops => _maxDrops;
@@ -63,6 +69,8 @@ namespace ForagerCP
             drop.Setup(definition, count, _inventory);
             drop.PickedUp += OnPickedUp;
             _active.Add(drop);
+
+            if (_lifetime > 0f) _expiry[drop] = Time.time + _lifetime;
             return drop;
         }
 
@@ -87,6 +95,32 @@ namespace ForagerCP
             box.size = renderer.bounds.size;
         }
 
+        /// 수명이 다한 것을 치운다. _active는 오래된 것이 앞이라 앞에서부터 보다가 멈추면 된다.
+        void Update()
+        {
+            if (_lifetime <= 0f || _active.Count == 0) return;
+
+            float now = Time.time;
+            while (_active.Count > 0)
+            {
+                ItemDrop oldest = _active[0];
+                if (oldest == null) { _active.RemoveAt(0); continue; }
+
+                // 수명이 안 적힌 것(상한 조정 등으로 들어온 것)은 건드리지 않는다.
+                if (!_expiry.TryGetValue(oldest, out float due) || now < due) return;
+
+                _active.RemoveAt(0);
+                Retire(oldest);
+            }
+        }
+
+        void Retire(ItemDrop drop)
+        {
+            _expiry.Remove(drop);
+            drop.PickedUp -= OnPickedUp;
+            PoolManager.Despawn(drop.gameObject);
+        }
+
         /// 상한을 넘기 전에 미리 한 칸 비운다. 가장 오래 놓여 있던 것이 먼저 사라진다.
         void TrimToLimit()
         {
@@ -98,8 +132,7 @@ namespace ForagerCP
                 _active.RemoveAt(0);
                 if (oldest == null) continue;
 
-                oldest.PickedUp -= OnPickedUp;
-                PoolManager.Despawn(oldest.gameObject);
+                Retire(oldest);
             }
         }
 
@@ -112,9 +145,8 @@ namespace ForagerCP
             // 일부만 주웠으면 남은 만큼 바닥에 그대로 둔다.
             if (drop.Count > 0) return;
 
-            drop.PickedUp -= OnPickedUp;
             _active.Remove(drop);
-            PoolManager.Despawn(drop.gameObject);
+            Retire(drop);
         }
     }
 }

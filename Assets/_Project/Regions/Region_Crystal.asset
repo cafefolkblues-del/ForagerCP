@@ -15,5 +15,8 @@ MonoBehaviour:
   _displayName: "\uC218\uC815 \uAD74"
   _mapColor: {r: 0.7, g: 0.5, b: 0.95, a: 0.18}
   _requirements:
-  - {fileID: 11400000, guid: 1c394084ee55fc24aa32f105b79c8851, type: 2}
+  - {fileID: 11400000, guid: f3734b814f262e74ea3996d42cf9ec8b, type: 2}
   _permanentUnlock: 1
+  _wallPrefab: {fileID: 0}
+  _wallHeight: 2
+  _wallThickness: 0.5

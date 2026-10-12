@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af40f976f9152774e9b137f22cf7e2b3, type: 3}
-  m_Name: Require_Level2
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.LevelRequirement
-  _minLevel: 2
+  m_Script: {fileID: 11500000, guid: a5cad9d33a87a1244ad5d7e244557123, type: 3}
+  m_Name: Require_Gold1200
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GoldRequirement
+  _price: 1200
+  _spendOnEnter: 1

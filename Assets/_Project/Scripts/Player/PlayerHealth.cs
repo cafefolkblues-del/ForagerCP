@@ -21,7 +21,7 @@ namespace ForagerCP
         [SerializeField] PlayerDash _dash;
 
         /// 연속 피격으로 즉사하는 걸 막는 최소한의 무적. 수치는 튜닝용.
-        [SerializeField] float _invulnerableTime = 0.4f;
+        [SerializeField] float _invulnerableTime = 1f;
 
         public event Action<PlayerHealth> Changed;
         public event Action<PlayerHealth> Died;

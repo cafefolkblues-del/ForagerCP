@@ -18,7 +18,7 @@ namespace ForagerCP
         [SerializeField] PlayerAttacker _attacker;
 
         [Header("이동 배율")]
-        [SerializeField] float _shieldMoveMultiplier = 0.45f;
+        [SerializeField] float _shieldMoveMultiplier = 0.8f;
         [SerializeField] float _chargeMoveMultiplier = 0.45f;
 
         void Awake()
