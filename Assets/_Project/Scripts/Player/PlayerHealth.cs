@@ -136,7 +136,69 @@ namespace ForagerCP
             public Vector3 Position;
         }
 
+        /// 저장된 자리가 막혀 있을 때 밀어낼 거리와 시도 횟수.
+        /// 광물은 저장하지 않으므로, 캔 자리에 서서 저장했다가 불러오면
+        /// 그 사이 되살아난 광물 안에서 깨어날 수 있다(3차 프로토타입 피드백 5번).
+        [SerializeField] float _unstickStep = 0.6f;
+        [SerializeField] int _unstickRings = 4;
+
         public string SaveKey => "player";
+
+        /// 겹치지 않는 가장 가까운 자리. 저장된 자리가 비어 있으면 그대로 돌려준다.
+        ///
+        /// 광물 쪽은 '막혀 있으면 미룬다'로 막지만 그것만으로는 모자란다 —
+        /// 광물이 먼저 되살아난 뒤에 플레이어가 그 위로 복원되는 순서도 있다.
+        /// 양쪽을 다 막아야 순서에 기대지 않는다.
+        Vector3 FreeSpotNear(Vector3 wanted)
+        {
+            if (!IsBlockedAt(wanted)) return wanted;
+
+            for (int ring = 1; ring <= Mathf.Max(1, _unstickRings); ring++)
+            {
+                float radius = ring * _unstickStep;
+
+                // 여덟 방향을 같은 거리에서 먼저 본다. 가까운 자리부터 집어야
+                // 불러오자마자 엉뚱한 곳에 서 있지 않는다.
+                for (int step = 0; step < 8; step++)
+                {
+                    float angle = step * Mathf.PI * 0.25f;
+                    var candidate = wanted + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                    if (!IsBlockedAt(candidate)) return candidate;
+                }
+            }
+
+            // 전부 막혔으면 원래 자리를 돌려준다. 못 찾았다고 맵 밖으로 보내는 것보다 낫다.
+            return wanted;
+        }
+
+        bool IsBlockedAt(Vector3 position)
+        {
+            if (!TryGetComponent(out CapsuleCollider capsule)) return false;
+
+            float radius = capsule.radius * 0.9f;
+            Vector3 center = position + capsule.center;
+            Vector3 up = Vector3.up * Mathf.Max(0f, capsule.height * 0.5f - capsule.radius);
+
+            int count = Physics.OverlapCapsuleNonAlloc(
+                center - up, center + up, radius, _unstickBuffer, ~0, QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_unstickBuffer[i] == null) continue;
+
+                // 자기 자신과 바닥은 막는 것이 아니다.
+                if (_unstickBuffer[i].transform.IsChildOf(transform)) continue;
+                if (_unstickBuffer[i].GetComponentInParent<PlayerHealth>() != null) continue;
+                if (_unstickBuffer[i].GetComponentInParent<MineralNode>() == null
+                    && _unstickBuffer[i].GetComponentInParent<Monster>() == null
+                    && _unstickBuffer[i].GetComponentInParent<GridPlacement>() == null) continue;
+
+                return true;
+            }
+            return false;
+        }
+
+        readonly Collider[] _unstickBuffer = new Collider[8];
 
         public string Capture() => JsonUtility.ToJson(new Save { Hp = _hp, Position = transform.position });
 
@@ -155,7 +217,8 @@ namespace ForagerCP
                 body.position = save.Position;
             }
 
-            transform.position = save.Position;
+            transform.position = FreeSpotNear(save.Position);
+            if (TryGetComponent(out Rigidbody placed)) placed.position = transform.position;
             Physics.SyncTransforms();
 
             // 불러오자마자 맞지 않도록 잠깐 무적을 준다.

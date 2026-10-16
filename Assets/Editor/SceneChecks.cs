@@ -120,7 +120,7 @@ namespace ForagerCP.EditorTools
             "CraftPanelView._window", "CraftPanelView._router", "CraftPanelView._equipment",
 
             // 보관함에서 늘어난 자동탐색 필드
-            "RegionBannerView._placer",
+            "RegionBannerView._placer", "DropService._saves",
             "StoragePanelView._window", "StoragePanelView._router", "StoragePanelView._inventory"
         };
 

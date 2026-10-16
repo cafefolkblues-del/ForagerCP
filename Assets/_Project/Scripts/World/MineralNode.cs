@@ -131,6 +131,10 @@ namespace ForagerCP
         }
 
         /// 디버그 즉시 재생성(1-11)도 같은 경로를 쓴다.
+        ///
+        /// 자리가 막혀 있으면 여기서도 미룬다. 시간이 차서 도는 길(RespawnRoutine)만
+        /// 막아두면, 불러오기나 디버그처럼 '즉시'로 들어오는 길이 그 검사를 건너뛰어
+        /// 플레이어 몸 안에서 광물이 켜진다(3차 프로토타입 피드백 5번).
         public void Respawn()
         {
             if (_definition == null) return;
@@ -141,9 +145,25 @@ namespace ForagerCP
                 _respawnRoutine = null;
             }
 
+            if (IsBlocked() && isActiveAndEnabled)
+            {
+                _respawnRoutine = StartCoroutine(WaitForRoomRoutine());
+                return;
+            }
+
             _hp = _definition.MaxHp;
             _alive = true;
             SetPresence(true);
+        }
+
+        /// 자리가 빌 때까지 기다렸다가 되살린다. 건너뛰지 않는 이유는 RespawnRoutine과 같다 —
+        /// 한 번 거르면 그 칸의 광물이 영영 안 돌아온다.
+        IEnumerator WaitForRoomRoutine()
+        {
+            while (IsBlocked()) yield return new WaitForSeconds(_blockedRetryInterval);
+
+            _respawnRoutine = null;
+            Respawn();
         }
 
         /// SetActive(false)로 숨기면 이 오브젝트의 리스폰 코루틴이 같이 죽는다.

@@ -57,6 +57,7 @@ namespace ForagerCP
         }
 
         /// 맞혔으면 true. 쏜 쪽과 같은 편은 뚫고 지나간다.
+        /// 피해를 줄 때 넘기는 'source'는 쏜 몬스터가 아니라 탄 자신이다(아래 주석 참고).
         bool TryHit(Collider collider)
         {
             var damageable = collider.GetComponentInParent<IDamageable>();
@@ -70,7 +71,11 @@ namespace ForagerCP
 
                 if (!damageable.IsAlive) return false;
 
-                damageable.TakeDamage(_damage, _source, _kind);
+                // 때린 쪽으로 '탄 자신'을 넘긴다. 쏜 몬스터를 넘기면 방패 각도를 몬스터
+                // 위치로 재게 되어, 탄이 옆이나 뒤에서 날아와도 몬스터가 정면이면 막힌다.
+                // 기획이 "뒤에서 맞으면 피해"를 명시하므로 판정 기준은 탄이어야 한다.
+                // 넉백 방향도 같은 값을 쓰는데, 그쪽도 탄이 온 방향이 맞다.
+                damageable.TakeDamage(_damage, gameObject, _kind);
                 Finish();
                 return true;
             }

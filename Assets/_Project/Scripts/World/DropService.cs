@@ -8,8 +8,15 @@ namespace ForagerCP
     ///
     /// 떨어진 자원은 일정 시간이 지나면 사라진다. 개수 상한도 그대로 둔다 —
     /// 한 번에 왕창 떨어지면 수명이 다하기 전에 쌓이므로 둘 다 필요하다.
+    ///
+    /// ⚠️ 바닥 드랍은 저장하지 않는다. 대신 **불러올 때 전부 치운다**.
+    /// 안 치우면 인벤만 과거로 돌아가고 바닥의 것은 그대로 남아, 그걸 주우면 복제가 된다
+    /// (3차 프로토타입 피드백 6번에서 실제로 나왔다).
+    /// 수명 30초짜리를 저장해 되살릴 값어치는 없고, 남겨두는 쪽은 반드시 복제를 만든다.
     public class DropService : MonoBehaviour
     {
+        [SerializeField] SaveService _saves;
+
         /// 종류별 모양이 없을 때 쓰는 기본 프리팹.
         [SerializeField] GameObject _dropPrefab;
         [SerializeField] Transform _dropParent;
@@ -41,6 +48,36 @@ namespace ForagerCP
         {
             if (_inventory == null) _inventory = FindFirstObjectByType<Inventory>();
             if (_dropParent == null) _dropParent = transform;
+            if (_saves == null) _saves = FindFirstObjectByType<SaveService>();
+        }
+
+        void OnEnable()
+        {
+            if (_saves != null) _saves.Loaded += OnLoaded;
+        }
+
+        void OnDisable()
+        {
+            if (_saves != null) _saves.Loaded -= OnLoaded;
+        }
+
+        /// 불러오기 직후. 저장된 순간 바닥에 없던 것이 남아 있으면 안 된다.
+        void OnLoaded(int slot) => ClearAll();
+
+        /// 지금 바닥에 있는 것을 전부 치운다.
+        public void ClearAll()
+        {
+            // 뒤에서부터 돈다 — Retire가 목록을 건드리지는 않지만,
+            // 나중에 건드리게 되더라도 인덱스가 밀리지 않는다.
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                ItemDrop drop = _active[i];
+                _active.RemoveAt(i);
+                if (drop != null) Retire(drop);
+            }
+
+            _active.Clear();
+            _expiry.Clear();
         }
 
         public ItemDrop Spawn(ItemDefinition definition, int count, Vector3 position)

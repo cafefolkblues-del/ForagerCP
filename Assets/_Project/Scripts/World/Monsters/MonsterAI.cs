@@ -35,6 +35,27 @@ namespace ForagerCP
         /// 지금 예고 중인 공격. 없으면 null.
         public MonsterAttack Winding { get; private set; }
 
+        /// 이 몬스터가 서 있는 구역. 구획 밖에 놓였으면 null이고, 그때는 구역 규칙을 적용하지 않는다.
+        ///
+        /// Start에서 한 번 잡지 않는 이유: 스폰 자리는 같은 오브젝트의 Monster.Start가 세우는데
+        /// 같은 오브젝트 안의 Start 순서는 보장되지 않는다. 먼저 읽으면 원점(0,0,0)의 구역을 본다.
+        /// 값이 설 때까지 다시 묻고, 한 번 잡히면 그대로 둔다.
+        public RegionDefinition HomeRegion
+        {
+            get
+            {
+                if (_homeRegionKnown) return _homeRegion;
+                if (_monster == null) return null;
+
+                _homeRegion = RegionMap.At(_monster.HomePosition);
+                if (_homeRegion != null) _homeRegionKnown = true;
+                return _homeRegion;
+            }
+        }
+
+        RegionDefinition _homeRegion;
+        bool _homeRegionKnown;
+
         Monster _monster;
         MonsterDefinition _definition;
         IDamageable _targetDamageable;
@@ -135,7 +156,11 @@ namespace ForagerCP
                 return;
             }
 
-            if (distanceToTarget > _definition.DetectRange)
+            // 차단벽 너머의 플레이어는 표적이 아니다(3차 프로토타입 피드백 1번).
+            // 벽은 구역 경계에 서 있으므로 '같은 구역인가'만 물으면 벽 너머가 통째로 걸러진다.
+            // 시야 레이캐스트를 쓰지 않은 이유: 광물·구조물 뒤에 선 것까지 놓쳐서
+            // 보고된 것보다 넓게 바뀌고, 구역 판정은 그런 오작동이 없다.
+            if (distanceToTarget > _definition.DetectRange || !TargetInSameRegion())
             {
                 // 표적을 놓치면 스폰 지점으로 돌아간다.
                 Current = toHome.sqrMagnitude > 0.05f ? State.Return : State.Idle;
@@ -164,6 +189,15 @@ namespace ForagerCP
             Current = State.Chase;
             FaceTowards(toTarget);
             MoveTowards(toTarget);
+        }
+
+        /// 구획되지 않은 땅에 놓인 몬스터는 이 규칙을 적용하지 않는다 —
+        /// 구역이 없는데 '같은 구역'을 요구하면 영영 아무도 쫓지 않는다.
+        bool TargetInSameRegion()
+        {
+            RegionDefinition home = HomeRegion;
+            if (home == null) return true;
+            return RegionMap.At(_target.position) == home;
         }
 
         /// 쓸 수 있는 것 중 목록에서 앞선 것. 우선순위를 코드가 아니라 에셋 순서가 정한다.
