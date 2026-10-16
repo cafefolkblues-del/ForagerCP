@@ -14,9 +14,15 @@ namespace ForagerCP
         /// 평면 거리. 높이 차이를 섞으면 같은 칸인데 지형에 따라 사거리가 달라진다.
         public readonly float Distance;
 
-        public MonsterAttackContext(Monster monster, IDamageable target, Transform targetTransform, float distance)
+        /// 이동이 필요한 공격(돌진)이 이쪽에 부탁한다. 공격이 직접 몸을 옮기면
+        /// 이동을 아는 곳이 둘이 되어, 넉백·경직과 누가 위치를 쥐는지가 흐려진다.
+        public readonly MonsterAI Brain;
+
+        public MonsterAttackContext(Monster monster, MonsterAI brain,
+                                    IDamageable target, Transform targetTransform, float distance)
         {
             Monster = monster;
+            Brain = brain;
             Self = monster != null ? monster.transform : null;
             Target = target;
             TargetTransform = targetTransform;
@@ -51,6 +57,16 @@ namespace ForagerCP
         /// 타이밍이 생기고, 보여주는 일은 MonsterAI.Telegraphing을 듣는 쪽이 맡는다.
         [SerializeField] float _windup;
 
+        /// 내지른 뒤 아무것도 못 하는 시간. 재사용 대기(Cooldown)와 다른 축이다 —
+        /// 대기는 '이 공격을 다시 쓰기까지'이고, 빈틈은 '이동도 다른 공격도 못 하는' 구간이다.
+        /// 기획서가 몬스터마다 예고와 빈틈을 따로 적어둔 이유이고,
+        /// 1구역의 "막거나 피하면 잠시 멈추니 반격할 수 있다"가 이 값으로 성립한다.
+        [SerializeField] float _recovery;
+
+        /// 방패에 막혔을 때 추가로 멈추는 시간. 0이면 빈틈과 같게 둔다 —
+        /// 막아낸 보람이 빈틈보다 짧으면 방패를 들 이유가 없어진다.
+        [SerializeField] float _staggerWhenBlocked;
+
         /// 방패로 막히는 공격인지. 방어불가를 실제로 쓰는 공격이 여기서 처음 생긴다
         /// (판정 쪽 이음새는 PlayerHealth에 이미 있었다).
         [SerializeField] DamageKind _kind = DamageKind.Normal;
@@ -61,6 +77,8 @@ namespace ForagerCP
         public float MinRange => Mathf.Max(0f, _minRange);
         public float Cooldown => Mathf.Max(0.05f, _cooldown);
         public float Windup => Mathf.Max(0f, _windup);
+        public float Recovery => Mathf.Max(0f, _recovery);
+        public float StaggerWhenBlocked => _staggerWhenBlocked > 0f ? _staggerWhenBlocked : Recovery;
         public DamageKind Kind => _kind;
 
         /// 지금 이 거리에서 쓸 수 있는지. 사거리 말고 다른 조건이 생기면 여기를 덮는다.
@@ -73,6 +91,7 @@ namespace ForagerCP
         public virtual string Describe()
             => $"{DisplayName} · 피해 {Damage} · 사거리 {Range:0.#} · {Cooldown:0.#}초"
                + (Windup > 0f ? $" · 예고 {Windup:0.##}초" : string.Empty)
+               + (Recovery > 0f ? $" · 빈틈 {Recovery:0.##}초" : string.Empty)
                + (_kind == DamageKind.Unblockable ? " · 방어불가" : string.Empty);
     }
 }

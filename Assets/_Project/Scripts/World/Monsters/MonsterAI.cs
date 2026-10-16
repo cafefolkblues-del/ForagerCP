@@ -12,7 +12,7 @@ namespace ForagerCP
     [RequireComponent(typeof(Monster))]
     public class MonsterAI : MonoBehaviour
     {
-        public enum State { Idle, Chase, Windup, Attack, Return }
+        public enum State { Idle, Chase, Retreat, Windup, Attack, Recover, Lunge, Return }
 
         [SerializeField] Transform _target;
         [SerializeField] Rigidbody _body;
@@ -29,6 +29,9 @@ namespace ForagerCP
         /// 기획에 공격 예고가 있는지 확인되면 연출이 이걸 들으면 된다.
         /// 이음새만 두는 이유: 예고 시간이 0이면 이 이벤트도 안 나가 지금 동작이 그대로다.
         public event Action<MonsterAI, MonsterAttack> Telegraphing;
+
+        /// 돌진을 시작할 때 한 번. 예고와 같은 이유로 연출이 들을 자리다.
+        public event Action<MonsterAI> Lunged;
 
         public State Current { get; private set; } = State.Idle;
 
@@ -58,6 +61,10 @@ namespace ForagerCP
 
         Monster _monster;
         MonsterDefinition _definition;
+        PlayerHealth _player;
+
+        /// 마지막으로 내지른 공격. 막혔을 때 얼마나 멈출지를 여기서 읽는다.
+        MonsterAttack _lastFired;
         IDamageable _targetDamageable;
 
         /// 공격마다 따로 센다. 하나로 묶으면 근접을 쓴 뒤 원거리까지 같이 잠긴다.
@@ -65,6 +72,20 @@ namespace ForagerCP
 
         float _windupEndsAt;
         int _windingIndex = -1;
+
+        /// 내지른 뒤 아무것도 못 하는 구간의 끝. 공격마다 다르므로 공격이 값을 준다.
+        float _recoverUntil;
+
+        // ---- 돌진 ----
+        Vector3 _lungeDirection;
+        float _lungeSpeed;
+        float _lungeRemaining;
+        int _lungeDamage;
+        DamageKind _lungeKind;
+        float _lungeHitRadius;
+        bool _lungeHasHit;
+
+        public bool IsLunging => _lungeRemaining > 0f;
 
         public bool IsHitstunned => Time.time < _hitstunUntil;
 
@@ -75,11 +96,36 @@ namespace ForagerCP
             _monster = GetComponent<Monster>();
             if (_body == null) _body = GetComponent<Rigidbody>();
             if (_knockback == null) _knockback = GetComponent<Knockback>();
+
+            // OnEnable이 Start보다 먼저 돌기 때문에 여기서 찾는다.
+            _player = FindFirstObjectByType<PlayerHealth>();
         }
 
-        void OnEnable() => GetComponent<Monster>().Damaged += OnDamaged;
+        void OnEnable()
+        {
+            GetComponent<Monster>().Damaged += OnDamaged;
 
-        void OnDisable() => GetComponent<Monster>().Damaged -= OnDamaged;
+            // 막혔을 때 멈추는 쪽이 자기 자신이라, 플레이어가 몬스터를 찾아 때리는 대신
+            // 몬스터가 '내 공격이 막혔나'를 듣는다. 플레이어 쪽이 몬스터를 알 필요가 없다.
+            if (_player != null) _player.Blocked += OnBlocked;
+        }
+
+        void OnDisable()
+        {
+            GetComponent<Monster>().Damaged -= OnDamaged;
+            if (_player != null) _player.Blocked -= OnBlocked;
+        }
+
+        /// 내 공격이 정면 방패에 막혔다. 1구역의 "막으면 잠시 멈추니 반격할 수 있다"가 이것이다.
+        void OnBlocked(PlayerHealth health, GameObject source)
+        {
+            if (source == null || !source.transform.IsChildOf(transform)) return;
+
+            float stagger = _lastFired != null ? _lastFired.StaggerWhenBlocked : _hitstunTime;
+            _recoverUntil = Mathf.Max(_recoverUntil, Time.time + stagger);
+            CancelWindup();
+            StopLunge();
+        }
 
         /// 확정 스펙: 넉백을 hitstun으로 승격 — 밀리는 동안 몹의 공격 윈드업을 리셋한다.
         /// 이게 없으면 연타로 녹이는 동안에도 몹이 제 박자대로 때린다.
@@ -87,6 +133,7 @@ namespace ForagerCP
         {
             _hitstunUntil = Time.time + _hitstunTime;
             CancelWindup();
+            StopLunge();
         }
 
         void Start()
@@ -121,6 +168,14 @@ namespace ForagerCP
                 return;
             }
 
+            // 돌진은 위치를 직접 쥐는 구간이라 다른 판단보다 먼저 처리한다.
+            if (IsLunging)
+            {
+                Current = State.Lunge;
+                TickLunge();
+                return;
+            }
+
             // 경직 중에는 이동도 공격도 없다. 넉백이 위치를 맡는 구간과 겹친다.
             if (IsHitstunned) return;
 
@@ -133,6 +188,14 @@ namespace ForagerCP
 
             Vector3 toHome = _monster.HomePosition - transform.position;
             toHome.y = 0f;
+
+            // 내지른 뒤의 빈틈. 이동도 다음 공격도 없다 — 이 구간이 플레이어의 반격 창이다.
+            if (Time.time < _recoverUntil)
+            {
+                Current = State.Recover;
+                FaceTowards(toTarget);
+                return;
+            }
 
             // 예고 중에는 제자리에서 표적만 본다. 쫓아가며 때리면 예고가 피할 시간이 못 된다.
             if (_windingIndex >= 0)
@@ -165,6 +228,15 @@ namespace ForagerCP
                 // 표적을 놓치면 스폰 지점으로 돌아간다.
                 Current = toHome.sqrMagnitude > 0.05f ? State.Return : State.Idle;
                 if (Current == State.Return) MoveTowards(toHome);
+                return;
+            }
+
+            // 원거리형은 붙으면 물러난다. 물러날 거리는 공격이 들고 있는 최소 사거리에서 나온다 —
+            // 따로 수치를 두면 "안 쏘는 거리"와 "물러나는 거리"가 어긋난다.
+            if (distanceToTarget < _definition.RetreatRange && TryRetreat(toTarget))
+            {
+                Current = State.Retreat;
+                FaceTowards(toTarget);
                 return;
             }
 
@@ -205,7 +277,7 @@ namespace ForagerCP
         {
             if (_targetDamageable == null || !_targetDamageable.IsAlive) return -1;
 
-            var context = new MonsterAttackContext(_monster, _targetDamageable, _target, distance);
+            var context = new MonsterAttackContext(_monster, this, _targetDamageable, _target, distance);
 
             for (int i = 0; i < _definition.Attacks.Count; i++)
             {
@@ -244,15 +316,90 @@ namespace ForagerCP
             // 재사용 대기는 내지른 때부터 센다. 예고 시작부터 세면 예고가 긴 공격이
             // 사실상 더 자주 나간다.
             _readyAt[index] = Time.time + attack.Cooldown;
+            _recoverUntil = Time.time + attack.Recovery;
+            _lastFired = attack;
             CancelWindup();
 
-            attack.Execute(new MonsterAttackContext(_monster, _targetDamageable, _target, distance));
+            attack.Execute(new MonsterAttackContext(_monster, this, _targetDamageable, _target, distance));
         }
 
         void CancelWindup()
         {
             _windingIndex = -1;
             Winding = null;
+        }
+
+        /// 뒤로 물러난다. 자기 구역을 벗어나게 되면 물러나지 않는다 —
+        /// 기획이 "구역 밖으로 이동하지 않는다"로 못박았고, 안 막으면 벽까지 밀려난다.
+        bool TryRetreat(Vector3 toTarget)
+        {
+            Vector3 away = -toTarget;
+            if (away.sqrMagnitude < 0.0001f) return false;
+
+            Vector3 step = away.normalized * (_definition.MoveSpeed * Time.fixedDeltaTime);
+            Vector3 next = (_body != null ? _body.position : transform.position) + step;
+
+            RegionDefinition home = HomeRegion;
+            if (home != null && RegionMap.At(next) != home) return false;
+
+            if (_body != null) _body.MovePosition(next);
+            else transform.position = next;
+            return true;
+        }
+
+        /// 돌진을 시작한다. 공격 에셋이 부탁하고 이동은 여기가 맡는다.
+        public void BeginLunge(Vector3 direction, float speed, float distance,
+                               int damage, DamageKind kind, float hitRadius)
+        {
+            if (direction.sqrMagnitude < 0.0001f || distance <= 0f) return;
+
+            _lungeDirection = direction.normalized;
+            _lungeSpeed = Mathf.Max(0.1f, speed);
+            _lungeRemaining = distance;
+            _lungeDamage = damage;
+            _lungeKind = kind;
+            _lungeHitRadius = Mathf.Max(0.1f, hitRadius);
+            _lungeHasHit = false;
+
+            FaceTowards(_lungeDirection);
+            Lunged?.Invoke(this);
+        }
+
+        void StopLunge() => _lungeRemaining = 0f;
+
+        /// 한 번만 맞히고, 벽에 닿거나 거리를 다 쓰면 멈춘다.
+        /// 멈춘 뒤의 빈틈은 Fire가 이미 걸어두었다(돌진 공격의 Recovery).
+        void TickLunge()
+        {
+            float step = Mathf.Min(_lungeRemaining, _lungeSpeed * Time.fixedDeltaTime);
+            Vector3 from = _body != null ? _body.position : transform.position;
+
+            if (!_lungeHasHit && _targetDamageable != null && _targetDamageable.IsAlive)
+            {
+                Vector3 flat = _target.position - from;
+                flat.y = 0f;
+
+                if (flat.magnitude <= _lungeHitRadius)
+                {
+                    _targetDamageable.TakeDamage(_lungeDamage, gameObject, _lungeKind);
+                    _lungeHasHit = true;
+                }
+            }
+
+            // 벽을 만나면 그 자리에서 끝난다. 뚫고 지나가면 구역 밖으로 나가버린다.
+            if (Physics.SphereCast(from + Vector3.up * 0.5f, _lungeHitRadius * 0.8f,
+                    _lungeDirection, out RaycastHit hit, step, ~0, QueryTriggerInteraction.Ignore)
+                && hit.collider.GetComponentInParent<IDamageable>() == null)
+            {
+                StopLunge();
+                return;
+            }
+
+            Vector3 next = from + _lungeDirection * step;
+            if (_body != null) _body.MovePosition(next);
+            else transform.position = next;
+
+            _lungeRemaining -= step;
         }
 
         void MoveTowards(Vector3 direction)

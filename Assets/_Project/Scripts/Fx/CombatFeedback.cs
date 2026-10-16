@@ -121,7 +121,7 @@ namespace ForagerCP
             Popup(health.transform.position, delta.ToString(), _playerHurtColor, _normalScale);
         }
 
-        void OnPlayerBlocked(PlayerHealth health) =>
+        void OnPlayerBlocked(PlayerHealth health, GameObject source) =>
             Popup(health.transform.position, "막음", _blockColor, _normalScale);
 
         // ---------------- 채집 / 경제 ----------------

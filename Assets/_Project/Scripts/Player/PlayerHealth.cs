@@ -32,7 +32,9 @@ namespace ForagerCP
         public event Action<PlayerHealth> Died;
 
         /// 방패로 막아낸 순간. 막기 연출·사운드가 붙을 자리.
-        public event Action<PlayerHealth> Blocked;
+        /// 막아냈다. 두 번째 값은 막아낸 상대 — 막히면 공격자가 잠시 멈추는 규칙이 있어서,
+        /// 누구를 막았는지 없이는 그 규칙을 쓸 수가 없다.
+        public event Action<PlayerHealth, GameObject> Blocked;
 
         public bool IsAlive => _hp > 0;
         public Transform Transform => transform;
@@ -72,7 +74,7 @@ namespace ForagerCP
                 && _shield != null && source != null
                 && _shield.Blocks(source.transform.position))
             {
-                Blocked?.Invoke(this);
+                Blocked?.Invoke(this, source);
 
                 // 막아낸 뒤 밀려날지. 기본은 완전 차단(앞서 확정된 쪽)이고, 기획이 원하면 켜면 된다.
                 if (_knockbackWhenBlocked && _knockback != null) _knockback.ApplyFrom(source.transform);

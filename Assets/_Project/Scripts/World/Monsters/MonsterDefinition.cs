@@ -70,6 +70,23 @@ namespace ForagerCP
             }
         }
 
+        /// 공격들이 요구하는 최소 사거리 중 가장 먼 값. 플레이어가 이보다 가까이 붙으면 물러난다.
+        /// 따로 수치를 두지 않는 이유: "안 쏘는 거리"와 "물러나는 거리"가 어긋나면
+        /// 쏘지도 물러나지도 않고 멍하니 서 있는 구간이 생긴다.
+        public float RetreatRange
+        {
+            get
+            {
+                float best = 0f;
+                for (int i = 0; i < _attacks.Count; i++)
+                {
+                    if (_attacks[i] == null) continue;
+                    best = Mathf.Max(best, _attacks[i].MinRange);
+                }
+                return best;
+            }
+        }
+
         /// 가장 먼 공격의 사거리. AI가 '어디까지 다가가야 하는지'를 여기서 묻는다 —
         /// 공격마다 사거리가 다르므로 접근 거리를 수치로 따로 들면 둘이 어긋난다.
         public float MaxAttackRange
