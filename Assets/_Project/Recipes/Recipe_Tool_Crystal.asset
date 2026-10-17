@@ -18,8 +18,8 @@ MonoBehaviour:
   _itemCount: 1
   _ingredients:
   - Item: {fileID: 11400000, guid: 69b62a768c41aa848be34e366736c30e, type: 2}
-    Count: 12
-  - Item: {fileID: 11400000, guid: 1e956437f2a5f70439eaf9445094d03f, type: 2}
     Count: 20
+  - Item: {fileID: 11400000, guid: 797a53bf1e45de04bba4554fd3fa6f6e, type: 2}
+    Count: 15
   _seconds: 40
   _category: Tools
