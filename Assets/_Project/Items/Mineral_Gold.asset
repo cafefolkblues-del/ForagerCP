@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ccdd102290def14fb46c7c6e7dfc072, type: 3}
+  m_Name: Mineral_Gold
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
+  _displayName: "\uAE08\uAD11\uC11D"
+  _icon: {fileID: 0}
+  _maxStack: 99
+  _goldValue: 60
+  _sortOrder: 0
+  _sellable: 1
+  _uiColor: {r: 0.854902, g: 0.6470588, b: 0.1254902, a: 1}
+  _dropPrefab: {fileID: 0}
+  _placePrefab: {fileID: 6083185110008918992, guid: 34b7a57d3236c9547b9240164cb92643, type: 3}
+  _maxPerRegion: 0
+  _maxHp: 90
+  _harvestYield: 1
+  _expReward: 18
+  _respawnDelay: 10

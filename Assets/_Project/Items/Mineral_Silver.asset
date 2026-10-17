@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ccdd102290def14fb46c7c6e7dfc072, type: 3}
+  m_Name: Mineral_Silver
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
+  _displayName: "\uC740\uAD11\uC11D"
+  _icon: {fileID: 0}
+  _maxStack: 99
+  _goldValue: 45
+  _sortOrder: 0
+  _sellable: 1
+  _uiColor: {r: 0.7529413, g: 0.7529413, b: 0.7529413, a: 1}
+  _dropPrefab: {fileID: 0}
+  _placePrefab: {fileID: 8571634959264172078, guid: 6763c1ae3dcc3e747abfe0dc93a2caec, type: 3}
+  _maxPerRegion: 0
+  _maxHp: 75
+  _harvestYield: 1
+  _expReward: 10
+  _respawnDelay: 10
