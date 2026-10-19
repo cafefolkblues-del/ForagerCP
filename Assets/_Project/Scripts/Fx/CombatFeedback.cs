@@ -30,7 +30,6 @@ namespace ForagerCP
         PlayerHealth _playerHealth;
         Inventory _inventory;
         ConverterStation _converter;
-        DropService _drops;
         CombatRewardService _combatRewards;
 
         int _lastHpSeen;
@@ -61,8 +60,6 @@ namespace ForagerCP
             if (_converter != null) _converter.Converted += OnConverted;
 
             _combatRewards = FindFirstObjectByType<CombatRewardService>();
-            _drops = FindFirstObjectByType<DropService>();
-            if (_drops != null) _drops.Picked += OnPicked;
         }
 
         void OnDisable()
@@ -92,7 +89,6 @@ namespace ForagerCP
             }
 
             if (_converter != null) _converter.Converted -= OnConverted;
-            if (_drops != null) _drops.Picked -= OnPicked;
         }
 
         // ---------------- 전투 ----------------
@@ -127,17 +123,12 @@ namespace ForagerCP
         // ---------------- 채집 / 경제 ----------------
 
         /// 캔 순간에는 자원이 바닥에 떨어질 뿐이라 "얻었다"고 쓰면 거짓말이 된다.
-        /// 캘 때는 경험치만 알리고, 획득 표시는 실제로 주울 때 띄운다.
+        /// 캘 때는 경험치만 알린다. 주운 것은 HUD 획득 알림(PickupAlarmView)이 맡는다 —
+        /// 머리 위에도 같은 글자를 띄우면 연달아 주울 때 글자가 겹쳐 뭉개진다.
         void OnMineralHarvested(MineralNode node)
         {
             if (node.Definition == null || node.Definition.ExpReward <= 0) return;
             Popup(node.transform.position, "EXP +" + node.Definition.ExpReward, _harvestColor, _normalScale);
-        }
-
-        void OnPicked(ItemDefinition definition, int amount, Vector3 position)
-        {
-            if (definition == null) return;
-            Popup(position, definition.DisplayName + " +" + amount, definition.UiColor, _bigScale);
         }
 
         void OnConverted(int count, int gold) =>
