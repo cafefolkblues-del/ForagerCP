@@ -69,3 +69,17 @@ MonoBehaviour:
     SwatchColor: {r: 0.25, g: 0.6, b: 0.35, a: 1}
     Category: Monsters
     AllowRotation: 0
+  - DisplayName: "\uC740 \uAD11\uC11D"
+    Prefab: {fileID: 5999848384626851595, guid: abd1d9fceaf00f049830de68879a9518, type: 3}
+    Size: {x: 1, y: 1}
+    HeightOffset: 0.5
+    SwatchColor: {r: 0.86, g: 0.88, b: 0.92, a: 1}
+    Category: Minerals
+    AllowRotation: 0
+  - DisplayName: "\uAE08 \uAD11\uC11D"
+    Prefab: {fileID: 6542391058023598313, guid: 7a011aac5c0d8c641a489eae962cea29, type: 3}
+    Size: {x: 1, y: 1}
+    HeightOffset: 0.5
+    SwatchColor: {r: 0.95, g: 0.8, b: 0.32, a: 1}
+    Category: Minerals
+    AllowRotation: 0

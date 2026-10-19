@@ -17,9 +17,9 @@ MonoBehaviour:
   _item: {fileID: 0}
   _itemCount: 1
   _ingredients:
-  - Item: {fileID: 11400000, guid: 1e956437f2a5f70439eaf9445094d03f, type: 2}
+  - Item: {fileID: 11400000, guid: be79cc283065e344d8b0a156b1ef03ec, type: 2}
     Count: 15
-  - Item: {fileID: 11400000, guid: 69b62a768c41aa848be34e366736c30e, type: 2}
-    Count: 3
+  - Item: {fileID: 11400000, guid: 754aab1a3d2272845833ade81ae66e0c, type: 2}
+    Count: 20
   _seconds: 25
   _category: Tools
