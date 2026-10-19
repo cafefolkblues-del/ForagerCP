@@ -59,6 +59,10 @@ namespace ForagerCP
                 IInteractable candidate = hits[i].GetComponentInParent<IInteractable>();
                 if (candidate == null) continue;
 
+                // 잠긴 구역 안의 것은 대상이 아니다. 다만 경계벽 자신은 예외 —
+                // 그걸 막으면 구역을 여는 길이 사라진다.
+                if (candidate is not RegionBarrier && !RegionGate.Allows(candidate.Transform)) continue;
+
                 float sqrDistance = (candidate.Transform.position - transform.position).sqrMagnitude;
                 if (sqrDistance >= bestSqrDistance) continue;
 

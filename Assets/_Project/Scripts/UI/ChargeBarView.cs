@@ -28,13 +28,44 @@ namespace ForagerCP
 
         [SerializeField] float _fadeDuration = 0.12f;
 
+        [Header("따라붙기")]
+        /// 이 대상의 발밑에 붙는다. 비우면 화면 고정(둔 자리에 그대로).
+        ///
+        /// 화면 아래 고정에서 캐릭터 밑으로 옮긴 이유: 차지하는 동안 시선은 캐릭터와
+        /// 커서 사이에 있다. 막대가 화면 끝에 있으면 얼마나 찼는지 보려고 눈을 떼야 한다.
+        [SerializeField] Transform _follow;
+
+        /// 대상 기준 월드 오프셋. 발밑에 깔리도록 살짝 아래로.
+        [SerializeField] Vector3 _worldOffset = new Vector3(0f, 0.05f, -0.9f);
+
+        [SerializeField] Camera _viewCamera;
+
+        /// 월드→화면 좌표를 옮길 캔버스. 렌더 모드를 보려고 든다.
+        [SerializeField] Canvas _canvas;
+
         float _ratio;
+        RectTransform _rect;
+        RectTransform _canvasRect;
 
         void Awake()
         {
             if (_attacker == null) _attacker = FindFirstObjectByType<PlayerAttacker>();
             if (_group == null) _group = GetComponent<CanvasGroup>();
             if (_group != null) _group.alpha = 0f;
+
+            _rect = (RectTransform)transform;
+            if (_viewCamera == null) _viewCamera = Camera.main;
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
+            // 부모 기준으로 잰다. anchoredPosition이 부모 좌표이기 때문 —
+            // 루트 캔버스로 재면 부모가 화면 전체를 덮지 않을 때 자리가 어긋난다.
+            _canvasRect = transform.parent as RectTransform;
+
+            // 따라붙을 대상을 안 지정했으면 플레이어를 쓴다.
+            if (_follow == null)
+            {
+                var player = FindFirstObjectByType<PlayerHealth>();
+                if (player != null) _follow = player.transform;
+            }
 
             Apply(0f);
         }
@@ -82,6 +113,30 @@ namespace ForagerCP
             // 창 연출과 같은 이유로 게임 속도와 무관하게 움직인다.
             float step = _fadeDuration <= 0f ? 1f : Time.unscaledDeltaTime / _fadeDuration;
             _group.alpha = Mathf.MoveTowards(_group.alpha, target, step);
+        }
+
+        /// 카메라가 움직인 뒤에 자리를 잡아야 한 프레임 늦게 따라오는 떨림이 없다.
+        void LateUpdate()
+        {
+            if (_follow == null || _viewCamera == null || _rect == null || _canvasRect == null) return;
+
+            // 보이지 않을 때는 계산하지 않는다. 늘 도는 코드라 아낄 값어치가 있다.
+            if (_group != null && _group.alpha <= 0f) return;
+
+            Vector3 screen = _viewCamera.WorldToScreenPoint(_follow.position + _worldOffset);
+
+            // 카메라 뒤로 넘어가면 좌표가 뒤집힌다. 고정 탑다운이라 날 일은 없지만
+            // 한 번 나면 막대가 화면 반대편에 붙어 원인을 찾기 어렵다.
+            if (screen.z < 0f) return;
+
+            Vector2 local;
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    _canvasRect, screen,
+                    _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _viewCamera,
+                    out local))
+            {
+                _rect.anchoredPosition = local;
+            }
         }
     }
 }

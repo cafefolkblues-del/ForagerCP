@@ -358,6 +358,10 @@ namespace ForagerCP
                 var candidate = _overlapBuffer[i].GetComponentInParent<IHarvestable>();
                 if (candidate == null || !candidate.IsHarvestable) continue;
 
+                // 잠긴 구역의 광물은 벽 너머로도 안 캐진다. 안 막으면 개방 비용을
+                // 치르지 않고 벽에 붙어 캐게 된다(2차 프로토타입 피드백 2번).
+                if (!RegionGate.Allows(candidate.Transform)) continue;
+
                 Vector3 toTarget = candidate.Transform.position - transform.position;
                 toTarget.y = 0f;
                 if (Vector3.Angle(facing, toTarget) > _halfAngle) continue;
