@@ -49,6 +49,10 @@ namespace ForagerCP
 
         [Header("오른쪽 — 고른 능력치")]
         [SerializeField] Image _detailIcon;
+
+        /// 아이콘을 원본 픽셀의 몇 배로 그릴지. 칸에 맞춰 늘리면 넓적한 그림(채집)만 유독 작아진다 —
+        /// 아이콘들은 같은 축척으로 그려졌으니 같은 배율로 그려야 크기가 고르게 보인다.
+        [SerializeField] float _detailIconScale = 1f;
         [SerializeField] TMP_Text _detailName;
         [SerializeField] TMP_Text _detailDescription;
         [SerializeField] TMP_Text _detailCurrent;
@@ -150,6 +154,7 @@ namespace ForagerCP
             {
                 _detailIcon.sprite = row.Icon;
                 _detailIcon.enabled = row.Icon != null;
+                if (row.Icon != null) _detailIcon.rectTransform.sizeDelta = row.Icon.rect.size * _detailIconScale;
             }
             if (_detailName != null) _detailName.text = row.DisplayName;
             if (_detailDescription != null) _detailDescription.text = row.Description;
