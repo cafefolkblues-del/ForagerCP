@@ -46,10 +46,28 @@ namespace ForagerCP
         /// 빈 칸을 못 찾을 때 포기하기까지의 시도 횟수. 범위가 좁으면 영영 못 찾을 수 있다.
         [SerializeField] int _maxAttempts = 200;
 
+        [Header("피할 것")]
+        /// 이 구역 안에만 세운다. 비우면 이 오브젝트가 선 구역을 쓴다.
+        ///
+        /// 꼭 지켜야 하는 이유: 몬스터는 자기 구역 밖의 플레이어를 표적으로 삼지 않는다.
+        /// 남의 구역이나 구획 밖에 세우면 영영 아무도 안 쫓는 허수아비가 되는데,
+        /// 겉으로는 'AI가 고장난 것'처럼 보여서 원인을 찾기가 어렵다.
+        [SerializeField] RegionDefinition _region;
+
+        /// 구역을 안 따질 때 끈다. 구획을 아직 안 그은 맵에서 쓴다.
+        [SerializeField] bool _requireRegion = true;
+
+        /// 살아있는 것과 벽을 피하는 반경. 칸 반폭보다 살짝 작게 둔다 —
+        /// 옆 칸에 붙어 선 것까지 걸리면 좁은 구역에서 자리를 못 찾는다.
+        [SerializeField] float _clearanceRadius = 0.45f;
+
         /// 땅에서 띄우는 높이. 놓인 블럭과 같은 이유로 여기 둔다.
         [SerializeField] float _heightOffset = 0.5f;
 
         public Mode Current => _mode;
+
+        /// 세울 구역. 지정하지 않았으면 이 오브젝트가 선 자리의 구역.
+        public RegionDefinition Region => _region != null ? _region : RegionMap.At(transform.position);
         public int Alive
         {
             get
@@ -176,18 +194,56 @@ namespace ForagerCP
             }
         }
 
-        /// 이미 뭔가 놓인 칸과, 먼저 고른 자리에 너무 가까운 칸은 거른다.
+        /// 네 가지를 거른다: 그리드에 등록된 것 · 구역 밖 · 살아있는 것이나 벽 · 먼저 고른 자리 근처.
+        ///
+        /// 그리드(GridOccupancy)만 묻던 때의 구멍이 둘 있었다.
+        /// ① 구역 경계벽은 GridPlacement를 달지 않아 등록되지 않는다 — 벽 속에 생겼다.
+        /// ② 플레이어는 칸에 매이지 않아 등록될 수가 없다.
+        /// 그래서 등록 여부와 상관없이 물리로 한 번 더 본다(설치 블럭 쪽에서 쓰는 방식과 같다).
         bool IsUsable(Vector2Int cell)
         {
+            // 광물·구조물·설치한 블럭·보관함·시설 — 칸을 차지한다고 등록한 것 전부.
             if (!GridOccupancy.IsFree(new RectInt(cell.x, cell.y, 1, 1))) return false;
+
+            if (_requireRegion)
+            {
+                RegionDefinition region = Region;
+                if (region != null && RegionMap.At(cell) != region) return false;
+            }
 
             for (int i = 0; i < _cells.Count; i++)
             {
                 Vector2Int gap = _cells[i] - cell;
                 if (Mathf.Abs(gap.x) < _minSpacing && Mathf.Abs(gap.y) < _minSpacing) return false;
             }
-            return true;
+
+            return !IsCrowded(cell);
         }
+
+        /// 살아있는 것(플레이어·몬스터)과 구역 경계벽이 서 있는지.
+        /// 바닥은 세지 않는다 — 무엇을 피할지 이름으로 꼽아야 바닥·장식까지 걸려 자리가 없어지는 일이 없다.
+        bool IsCrowded(Vector2Int cell)
+        {
+            MapGrid grid = MapGrid.Active;
+            if (grid == null) return false;
+
+            Vector3 center = grid.CellToWorld(cell, Vector2Int.one) + Vector3.up * _heightOffset;
+
+            int count = Physics.OverlapSphereNonAlloc(
+                center, _clearanceRadius, _clearance, ~0, QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < count; i++)
+            {
+                if (_clearance[i] == null) continue;
+                if (_clearance[i].transform.IsChildOf(transform)) continue;
+
+                if (_clearance[i].GetComponentInParent<IDamageable>() != null) return true;
+                if (_clearance[i].GetComponentInParent<RegionBarrier>() != null) return true;
+            }
+            return false;
+        }
+
+        readonly Collider[] _clearance = new Collider[8];
 
         void OnDrawGizmosSelected()
         {
