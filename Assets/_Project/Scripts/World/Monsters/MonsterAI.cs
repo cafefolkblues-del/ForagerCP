@@ -9,6 +9,10 @@ namespace ForagerCP
     ///
     /// 무엇을 내지를지는 여기가 정하지 않는다 — MonsterDefinition이 든 공격 목록에서
     /// 지금 쓸 수 있는 것을 고를 뿐이다. 공격 종류가 늘어도 이 파일은 안 늘어난다.
+    ///
+    /// ⚠️ 상태기계(전이 조건·상태 추가)는 따로 손볼 예정이다. 지금 전이 순서는
+    /// 돌진 → 경직/넉백 → 빈틈 → 예고 → 리쉬 → 탐지·구역 → 후퇴 → 공격 → 추적이고,
+    /// 위에 있는 것이 먼저 가로챈다. 건드릴 때 이 순서를 먼저 확인할 것.
     [RequireComponent(typeof(Monster))]
     public class MonsterAI : MonoBehaviour
     {
