@@ -8,6 +8,10 @@ namespace ForagerCP
     public class ItemDefinition : ScriptableObject
     {
         [SerializeField] string _displayName;
+
+        /// 인벤 탭 오른쪽 쪽에 뜨는 설명. 비워두면 설명 없이 이름만 보인다.
+        [SerializeField, TextArea] string _description;
+
         [SerializeField] Sprite _icon;
         [SerializeField] int _maxStack = 99;
         [SerializeField] int _goldValue = 10;
@@ -36,6 +40,7 @@ namespace ForagerCP
 
         /// 이름을 비워두면 에셋 파일명을 쓴다 — 디자이너가 한 군데만 고쳐도 되게.
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
+        public string Description => _description;
 
         public Sprite Icon => _icon;
         public int MaxStack => Mathf.Max(1, _maxStack);

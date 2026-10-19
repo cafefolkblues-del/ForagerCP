@@ -12,8 +12,16 @@ namespace ForagerCP
         [SerializeField] TMP_Text _nameText;
         [SerializeField] CanvasGroup _contentGroup;
 
+        /// 고른 칸 테두리. 고르는 개념이 없는 창(창고)은 비워둔다.
+        [SerializeField] Image _selection;
+
         /// 아이콘 에셋이 아직 없을 때 쓰는 대체 색. 아트가 들어오면 아이콘이 이걸 덮는다.
         [SerializeField] Color _emptyColor = new Color(1f, 1f, 1f, 0.06f);
+
+        public void SetSelected(bool selected)
+        {
+            if (_selection != null) _selection.enabled = selected;
+        }
 
         public void ShowEmpty()
         {
