@@ -67,8 +67,21 @@ namespace ForagerCP
             Unbind();
         }
 
+
+        /// 같은 역에 다시 F를 누르면 닫는다. 창을 닫는 길이 ESC 하나뿐이면
+        /// 열던 키로 닫지 못해 손이 한 번 더 움직인다(3차 프로토타입 피드백 2번).
+        bool ToggledOff(ShopStation station)
+        {
+            if (_window == null || !_window.IsOpen || _station != station) return false;
+
+            _window.Close();
+            return true;
+        }
+
         void Open(ShopStation station)
         {
+            if (ToggledOff(station)) return;
+
             Bind(station);
 
             if (_notice != null) _notice.text = string.Empty;

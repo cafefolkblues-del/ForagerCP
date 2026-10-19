@@ -128,6 +128,7 @@ namespace ForagerCP
             }
 
             if (!HasIngredients(recipe, out string missing)) { reason = $"{missing} 부족"; return false; }
+
             return true;
         }
 
@@ -224,21 +225,46 @@ namespace ForagerCP
             return -1;
         }
 
+        /// 모자란 것을 **전부** 적는다. 처음 걸린 하나만 말하면 플레이어가 한 종류씩
+        /// 채워 오며 같은 화면을 여러 번 열게 된다(3차 프로토타입 피드백 3번).
         bool HasIngredients(CraftRecipe recipe, out string missing)
         {
             missing = null;
 
+            List<string> lacking = null;
             for (int i = 0; i < recipe.Ingredients.Count; i++)
             {
                 CraftRecipe.Ingredient ingredient = recipe.Ingredients[i];
                 if (ingredient?.Item == null) continue;
 
-                if (_inventory.CountOf(ingredient.Item) >= ingredient.Count) continue;
+                int have = _inventory.CountOf(ingredient.Item);
+                if (have >= ingredient.Count) continue;
 
-                missing = ingredient.Item.DisplayName;
-                return false;
+                lacking ??= new List<string>();
+                lacking.Add($"{ingredient.Item.DisplayName} {have}/{ingredient.Count}");
             }
-            return true;
+
+            if (lacking == null) return true;
+
+            missing = string.Join(", ", lacking);
+            return false;
+        }
+
+        /// 재료를 가졌든 아니든 전 종류의 보유/필요를 적는다. 화면이 늘 같은 줄을 보여주도록.
+        public string DescribeIngredients(CraftRecipe recipe)
+        {
+            if (recipe == null || _inventory == null) return string.Empty;
+
+            var parts = new List<string>();
+            for (int i = 0; i < recipe.Ingredients.Count; i++)
+            {
+                CraftRecipe.Ingredient ingredient = recipe.Ingredients[i];
+                if (ingredient?.Item == null) continue;
+
+                int have = _inventory.CountOf(ingredient.Item);
+                parts.Add($"{ingredient.Item.DisplayName} {have}/{ingredient.Count}");
+            }
+            return string.Join("  ·  ", parts);
         }
 
         void TakeIngredients(CraftRecipe recipe)

@@ -95,8 +95,19 @@ namespace ForagerCP
             if (_window != null && _window.IsOpen) Redraw();
         }
 
+        /// 같은 보관함에 다시 F를 누르면 닫는다(3차 프로토타입 피드백 2번).
+        bool ToggledOff(StorageBox box)
+        {
+            if (_window == null || !_window.IsOpen || _box != box) return false;
+
+            _window.Close();
+            return true;
+        }
+
         void Open(StorageBox box)
         {
+            if (ToggledOff(box)) return;
+
             _box = box;
             if (_notice != null) _notice.text = string.Empty;
 

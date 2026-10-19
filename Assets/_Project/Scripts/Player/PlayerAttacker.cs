@@ -52,6 +52,12 @@ namespace ForagerCP
         [Header("채집")]
         [SerializeField] float _harvestInterval = 0.4f;
 
+        /// 채집과 공격이 후딜을 함께 쓴다. 끄면 예전처럼 따로 센다.
+        ///
+        /// 따로 세면 캐다가 바로 칼을 휘두르고 또 바로 캐는 식으로 두 박자가 겹쳐,
+        /// 한쪽 박자만 보고 잡은 밸런스가 전부 무너진다(2차 프로토타입 피드백 1번).
+        [SerializeField] bool _shareActionCooldown = true;
+
         public event Action<bool> SwingStarted; // true = 차지 스윙
         public event Action<float> ChargeRatioChanged;
 
@@ -78,6 +84,9 @@ namespace ForagerCP
         bool _swingIsCharged;
         bool _harvestLock;
         float _nextHarvestTime;
+
+        /// 채집이든 공격이든 '다음 행동'이 가능해지는 시각. 둘이 같은 값을 민다.
+        float _nextActionTime;
 
         void Awake()
         {
@@ -139,11 +148,14 @@ namespace ForagerCP
         void TickHarvest()
         {
             if (Time.time < _nextHarvestTime) return;
+            if (_shareActionCooldown && Time.time < _nextActionTime) return;
 
             IHarvestable target = FindNearestHarvestable(_range);
             if (target == null) return;
 
             _nextHarvestTime = Time.time + _harvestInterval;
+            _nextActionTime = _nextHarvestTime;
+
             target.Harvest(_power != null ? _power.Value : 1);
         }
 
@@ -158,6 +170,9 @@ namespace ForagerCP
 
             if (_state != null && !_state.CanAttack) { SetCharging(false); return; }
             if (Current != Phase.Idle) { SetCharging(false); return; }
+
+            // 캐던 손으로 바로 베지 못한다. 채집이 민 후딜이 아직 남아 있으면 스윙도 안 나간다.
+            if (_shareActionCooldown && Time.time < _nextActionTime) { SetCharging(false); return; }
 
             bool charged = _chargeTime > 0f && holdTime >= _chargeTime;
             SetCharging(false);
@@ -216,6 +231,9 @@ namespace ForagerCP
                     if (Time.time < _phaseEndTime) return;
                     Current = Phase.Idle;
                     HasAimLock = false;
+
+                    // 벤 손으로 바로 캐지도 못한다. 반대 방향도 같이 막아야 박자가 하나가 된다.
+                    _nextActionTime = Time.time + _harvestInterval;
                     return;
             }
         }

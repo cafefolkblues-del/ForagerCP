@@ -91,8 +91,21 @@ namespace ForagerCP
             Unbind();
         }
 
+
+        /// 같은 역에 다시 F를 누르면 닫는다. 창을 닫는 길이 ESC 하나뿐이면
+        /// 열던 키로 닫지 못해 손이 한 번 더 움직인다(3차 프로토타입 피드백 2번).
+        bool ToggledOff(CraftingStation station)
+        {
+            if (_window == null || !_window.IsOpen || _station != station) return false;
+
+            _window.Close();
+            return true;
+        }
+
         void Open(CraftingStation station)
         {
+            if (ToggledOff(station)) return;
+
             Bind(station);
 
             if (_notice != null) _notice.text = string.Empty;
@@ -223,10 +236,14 @@ namespace ForagerCP
                 bool can = _station.CanStart(recipe, out string reason);
                 row.Detail.color = can ? _ready : _blocked;
 
-                // 못 만들 때는 재료 목록 대신 이유를 보여준다 — 무엇이 막는지가 더 급한 정보다.
-                row.Detail.text = can
-                    ? $"{recipe.DescribeIngredients()} · {recipe.Seconds:0}초"
-                    : reason;
+                // 재료는 되든 안 되든 전 종류를 보유/필요로 보여준다.
+                // 못 만들 때만 이유로 바꿔 끼우면 "무엇이 얼마나 모자란지"가 안 보여서,
+                // 한 종류씩 채워 오며 같은 화면을 여러 번 열게 된다(3차 프로토타입 피드백 3번).
+                // 재료가 아닌 이유(자리 없음 등)는 뒤에 덧붙인다.
+                string ingredients = $"{_station.DescribeIngredients(recipe)} · {recipe.Seconds:0}초";
+                row.Detail.text = can || string.IsNullOrEmpty(reason)
+                    ? ingredients
+                    : $"{ingredients}   —   {reason}";
 
                 row.Make.interactable = can;
 

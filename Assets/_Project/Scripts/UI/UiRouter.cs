@@ -88,15 +88,19 @@ namespace ForagerCP
         public void OpenSkills() => OpenPanel(_skillPanel);
         public void OpenSaves() => OpenPanel(_savePanel);
 
-        /// ESC 한 번에 다 닫아버리면 메뉴에서 들어간 화면을 빠져나올 때마다 처음부터 다시 열어야 한다.
-        /// 하위 화면이 열려 있으면 메뉴로 돌아가고, 메뉴만 있으면 그때 닫는다.
+        /// ESC는 떠 있는 창을 그냥 닫는다. 창이 없을 때만 메뉴를 연다.
+        ///
+        /// 한때는 하위 화면에서 ESC를 누르면 메뉴로 돌아가게 했다. "메뉴에서 들어간 화면을
+        /// 빠져나올 때 처음부터 다시 열지 않아도 된다"는 이유였는데, 실제로는 상점·제작대처럼
+        /// **메뉴를 거치지 않고 연 창**이 훨씬 많았다. 그 경우 ESC 한 번에 쓸데없는 메뉴가 뜨고
+        /// 게임으로 돌아가려면 또 눌러야 했다(3차 프로토타입 피드백 2번).
+        /// 메뉴에서 들어간 화면은 메뉴 버튼으로 다시 열면 되고, 그쪽이 누르는 횟수가 적다.
         void OnCancel()
         {
             if (AnyOpenExcept(_menuPanel))
             {
-                // 한 번에 하나만 여는 설정이면 OpenPanel이 나머지를 알아서 닫는다.
-                OpenPanel(_menuPanel);
-                if (!_exclusive) CloseAllExcept(_menuPanel);
+                CloseAllExcept(_menuPanel);
+                if (_menuPanel != null) _menuPanel.Close();
                 return;
             }
 
