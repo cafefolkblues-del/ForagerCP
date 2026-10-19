@@ -76,6 +76,21 @@ namespace ForagerCP
 
         public float ChargeRatio => _chargeTime <= 0f ? 1f : Mathf.Clamp01(_input.AttackHoldTime / _chargeTime);
 
+        /// 일반 스윙 한 대의 피해. 스탯 창도 이 값을 읽는다 — 화면용 계산을 따로 두면 실제 피해와 어긋난다.
+        ///
+        /// 공격력은 장비 한 곳에서만 나온다. 여기 숫자를 박으면 무기 티어를 늘릴 때 코드를 고쳐야 한다.
+        /// 버프는 더 이상 숫자를 더하지 않고 비율을 올린다. 기획이 "기본 능력치에 각각의
+        /// 증가율을 더한 뒤 한 번 계산"으로 못박았으므로, 비율끼리 먼저 더하고 곱은 한 번이다.
+        public float AttackPower
+        {
+            get
+            {
+                int weapon = Mathf.Max(1, _equipment != null ? _equipment.AttackPower : 1);
+                float bonus = 1f + (_buffs != null ? _buffs.AttackPower : 0) / 100f;
+                return weapon * bonus;
+            }
+        }
+
         /// 한 스윙에서 이미 때린 대상. 액티브가 여러 프레임이라 중복 타격을 막아야 한다.
         readonly HashSet<IDamageable> _hitThisSwing = new HashSet<IDamageable>();
         readonly Collider[] _overlapBuffer = new Collider[32];
@@ -285,15 +300,7 @@ namespace ForagerCP
         {
             float range = _swingIsCharged ? _chargeRange : _range;
             float halfAngle = _swingIsCharged ? 180f : _halfAngle; // 차지는 원형 360°
-            // 공격력은 장비 한 곳에서만 나온다. 여기 숫자를 박으면 무기 티어를 늘릴 때 코드를 고쳐야 한다.
-            //
-            // 버프는 더 이상 숫자를 더하지 않고 비율을 올린다. 기획이 "기본 능력치에 각각의
-            // 증가율을 더한 뒤 한 번 계산"으로 못박았으므로, 비율끼리 먼저 더하고 곱은 한 번이다.
-            int weapon = Mathf.Max(1, _equipment != null ? _equipment.AttackPower : 1);
-            float bonus = 1f + (_buffs != null ? _buffs.AttackPower : 0) / 100f;
-
-            int damage = Mathf.RoundToInt(weapon * bonus
-                                          * (_swingIsCharged ? _chargeDamageMultiplier : 1f));
+            int damage = Mathf.RoundToInt(AttackPower * (_swingIsCharged ? _chargeDamageMultiplier : 1f));
 
             if (!HitsEveryone)
             {

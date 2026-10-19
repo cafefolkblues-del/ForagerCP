@@ -43,6 +43,14 @@ namespace ForagerCP
         /// 갑옷을 낀 뒤 체력바가 옛 칸 수로 남는 일이 없다.
         public int MaxHp => _maxHp + (_equipment != null ? _equipment.MaxHpBonus : 0);
 
+        /// 받는 피해를 몇 % 깎는가(최대 90). 스탯 창도 이 값을 읽는다.
+        ///
+        /// 출처(방어구·버프)마다 따로 곱하지 않고 비율을 먼저 더한 뒤 한 번만 적용한다.
+        /// 따로 곱하면 둘만 겹쳐도 체감이 과하게 세진다.
+        public int DamageReductionPercent => Mathf.Clamp(
+            (_equipment != null ? _equipment.DamageReduction : 0) + (_buffs != null ? _buffs.DamageReduction : 0),
+            0, 90);
+
         int _hp;
         float _invulnerableUntil;
 
@@ -83,13 +91,7 @@ namespace ForagerCP
 
             // 방어구는 들어온 피해를 비율로 깎는다. 다만 0으로는 못 만든다 —
             // 방어구만으로 무적이 되면 전투가 성립하지 않는다(기획도 최소 피해 1로 못박았다).
-            //
-            // 출처(방어구·버프)마다 따로 곱하지 않고 비율을 먼저 더한 뒤 한 번만 적용한다.
-            // 따로 곱하면 둘만 겹쳐도 체감이 과하게 세진다.
-            int percent = (_equipment != null ? _equipment.DamageReduction : 0)
-                        + (_buffs != null ? _buffs.DamageReduction : 0);
-
-            float scale = 1f - Mathf.Clamp(percent, 0, 90) / 100f;
+            float scale = 1f - DamageReductionPercent / 100f;
             int taken = Mathf.Max(1, Mathf.RoundToInt(amount * scale));
 
             _invulnerableUntil = Time.time + _invulnerableTime;

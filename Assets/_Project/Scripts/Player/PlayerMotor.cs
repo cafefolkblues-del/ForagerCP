@@ -20,6 +20,9 @@ namespace ForagerCP
         [SerializeField] float _fallSafeY = -3f;
         [SerializeField] float _moveSpeed = 5f;
 
+        /// 기본 이동 속도(차지·방패 감속 전). 스탯 창이 읽는다.
+        public float MoveSpeed => _moveSpeed;
+
         Rigidbody _body;
 
         void Awake()

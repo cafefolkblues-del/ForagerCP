@@ -27,6 +27,10 @@ namespace ForagerCP
         /// 좌클릭을 뗀 순간. 인자는 누르고 있던 시간(차지 판정용).
         public event Action<float> AttackReleased;
 
+        /// 탭 화면에서 옆 탭으로(-1 = Q, +1 = E). E는 '놓기'와 같은 키지만
+        /// 창이 떠 있으면 놓기가 막히고, 창이 없으면 받는 쪽(UiRouter)이 무시하므로 겹치지 않는다.
+        public event Action<int> TabStepped;
+
         InputAction _move;
         InputAction _attack;
         InputAction _shield;
@@ -36,6 +40,8 @@ namespace ForagerCP
         InputAction _map;
         InputAction _cancel;
         InputAction _place;
+        InputAction _tabPrevious;
+        InputAction _tabNext;
 
         /// 창이 떠 있는 동안 참. UiRouter가 밀어 넣는다 —
         /// 입력이 UI를 참조하면 입력만 떼어 시험할 수가 없어진다.
@@ -78,6 +84,8 @@ namespace ForagerCP
             _map = new InputAction("Map", InputActionType.Button, "<Keyboard>/m");
             _cancel = new InputAction("Cancel", InputActionType.Button, "<Keyboard>/escape");
             _place = new InputAction("Place", InputActionType.Button, "<Keyboard>/e");
+            _tabPrevious = new InputAction("TabPrevious", InputActionType.Button, "<Keyboard>/q");
+            _tabNext = new InputAction("TabNext", InputActionType.Button, "<Keyboard>/e");
 
             _interact.performed += OnInteractPerformed;
             _inventory.performed += OnInventoryPerformed;
@@ -85,6 +93,8 @@ namespace ForagerCP
             _cancel.performed += OnCancelPerformed;
             _dash.performed += OnDashPerformed;
             _place.performed += OnPlacePerformed;
+            _tabPrevious.performed += OnTabPreviousPerformed;
+            _tabNext.performed += OnTabNextPerformed;
         }
 
         void OnEnable()
@@ -98,6 +108,8 @@ namespace ForagerCP
             _map.Enable();
             _cancel.Enable();
             _place.Enable();
+            _tabPrevious.Enable();
+            _tabNext.Enable();
         }
 
         void OnDisable()
@@ -111,6 +123,8 @@ namespace ForagerCP
             _map.Disable();
             _cancel.Disable();
             _place.Disable();
+            _tabPrevious.Disable();
+            _tabNext.Disable();
         }
 
         /// 홀드 시간과 릴리즈 시점은 여기 한 곳에서만 재고, 쓰는 쪽은 결과만 받는다.
@@ -170,6 +184,8 @@ namespace ForagerCP
             _cancel.performed -= OnCancelPerformed;
             _dash.performed -= OnDashPerformed;
             _place.performed -= OnPlacePerformed;
+            _tabPrevious.performed -= OnTabPreviousPerformed;
+            _tabNext.performed -= OnTabNextPerformed;
 
             _move.Dispose();
             _attack.Dispose();
@@ -180,6 +196,8 @@ namespace ForagerCP
             _map.Dispose();
             _cancel.Dispose();
             _place.Dispose();
+            _tabPrevious.Dispose();
+            _tabNext.Dispose();
         }
 
         /// ESC와 가방 열기는 막지 않는다 — 창을 닫을 길까지 끊으면 빠져나올 수가 없다.
@@ -198,5 +216,7 @@ namespace ForagerCP
         {
             if (!GameplayBlocked) PlacePressed?.Invoke();
         }
+        void OnTabPreviousPerformed(InputAction.CallbackContext _) => TabStepped?.Invoke(-1);
+        void OnTabNextPerformed(InputAction.CallbackContext _) => TabStepped?.Invoke(1);
     }
 }
