@@ -13,6 +13,17 @@ namespace ForagerCP
     {
         [SerializeField] string _displayName;
 
+        /// 이 종류를 세울 때 쓸 프리팹.
+        ///
+        /// 프리팹이 정의를 드는 게 아니라 **정의가 프리팹을 든다**. 방향이 이래야
+        /// 같은 몸통 하나를 구역별 정의 여럿이 돌려 쓸 수 있다 —
+        /// 기획이 "형태를 유지하되 광물 색으로 구분"이라 적은 그대로다.
+        [SerializeField] GameObject _prefab;
+
+        /// 몸 색. 구역이 올라갈수록 다른 색을 준다.
+        /// 머티리얼을 종류×구역만큼 만들지 않으려고 MaterialPropertyBlock으로 칠한다.
+        [SerializeField] Color _bodyColor = Color.white;
+
         [Header("전투")]
         [SerializeField] int _maxHp = 20;
 
@@ -33,6 +44,8 @@ namespace ForagerCP
         [SerializeField] float _respawnDelay = 15f;
 
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
+        public GameObject Prefab => _prefab;
+        public Color BodyColor => _bodyColor;
         public int MaxHp => Mathf.Max(1, _maxHp);
         public IReadOnlyList<MonsterAttack> Attacks => _attacks;
         public float MoveSpeed => Mathf.Max(0f, _moveSpeed);

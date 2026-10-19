@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a70fb5e906d465047be862869f448ac7, type: 3}
+  m_Name: Monster_Rubble_R5
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDefinition
+  _displayName: "\uB3CC\uBB34\uB354\uAE30"
+  _prefab: {fileID: 7989036063455739688, guid: 8f854b59923437f4d9142414480a184e, type: 3}
+  _bodyColor: {r: 0.4418, g: 0.316, b: 0.454, a: 1}
+  _maxHp: 55
+  _attacks:
+  - {fileID: 11400000, guid: e7921d0966bc0b74fa4ae6db9ff93c63, type: 2}
+  - {fileID: 11400000, guid: aa08a6e3b87300c4bb770a9db771a688, type: 2}
+  _moveSpeed: 2.5
+  _detectRange: 6
+  _leashDistance: 14
+  _expReward: 0
+  _respawnDelay: 99999

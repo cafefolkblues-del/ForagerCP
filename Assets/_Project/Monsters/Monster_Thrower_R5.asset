@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a70fb5e906d465047be862869f448ac7, type: 3}
+  m_Name: Monster_Thrower_R5
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDefinition
+  _displayName: "\uAD11\uB9E5 \uD22C\uCC99\uAFBC"
+  _prefab: {fileID: 2886228992763065164, guid: d9b072a2b5a116e43af54a399b18f700, type: 3}
+  _bodyColor: {r: 0.418, g: 0.36360005, b: 0.47439998, a: 1}
+  _maxHp: 45
+  _attacks:
+  - {fileID: 11400000, guid: f182e2c5689b10c4c92c8ca7d7c74a38, type: 2}
+  _moveSpeed: 2.2
+  _detectRange: 8
+  _leashDistance: 14
+  _expReward: 0
+  _respawnDelay: 99999

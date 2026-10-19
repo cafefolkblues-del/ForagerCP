@@ -25,7 +25,22 @@ namespace ForagerCP
             Random,
         }
 
+        /// 한 구역에 세울 종류와 마릿수. 2구역은 돌무더기 2 + 투척꾼 2처럼 섞인다.
+        ///
+        /// 구역당 스포너를 하나로 유지하는 이유: 구역 점령이 "이 구역 몬스터 전부"를
+        /// 한 덩어리로 켜고 끄고 세야 한다. 종류마다 스포너를 쪼개면 그걸 다시 묶는
+        /// 코드가 생긴다.
+        [System.Serializable]
+        public class Group
+        {
+            public MonsterDefinition Definition;
+            public int Count = 1;
+        }
+
         [SerializeField] Mode _mode = Mode.Placed;
+        [SerializeField] List<Group> _groups = new List<Group>();
+
+        /// 목록이 비었을 때 쓰는 옛 길. 씬에 이미 올려둔 스포너가 안 깨지게 남긴다.
         [SerializeField] GameObject _prefab;
 
         [Header("배치")]
@@ -83,6 +98,28 @@ namespace ForagerCP
 
         public int SpawnedCount => _spawned.Count;
 
+        /// 세울 마릿수의 합. 목록이 비었으면 옛 길의 값을 쓴다.
+        public int Wanted
+        {
+            get
+            {
+                if (_groups == null || _groups.Count == 0)
+                {
+                    return _mode == Mode.Random ? Mathf.Max(0, _count) : _cells.Count;
+                }
+
+                int total = 0;
+                for (int i = 0; i < _groups.Count; i++)
+                {
+                    if (_groups[i] != null && _groups[i].Definition != null)
+                    {
+                        total += Mathf.Max(0, _groups[i].Count);
+                    }
+                }
+                return total;
+            }
+        }
+
         readonly List<Monster> _spawned = new List<Monster>();
 
         /// 한 번 고른 자리. 초기화해도 같은 자리에 다시 선다.
@@ -99,19 +136,39 @@ namespace ForagerCP
 
         public void Spawn()
         {
-            if (_prefab == null) return;
-
             if (_cells.Count == 0) ChooseCells();
+
+            // 자리마다 어떤 종류를 세울지 미리 펼쳐둔다. 목록이 비었으면 옛 길(프리팹 하나).
+            List<MonsterDefinition> plan = Flatten();
 
             MapGrid grid = MapGrid.Active;
             for (int i = 0; i < _cells.Count; i++)
             {
+                MonsterDefinition definition = i < plan.Count ? plan[i] : null;
+
+                GameObject source = definition != null && definition.Prefab != null
+                    ? definition.Prefab
+                    : _prefab;
+                if (source == null) continue;
+
                 Vector3 position = grid != null
                     ? grid.CellToWorld(_cells[i], Vector2Int.one) + Vector3.up * _heightOffset
                     : transform.position;
 
-                GameObject instance = Instantiate(_prefab, position, Quaternion.identity, transform);
-                instance.name = _prefab.name + "_" + i;
+                // 비활성으로 만들고 종류를 갈아끼운 뒤 켠다. Monster.Awake가 체력을
+                // 정의에서 읽기 때문에, 켜진 뒤에 바꾸면 체력이 옛 종류 값으로 남는다.
+                bool wasActive = source.activeSelf;
+                source.SetActive(false);
+
+                GameObject instance = Instantiate(source, position, Quaternion.identity, transform);
+                source.SetActive(wasActive);
+
+                instance.name = (definition != null ? definition.name : source.name) + "_" + i;
+
+                if (definition != null && instance.TryGetComponent(out Monster configured))
+                {
+                    configured.Configure(definition);
+                }
 
                 // 칸 좌표를 심어준다. 죽음 기록(MonsterDeaths)이 칸으로 몬스터를 알아보므로,
                 // 런타임에 생긴 것도 칸을 들고 있어야 저장이 성립한다.
@@ -120,8 +177,26 @@ namespace ForagerCP
                     placement.Configure(_cells[i], placement.Size, _heightOffset);
                 }
 
+                instance.SetActive(true);
+
                 if (instance.TryGetComponent(out Monster monster)) _spawned.Add(monster);
             }
+        }
+
+        /// {종류, 마릿수} 목록을 자리 수만큼 한 줄로 편다.
+        List<MonsterDefinition> Flatten()
+        {
+            var plan = new List<MonsterDefinition>();
+            if (_groups == null) return plan;
+
+            for (int i = 0; i < _groups.Count; i++)
+            {
+                Group group = _groups[i];
+                if (group == null || group.Definition == null) continue;
+
+                for (int n = 0; n < Mathf.Max(0, group.Count); n++) plan.Add(group.Definition);
+            }
+            return plan;
         }
 
         public void Clear()
@@ -162,6 +237,9 @@ namespace ForagerCP
         {
             MapGrid grid = MapGrid.Active;
 
+            // 자리보다 마릿수가 많으면 조용히 덜 나온다. 그걸 못 찾는 게 제일 괴롭다.
+            int wanted = Wanted;
+
             List<Transform> points = _points;
             if (points == null || points.Count == 0)
             {
@@ -174,11 +252,16 @@ namespace ForagerCP
                 if (points[i] == null) continue;
                 _cells.Add(grid != null ? grid.WorldToCell(points[i].position) : Vector2Int.zero);
             }
+
+            if (_groups != null && _groups.Count > 0 && _cells.Count < wanted)
+            {
+                Debug.LogWarning($"{name}: 세울 자리가 {_cells.Count}개인데 마릿수는 {wanted}마리입니다", this);
+            }
         }
 
         void ChooseRandom()
         {
-            int wanted = Mathf.Max(0, _count);
+            int wanted = Mathf.Max(0, Wanted);
             int attempts = 0;
 
             while (_cells.Count < wanted && attempts < Mathf.Max(1, _maxAttempts))

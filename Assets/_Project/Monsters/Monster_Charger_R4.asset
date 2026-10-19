@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a70fb5e906d465047be862869f448ac7, type: 3}
+  m_Name: Monster_Charger_R4
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDefinition
+  _displayName: "\uAD11\uC11D \uB3CC\uC9C4\uC218"
+  _prefab: {fileID: 637022230094578250, guid: 95ad6ef755e6e5f4f984b1b16d3ddc26, type: 3}
+  _bodyColor: {r: 0.68539995, g: 0.4686, b: 0.3654, a: 1}
+  _maxHp: 55
+  _attacks:
+  - {fileID: 11400000, guid: e3a46303aef5d8344b988b040674317f, type: 2}
+  _moveSpeed: 2.6
+  _detectRange: 7
+  _leashDistance: 14
+  _expReward: 0
+  _respawnDelay: 99999

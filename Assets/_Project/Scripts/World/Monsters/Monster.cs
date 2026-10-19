@@ -35,6 +35,40 @@ namespace ForagerCP
         bool _alive = true;
         int _hp;
 
+        /// 세우기 전에 종류를 갈아끼운다.
+        ///
+        /// Awake가 _definition.MaxHp로 체력을 잡기 때문에 **활성화 전에** 불러야 한다.
+        /// 스포너는 비활성으로 만들어 이걸 부르고 켜는 순서를 지킨다.
+        public void Configure(MonsterDefinition definition)
+        {
+            if (definition == null) return;
+
+            _definition = definition;
+            _hp = definition.MaxHp;
+
+            Paint(definition.BodyColor);
+        }
+
+        /// 몸 색을 칠한다. 머티리얼을 복제하지 않는다 — 구역 수만큼 머티리얼이 늘면
+        /// 아트가 색을 한 번 바꿀 때 전부 다시 만들어야 한다.
+        void Paint(Color color)
+        {
+            if (_renderers == null) _renderers = GetComponentsInChildren<Renderer>(true);
+
+            _paint ??= new MaterialPropertyBlock();
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                if (_renderers[i] == null) continue;
+
+                _renderers[i].GetPropertyBlock(_paint);
+                _paint.SetColor(BaseColorId, color);
+                _renderers[i].SetPropertyBlock(_paint);
+            }
+        }
+
+        MaterialPropertyBlock _paint;
+        static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
         void Awake()
         {
             _renderers = GetComponentsInChildren<Renderer>(true);

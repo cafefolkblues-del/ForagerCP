@@ -919,7 +919,7 @@ Transform:
   m_GameObject: {fileID: 73269366}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4, y: 0, z: 0}
+  m_LocalPosition: {x: 3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2037,7 +2037,7 @@ Transform:
   m_GameObject: {fileID: 149982001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: -3}
+  m_LocalPosition: {x: -1, y: 0, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3002,7 +3002,7 @@ Transform:
   m_GameObject: {fileID: 280438157}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: -2}
+  m_LocalPosition: {x: -2, y: 0, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5641,11 +5641,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterSpawner
   _mode: 0
+  _groups:
+  - Definition: {fileID: 11400000, guid: 93c1f4a1061184a468f907c0b2ee1efd, type: 2}
+    Count: 3
   _prefab: {fileID: 3779456260382996971, guid: bd172e6dc891a8945b1843bc655de118, type: 3}
-  _points:
-  - {fileID: 73269367}
-  - {fileID: 567328542}
-  - {fileID: 149982002}
+  _points: []
   _count: 3
   _areaOrigin: {x: -5, y: 0}
   _areaSize: {x: 20, y: 12}
@@ -9420,7 +9420,7 @@ Transform:
   m_GameObject: {fileID: 739477739}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: -2}
+  m_LocalPosition: {x: -3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11306,7 +11306,7 @@ Transform:
   m_GameObject: {fileID: 876300497}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: 2}
+  m_LocalPosition: {x: 1, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12517,6 +12517,7 @@ Transform:
   - {fileID: 1240307906}
   - {fileID: 1131240607}
   - {fileID: 739477740}
+  - {fileID: 1959790382}
   m_Father: {fileID: 310181443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &949229594
@@ -12532,11 +12533,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterSpawner
   _mode: 0
+  _groups:
+  - Definition: {fileID: 11400000, guid: b87c469f114cdd346b80c2936123790d, type: 2}
+    Count: 2
+  - Definition: {fileID: 11400000, guid: fe21c6d21e783494291a65425e313d2b, type: 2}
+    Count: 2
   _prefab: {fileID: 3779456260382996971, guid: bd172e6dc891a8945b1843bc655de118, type: 3}
-  _points:
-  - {fileID: 1240307906}
-  - {fileID: 1131240607}
-  - {fileID: 739477740}
+  _points: []
   _count: 3
   _areaOrigin: {x: -18, y: 12}
   _areaSize: {x: 33, y: 6}
@@ -14712,7 +14715,7 @@ Transform:
   m_GameObject: {fileID: 1074963344}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4, y: 0, z: 0}
+  m_LocalPosition: {x: 3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15167,6 +15170,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1101873197}
   m_CullTransparentMesh: 1
+--- !u!1 &1110293693
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1110293694}
+  m_Layer: 0
+  m_Name: Point_4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1110293694
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1110293693}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 0, z: -3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1223240924}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1110905201
 GameObject:
   m_ObjectHideFlags: 0
@@ -15615,7 +15649,7 @@ Transform:
   m_GameObject: {fileID: 1131240606}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0, z: 2}
+  m_LocalPosition: {x: 0, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17054,6 +17088,8 @@ Transform:
   - {fileID: 1074963345}
   - {fileID: 876300498}
   - {fileID: 280438158}
+  - {fileID: 1996757664}
+  - {fileID: 1110293694}
   m_Father: {fileID: 310181443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1223240925
@@ -17069,11 +17105,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterSpawner
   _mode: 0
+  _groups:
+  - Definition: {fileID: 11400000, guid: 83c10c67e9ed38e4d9d22642fe42666e, type: 2}
+    Count: 2
+  - Definition: {fileID: 11400000, guid: 62a48093f9b5afb478fd2339d8c4f3c0, type: 2}
+    Count: 1
+  - Definition: {fileID: 11400000, guid: b0de28b5856e03d49b881e939d572d2a, type: 2}
+    Count: 2
   _prefab: {fileID: 3779456260382996971, guid: bd172e6dc891a8945b1843bc655de118, type: 3}
-  _points:
-  - {fileID: 1074963345}
-  - {fileID: 876300498}
-  - {fileID: 280438158}
+  _points: []
   _count: 3
   _areaOrigin: {x: -8, y: 18}
   _areaSize: {x: 23, y: 8}
@@ -17113,7 +17153,7 @@ Transform:
   m_GameObject: {fileID: 1240307905}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4, y: 0, z: 0}
+  m_LocalPosition: {x: 3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25958,6 +25998,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1957925185}
   m_CullTransparentMesh: 1
+--- !u!1 &1959790381
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1959790382}
+  m_Layer: 0
+  m_Name: Point_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1959790382
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1959790381}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 949229593}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1963600886
 GameObject:
   m_ObjectHideFlags: 0
@@ -26342,6 +26413,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1993584087}
   m_CullTransparentMesh: 1
+--- !u!1 &1996757663
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1996757664}
+  m_Layer: 0
+  m_Name: Point_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1996757664
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996757663}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3, y: 0, z: -2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1223240924}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1997355373 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 174845192260793297, guid: 31bee278dd86972469c8145906c668dc, type: 3}
