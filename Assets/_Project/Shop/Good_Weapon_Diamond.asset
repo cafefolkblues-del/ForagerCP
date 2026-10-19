@@ -16,7 +16,7 @@ MonoBehaviour:
   _icon: {fileID: 0}
   _uiColor: {r: 0.9, g: 0.7, b: 0.42, a: 1}
   _category: "\uBB34\uAE30"
-  _price: 320
+  _price: 2500
   _oneTime: 0
   _requires: {fileID: 0}
   _effects:

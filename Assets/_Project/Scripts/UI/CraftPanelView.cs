@@ -263,7 +263,7 @@ namespace ForagerCP
             if (_gearLabel != null)
             {
                 _gearLabel.text = $"지금 도구 · {_equipment.NameOf(EquipmentSlot.Tool)}"
-                                + $" (채집 +{_equipment.HarvestPower})";
+                                + $" (채집력 {_equipment.HarvestPower})";
             }
         }
 

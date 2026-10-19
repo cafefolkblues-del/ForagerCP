@@ -4,41 +4,10 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 일정 시간 동안 걸리는 강화 하나.
-    ///
-    /// 수치를 장비와 같은 넷으로 맞춘 이유: 합산하는 자리가 늘어나면 안 된다.
-    /// 공격력을 쓰는 쪽이 '장비 + 버프'만 더하면 되게 둔다.
-    [CreateAssetMenu(menuName = "ForagerCP/버프", fileName = "Buff")]
-    public class BuffDefinition : ScriptableObject
-    {
-        [SerializeField] string _displayName;
-        [SerializeField] Color _uiColor = new Color(0.72f, 0.55f, 0.95f);
-        [SerializeField] float _seconds = 60f;
-
-        [Header("수치")]
-        [SerializeField] int _harvestPower;
-        [SerializeField] int _attackPower;
-        [SerializeField] int _damageReduction;
-
-        public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
-        public Color UiColor => _uiColor;
-        public float Seconds => Mathf.Max(1f, _seconds);
-
-        public int HarvestPower => _harvestPower;
-        public int AttackPower => _attackPower;
-        public int DamageReduction => _damageReduction;
-
-        public string Describe()
-        {
-            var parts = new List<string>();
-            if (_harvestPower != 0) parts.Add($"채집 +{_harvestPower}");
-            if (_attackPower != 0) parts.Add($"공격 +{_attackPower}");
-            if (_damageReduction != 0) parts.Add($"피해 감소 {_damageReduction}");
-
-            string what = parts.Count == 0 ? "효과 없음" : string.Join(" · ", parts);
-            return $"{what} ({_seconds:0}초)";
-        }
-    }
+    // BuffDefinition은 Core/Items/BuffDefinition.cs로 옮겼다.
+    // ScriptableObject를 MonoBehaviour와 한 파일에 두면 재컴파일 때 에셋의 스크립트
+    // 참조가 끊기는 일이 있다(실제로 Buff_Strength가 m_Script: 0이 되어 명부에서 사라졌다).
+    // 한 파일에 하나, 파일명은 클래스명으로 두는 쪽이 안전하다.
 
     /// 지금 걸려 있는 버프와 남은 시간.
     ///
@@ -63,7 +32,7 @@ namespace ForagerCP
         public BuffDefinition BuffAt(int index) => index >= 0 && index < _active.Count ? _active[index].Buff : null;
         public float RemainingAt(int index) => index >= 0 && index < _active.Count ? _active[index].Remaining : 0f;
 
-        public int HarvestPower => Sum(buff => buff.HarvestPower);
+        public int HarvestSpeed => Sum(buff => buff.HarvestSpeed);
         public int AttackPower => Sum(buff => buff.AttackPower);
         public int DamageReduction => Sum(buff => buff.DamageReduction);
 

@@ -18,7 +18,7 @@ MonoBehaviour:
   _icon: {fileID: 0}
   _uiColor: {r: 0.9, g: 0.7, b: 0.42, a: 1}
   _harvestPower: 0
-  _attackPower: 4
+  _attackPower: 10
   _damageReduction: 0
   _maxHpBonus: 0
   _price: 0

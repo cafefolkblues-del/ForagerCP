@@ -81,11 +81,16 @@ namespace ForagerCP
                 return;
             }
 
-            // 방어구는 들어온 피해를 깎는다. 다만 0으로는 못 만든다 —
-            // 방어구만으로 무적이 되면 전투가 성립하지 않는다.
-            int reduction = (_equipment != null ? _equipment.DamageReduction : 0)
-                          + (_buffs != null ? _buffs.DamageReduction : 0);
-            int taken = Mathf.Max(1, amount - reduction);
+            // 방어구는 들어온 피해를 비율로 깎는다. 다만 0으로는 못 만든다 —
+            // 방어구만으로 무적이 되면 전투가 성립하지 않는다(기획도 최소 피해 1로 못박았다).
+            //
+            // 출처(방어구·버프)마다 따로 곱하지 않고 비율을 먼저 더한 뒤 한 번만 적용한다.
+            // 따로 곱하면 둘만 겹쳐도 체감이 과하게 세진다.
+            int percent = (_equipment != null ? _equipment.DamageReduction : 0)
+                        + (_buffs != null ? _buffs.DamageReduction : 0);
+
+            float scale = 1f - Mathf.Clamp(percent, 0, 90) / 100f;
+            int taken = Mathf.Max(1, Mathf.RoundToInt(amount * scale));
 
             _invulnerableUntil = Time.time + _invulnerableTime;
             _hp = Mathf.Max(0, _hp - taken);

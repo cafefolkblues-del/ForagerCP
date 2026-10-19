@@ -38,6 +38,8 @@ namespace ForagerCP
         [Header("수치")]
         [SerializeField] int _harvestPower;
         [SerializeField] int _attackPower;
+        /// 받은 피해를 몇 % 깎는가. 기획이 "일반·특수 피격 피해 10% 감소"로 적어
+        /// 정수 차감에서 비율로 바꿨다 — 정수로 두면 적 공격력이 커질수록 방어구가 무의미해진다.
         [SerializeField] int _damageReduction;
         [SerializeField] int _maxHpBonus;
 
@@ -53,6 +55,8 @@ namespace ForagerCP
 
         public int HarvestPower => _harvestPower;
         public int AttackPower => _attackPower;
+        /// 퍼센트다. 합치는 쪽(PlayerHealth)이 여러 출처를 더한 뒤 한 번만 적용한다 —
+        /// 출처마다 따로 곱하면 두 개만 겹쳐도 거의 무적이 된다.
         public int DamageReduction => _damageReduction;
         public int MaxHpBonus => _maxHpBonus;
         public int Price => Mathf.Max(0, _price);

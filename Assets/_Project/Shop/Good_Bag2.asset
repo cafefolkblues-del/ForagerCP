@@ -16,7 +16,7 @@ MonoBehaviour:
   _icon: {fileID: 0}
   _uiColor: {r: 0.7, g: 0.72, b: 0.78, a: 1}
   _category: "\uD3B8\uC758"
-  _price: 900
+  _price: 1500
   _oneTime: 1
   _requires: {fileID: 11400000, guid: d1aee051670c03e43851c033acca496e, type: 2}
   _effects:

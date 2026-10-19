@@ -24,7 +24,13 @@ namespace ForagerCP
         public int Bonus { get; private set; }
 
         public int FromTool => _equipment != null ? _equipment.HarvestPower : 0;
-        public int FromBuff => _buffs != null ? _buffs.HarvestPower : 0;
+        /// 버프는 더 이상 위력을 올리지 않는다. 기획이 채집 버프를
+        /// "광물 공격 간격 20% 감소"로 적어 **속도** 축으로 옮겼다(HarvestSpeedPercent).
+        public int FromBuff => 0;
+
+        /// 광물 공격 간격을 몇 % 줄이는가. 버프와 스킬이 더해진 값 —
+        /// 출처마다 따로 곱하면 둘만 겹쳐도 간격이 거의 0이 된다.
+        public int HarvestSpeedPercent => _buffs != null ? _buffs.HarvestSpeed : 0;
         public int Value => _basePower + FromTool + FromBuff + Bonus;
 
         public void AddBonus(int amount)

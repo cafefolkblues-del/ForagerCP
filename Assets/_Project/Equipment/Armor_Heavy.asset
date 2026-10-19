@@ -19,6 +19,6 @@ MonoBehaviour:
   _uiColor: {r: 0.55, g: 0.72, b: 0.95, a: 1}
   _harvestPower: 0
   _attackPower: 0
-  _damageReduction: 2
-  _maxHpBonus: 10
-  _price: 900
+  _damageReduction: 20
+  _maxHpBonus: 0
+  _price: 1000

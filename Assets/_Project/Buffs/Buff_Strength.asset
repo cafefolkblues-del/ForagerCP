@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: e94709ee5eceba844858fe161da55e17, type: 3}
   m_Name: Buff_Strength
   m_EditorClassIdentifier: Assembly-CSharp:ForagerCP:BuffDefinition
-  _displayName: "\uD798"
+  _displayName: "\uACF5\uACA9"
   _uiColor: {r: 0.72, g: 0.55, b: 0.95, a: 1}
   _seconds: 60
-  _harvestPower: 3
-  _attackPower: 5
+  _harvestSpeed: 0
+  _attackPower: 20
   _damageReduction: 0

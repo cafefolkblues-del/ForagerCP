@@ -145,6 +145,19 @@ namespace ForagerCP
             ChargeRatioChanged?.Invoke(ChargeRatio);
         }
 
+        /// 버프가 줄여준 만큼 짧아진 채집 간격. 비율은 더해서 한 번만 먹인다.
+        float HarvestInterval
+        {
+            get
+            {
+                int percent = _power != null ? _power.HarvestSpeedPercent : 0;
+
+                // 90%까지만 깎는다. 100%가 되면 간격이 0이 되어 한 프레임에 광물이 사라진다.
+                float scale = 1f - Mathf.Clamp(percent, 0, 90) / 100f;
+                return Mathf.Max(0.05f, _harvestInterval * scale);
+            }
+        }
+
         void TickHarvest()
         {
             if (Time.time < _nextHarvestTime) return;
@@ -153,7 +166,7 @@ namespace ForagerCP
             IHarvestable target = FindNearestHarvestable(_range);
             if (target == null) return;
 
-            _nextHarvestTime = Time.time + _harvestInterval;
+            _nextHarvestTime = Time.time + HarvestInterval;
             _nextActionTime = _nextHarvestTime;
 
             target.Harvest(_power != null ? _power.Value : 1);
@@ -233,7 +246,7 @@ namespace ForagerCP
                     HasAimLock = false;
 
                     // 벤 손으로 바로 캐지도 못한다. 반대 방향도 같이 막아야 박자가 하나가 된다.
-                    _nextActionTime = Time.time + _harvestInterval;
+                    _nextActionTime = Time.time + HarvestInterval;
                     return;
             }
         }
@@ -273,9 +286,13 @@ namespace ForagerCP
             float range = _swingIsCharged ? _chargeRange : _range;
             float halfAngle = _swingIsCharged ? 180f : _halfAngle; // 차지는 원형 360°
             // 공격력은 장비 한 곳에서만 나온다. 여기 숫자를 박으면 무기 티어를 늘릴 때 코드를 고쳐야 한다.
-            int weapon = (_equipment != null ? _equipment.AttackPower : 1)
-                       + (_buffs != null ? _buffs.AttackPower : 0);
-            int damage = Mathf.RoundToInt(Mathf.Max(1, weapon)
+            //
+            // 버프는 더 이상 숫자를 더하지 않고 비율을 올린다. 기획이 "기본 능력치에 각각의
+            // 증가율을 더한 뒤 한 번 계산"으로 못박았으므로, 비율끼리 먼저 더하고 곱은 한 번이다.
+            int weapon = Mathf.Max(1, _equipment != null ? _equipment.AttackPower : 1);
+            float bonus = 1f + (_buffs != null ? _buffs.AttackPower : 0) / 100f;
+
+            int damage = Mathf.RoundToInt(weapon * bonus
                                           * (_swingIsCharged ? _chargeDamageMultiplier : 1f));
 
             if (!HitsEveryone)

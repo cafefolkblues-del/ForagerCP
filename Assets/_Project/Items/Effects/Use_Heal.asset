@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9beedf7cee4d50d4aa425fa8a265fca9, type: 3}
   m_Name: Use_Heal
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.HealConsumableEffect
-  _amount: 8
+  _percentOfMax: 30
