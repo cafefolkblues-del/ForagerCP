@@ -17,6 +17,8 @@ namespace ForagerCP
 
         Renderer[] _renderers;
         MaterialPropertyBlock _block;
+        Color[] _baseColors;
+        bool[] _painted;
         Coroutine _routine;
         Vector3 _baseScale;
         bool _scaleCaptured;
@@ -39,7 +41,10 @@ namespace ForagerCP
                 _scaleCaptured = true;
             }
 
+            // 점멸 중에 또 맞으면 블록에 흰색이 섞여 있다. 그때 잡으면 흰색이 원래 색으로 굳는다.
             if (_routine != null) StopCoroutine(_routine);
+            else CaptureBaseColors();
+
             _routine = StartCoroutine(FlashRoutine());
         }
 
@@ -78,16 +83,38 @@ namespace ForagerCP
                 Renderer renderer = _renderers[i];
                 if (renderer == null || renderer.sharedMaterial == null) continue;
 
-                Color baseColor = renderer.sharedMaterial.HasProperty(BaseColorId)
-                    ? renderer.sharedMaterial.GetColor(BaseColorId)
-                    : Color.white;
-
                 renderer.GetPropertyBlock(_block);
-                _block.SetColor(BaseColorId, Color.Lerp(baseColor, color, weight));
+                _block.SetColor(BaseColorId, Color.Lerp(_baseColors[i], color, weight));
                 renderer.SetPropertyBlock(_block);
             }
         }
 
+        /// 맞기 직전의 색을 잡는다. 머티리얼 색만 보면 Monster.Paint가 블록에 칠한
+        /// 몸 색을 모른 채 머티리얼 색으로 되돌린다.
+        void CaptureBaseColors()
+        {
+            if (_baseColors == null || _baseColors.Length != _renderers.Length)
+            {
+                _baseColors = new Color[_renderers.Length];
+                _painted = new bool[_renderers.Length];
+            }
+
+            for (int i = 0; i < _renderers.Length; i++)
+            {
+                Renderer renderer = _renderers[i];
+                if (renderer == null || renderer.sharedMaterial == null) continue;
+
+                renderer.GetPropertyBlock(_block);
+                _painted[i] = _block.HasColor(BaseColorId);
+
+                if (_painted[i]) _baseColors[i] = _block.GetColor(BaseColorId);
+                else if (renderer.sharedMaterial.HasProperty(BaseColorId)) _baseColors[i] = renderer.sharedMaterial.GetColor(BaseColorId);
+                else _baseColors[i] = Color.white;
+            }
+        }
+
+        /// 블록을 통째로 비우지 않는다 — 다른 컴포넌트가 칠해둔 색(몬스터 몸 색)까지 지워진다.
+        /// 원래 블록에 색이 있었으면 그 색으로, 없었으면 예전처럼 비워 머티리얼 색으로 돌린다.
         void ClearTint()
         {
             for (int i = 0; i < _renderers.Length; i++)
@@ -95,7 +122,8 @@ namespace ForagerCP
                 if (_renderers[i] == null) continue;
 
                 _renderers[i].GetPropertyBlock(_block);
-                _block.Clear();
+                if (_painted != null && _painted[i]) _block.SetColor(BaseColorId, _baseColors[i]);
+                else _block.Clear();
                 _renderers[i].SetPropertyBlock(_block);
             }
         }

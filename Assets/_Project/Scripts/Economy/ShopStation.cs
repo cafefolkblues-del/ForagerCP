@@ -95,7 +95,8 @@ namespace ForagerCP
             }
 
             // TrySpend가 잔액 확인과 차감을 함께 한다 — 실패하면 효과도 적용되지 않는다.
-            if (!_gold.TrySpend(good.Price)) return false;
+            // 0골드 품목은 차감할 게 없어 건너뛴다. TrySpend(0)은 false라 공짜 품목이 사유 없이 막혔다.
+            if (good.Price > 0 && !_gold.TrySpend(good.Price)) return false;
 
             good.Apply(Context);
             _bought.Add(good);

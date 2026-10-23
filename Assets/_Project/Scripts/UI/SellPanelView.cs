@@ -62,6 +62,7 @@ namespace ForagerCP
             }
 
             if (_inventory != null) _inventory.Changed += OnInventoryChanged;
+            if (_gold != null) _gold.Changed += OnGoldChanged;
         }
 
         void OnDisable()
@@ -73,6 +74,7 @@ namespace ForagerCP
             }
 
             if (_inventory != null) _inventory.Changed -= OnInventoryChanged;
+            if (_gold != null) _gold.Changed -= OnGoldChanged;
             _station = null;
         }
 
@@ -81,6 +83,15 @@ namespace ForagerCP
             if (_station == null || _window == null || !_window.IsOpen) return;
 
             Build();
+            Redraw();
+        }
+
+        /// 판매는 가방을 먼저 비우고 골드를 나중에 준다. 가방 변화로 그린 시점엔
+        /// 골드가 아직 옛 값이라, 골드 변화도 따로 들어야 표시가 맞는다.
+        void OnGoldChanged(int gold)
+        {
+            if (_station == null || _window == null || !_window.IsOpen) return;
+
             Redraw();
         }
 
