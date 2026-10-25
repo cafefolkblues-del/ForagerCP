@@ -52,6 +52,10 @@ namespace ForagerCP
         /// 밀리는 동안 쌓아둔 예고가 끝나자마자 터지면 안 된다(확정 규칙, 씬 검사가 경고한다).
         [SerializeField] float _hitstunTime = 0.22f;
 
+        /// 표적을 놓치고 집으로 돌아가는 동안 초당 회복하는 양(최대 체력의 %). 가득 찰 때까지 이어진다.
+        /// 구역을 벗어나 전투가 초기화될 때도 같은 규칙으로 돌아간다.
+        [SerializeField] float _returnHealPercentPerSecond = 30f;
+
         [Header("처치 보상 / 재등장")]
         [SerializeField] int _expReward = 2;
         [SerializeField] float _respawnDelay = 15f;
@@ -68,6 +72,7 @@ namespace ForagerCP
         public float KnockbackForce => Mathf.Max(0f, _knockbackForce);
         public float KnockbackDuration => Mathf.Max(0.01f, _knockbackDuration);
         public float HitstunTime => Mathf.Max(0f, _hitstunTime);
+        public float ReturnHealPercentPerSecond => Mathf.Max(0f, _returnHealPercentPerSecond);
 
         /// 경직이 넉백보다 길어야 한다는 규칙을 어겼는가.
         public bool HitstunTooShort => HitstunTime <= KnockbackDuration;

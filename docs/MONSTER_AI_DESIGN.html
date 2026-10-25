@@ -16,7 +16,7 @@
     #open         아직 정하지 않은 것
     #migration    옮기는 순서
   다이어그램은 <pre class="mermaid"> 안의 Mermaid 소스로 들어 있다. 글자로 읽어도 된다.
-  상태: 5단계 완료 (넉백·경직 수치를 MonsterDefinition으로). 다음은 6단계 전투 초기화. 2026-10-25.
+  상태: 6단계 완료 (구역 전투 초기화 · 복귀 유지와 회복). 다음은 12장 질문을 기획 답에 따라 하나씩. 2026-10-25.
 -->
 <html lang="ko">
 <head>
@@ -670,24 +670,46 @@ classDiagram
 <!-- ================================================================ -->
 <section id="reset">
   <h2><span class="num">9</span>전투 초기화</h2>
-  <p class="lead">기획: 전투 중 사망하거나 구역 밖으로 나가면 그 구역 몬스터 전원이 <strong>원래 배치와 체력으로</strong> 돌아와요(TODO 22번). "새로 만든다"가 아니라 "처음 상태로 되돌린다"예요.</p>
+  <p class="lead">기획: 전투 중 사망하거나 구역 밖으로 나가면 그 구역 몬스터를 처음 상태로 되돌려요(TODO 22, 기획 C9). "새로 만든다"가 아니라 "되돌린다"예요. 구현: <code>RegionCombatReset</code>(씬의 GameState 오브젝트).</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>상황</th><th>살아 있는 몹</th><th>죽은 몹</th></tr></thead>
+    <tbody>
+      <tr><td>플레이어 사망</td><td>즉시 스폰 자리 · 체력 가득 · 대기 (<code>Monster.Respawn</code> + <code>MonsterAI.ResetCombat</code>)</td><td>같이 되살림</td></tr>
+      <tr><td>구역 이탈</td><td>집에 닿을 때까지 걸어서 복귀하며 초당 30% 회복 (<code>MonsterAI.BeginReturnHome</code>)</td><td>그 순간 스폰 자리에서 체력 가득으로 되살림</td></tr>
+    </tbody>
+  </table>
+  </div>
 
   <div class="diagram">
 <pre class="mermaid">
 flowchart LR
-  TRIG["플레이어 사망<br/>또는 구역 이탈"] --> REG["구역 관리자<br/>(TODO 21·22)"]
-  REG --> EACH["그 구역 몬스터마다"]
-  EACH --> M1["Monster.Respawn()<br/>체력 회복 · 집으로 순간이동"]
-  EACH --> M2["MonsterBrain.ResetCombat()"]
-  M2 --> A1["Memory.Clear()<br/>타이머 · 예고 · 동작 · 쿨다운 비움"]
-  M2 --> A2["Aggro.Reset()<br/>표적 놓기"]
-  M2 --> A3["현재 칸 Exit → Idle"]
+  D["PlayerHealth.Died"] --> R["RegionCombatReset"]
+  X["RegionTracker.Changed<br/>(떠난 구역)"] --> R
+  R --> Q{"그 구역이 전투 중?<br/>전멸(확보)은 아님?"}
+  Q -- 아니오 --> N["아무것도 안 함"]
+  Q -- 사망 --> I["전원 Respawn + ResetCombat"]
+  Q -- 이탈 --> W["산 몹: BeginReturnHome<br/>죽은 몹: Respawn + ResetCombat"]
+  I --> E["RegionReset 이벤트"]
+  W --> E
 </pre>
-    <figcaption>평소의 "어그로를 잃음 → 복귀"는 Aggro.Reset만 하고 걸어서 돌아가요. 전투 초기화는 여기에 체력·위치·진행 값까지 한 번에 되돌려요.</figcaption>
+    <figcaption>몹은 스포너가 아니라 자기 구역(<code>MonsterAI.HomeRegion</code>)으로 묶어요. 스포너로 세운 몹과 직접 놓은 몹을 같은 규칙으로 다루려고요. <code>RegionReset</code> 이벤트는 페이드·알림 같은 연출이 들을 자리이고, 지금은 아무도 듣지 않아요.</figcaption>
   </div>
+
+  <h3>판단 기준</h3>
+  <ul>
+    <li><strong>전투 중:</strong> 그 구역 몹 중 하나라도 싸우는 중(대기·복귀가 아님)이거나, 체력이 깎였거나, 죽어 있을 때. 그냥 지나간 구역은 건드리지 않아요.</li>
+    <li><strong>확보:</strong> 그 구역 몹이 전부 죽어 있으면 되돌리지 않아요. 진짜 점령·확보 상태(TODO 21)가 생기면 이 판정을 그쪽에 묻는 것으로 바꿔요.</li>
+    <li><strong>두 번 되돌리지 않음:</strong> 사망 이벤트는 플레이어가 리스폰 지점으로 옮겨지기 전에 나와요. 뒤이어 구역이 바뀌어도 이미 되돌린 구역은 전투 중이 아니라 다시 되돌리지 않아요.</li>
+  </ul>
+
+  <h3>복귀 규칙 (모든 복귀에 공통)</h3>
+  <p>끌 거리 초과, 탐지 범위 밖, 구역 이탈 초기화 모두 같은 복귀예요. <strong>집에 닿을 때까지</strong> 표적이 다시 보여도 돌아가고(<code>Return</code>은 Committed), 돌아가는 동안 초당 최대 체력의 <code>MonsterDefinition.ReturnHealPercentPerSecond</code>(기본 30%)씩 회복해요. 회복은 집에 먼저 닿아도 가득 찰 때까지 이어지고, 다시 맞거나 싸움이 붙으면 멈춰요. 복귀 중에 맞으면 경직은 걸리지만 복귀는 계속해요.</p>
+
   <div class="callout warn">
-    <strong>지금 코드와 다른 점</strong>
-    지금 <code>MonsterSpawner.Respawn()</code>은 지우고 새로 만들어요(<code>DestroyImmediate</code>). 새 구조에서는 지우지 않고 위 순서로 되돌리는 쪽이 기획 의도에 맞아요. 또 지금은 <code>Monster.Respawn()</code>을 해도 AI의 쿨다운·빈틈 값이 남는데, <code>ResetCombat</code>이 이 구멍을 막아요.
+    <strong>남은 것</strong>
+    <code>MonsterSpawner.Respawn()</code>은 아직 지우고 새로 만들어요(<code>DestroyImmediate</code>). 구역 점령(TODO 21)이 스포너를 켜는 주체가 될 때 이 초기화 경로를 쓰도록 바꾸면 돼요. 또 플레이어 리스폰 지점이 들판 구역 안에 있어서, 들판 몹은 플레이어가 죽은 직후 탐지 거리 안이면 바로 다시 쫓아와요(배치 문제).
   </div>
 </section>
 
@@ -767,10 +789,10 @@ flowchart LR
     <li><strong>기준 기록:</strong> 11장 체크리스트를 지금 코드로 한 번 돌려 결과를 적어 둬요(가능하면 녹화).</li>
     <li><strong>공통 부품 떼어 내기:</strong> <code>MonsterMemory</code>, <code>MonsterMotor</code>, <code>MonsterAggro</code>를 <code>MonsterAI</code> 안에서 분리해요. 동작 변화 없음. 체크리스트 → 커밋. <span class="tag good">완료 · 전후 상태 순서 비교로 확인</span></li>
     <li><strong>공격 클래스 몹별 분리:</strong> 공용 이름(근접·투사체·돌진)을 없애고 <code>RubbleSwingAttack</code>, <code>GolemSlamAttack</code>, <code>ThrowerShotAttack</code>, <code>ChargerDashAttack</code>로. 공용은 <code>ContactAttack</code> 하나. <span class="tag good">완료</span></li>
-    <li><strong>상태 뼈대:</strong> <code>StateId</code>, <code>MonsterState</code>, 칸 추상 클래스 5개, 기본 구현 에셋, <code>MonsterPattern</code>. 실행기를 다섯 단계로 바꿔요. 몹 4종 패턴 에셋 연결. 체크리스트 → 커밋. <span class="tag good">완료 · 전후 상태 순서 비교로 확인</span><br><small style="color:var(--muted)">지금 동작을 그대로 두려고 정한 것: ① 예고·빈틈·돌진 중에는 어그로 검사를 미룬다(<code>MonsterState.Committed</code>) ② 복귀는 아직 "집에 닿을 때까지 유지"가 아니다 — 7단계에서 동작 변경으로 ③ 칸이 바뀌면 같은 프레임에 이어서 실행해서, 일부 전이가 기존보다 1프레임(0.02초) 빠르다</small></li>
+    <li><strong>상태 뼈대:</strong> <code>StateId</code>, <code>MonsterState</code>, 칸 추상 클래스 5개, 기본 구현 에셋, <code>MonsterPattern</code>. 실행기를 다섯 단계로 바꿔요. 몹 4종 패턴 에셋 연결. 체크리스트 → 커밋. <span class="tag good">완료 · 전후 상태 순서 비교로 확인</span><br><small style="color:var(--muted)">지금 동작을 그대로 두려고 정한 것: ① 예고·빈틈·돌진 중에는 어그로 검사를 미룬다(<code>MonsterState.Committed</code>) ② 복귀 유지는 6단계에서 반영했다 ③ 칸이 바뀌면 같은 프레임에 이어서 실행해서, 일부 전이가 기존보다 1프레임(0.02초) 빠르다</small></li>
     <li><strong>몸 쓰는 공격 자리:</strong> <code>MonsterAttack.HasMotion</code> + <code>TickMotion</code>, 실행기의 <code>AttackMotion</code> 칸. 실행기·Memory의 돌진 코드와 <code>Lunged</code> 이벤트 제거, <code>ChargerDashAttack</code>은 빈 자리. <span class="tag good">완료</span></li>
     <li><strong>넉백·경직 수치를 Definition으로:</strong> 지금 값 그대로 옮기고 씬 검사에 경고 추가 → 커밋. <span class="tag good">완료</span><br><small style="color:var(--muted)">넉백 세기·시간과 경직 시간을 <code>MonsterDefinition</code>의 "피격" 묶음으로. 밀어내는 동작은 <code>Knockback</code>에 그대로(플레이어 공용, 값을 넘기는 오버로드만 추가). 씬 검사 "몬스터" 항목이 경직 ≤ 넉백이면 경고. 슬라임은 씬에서 덮어쓰던 세기 20을 정의에 옮겼어요.</small></li>
-    <li><strong>전투 초기화:</strong> <code>ResetCombat</code>과 구역 쪽 호출(TODO 21·22와 함께).</li>
+    <li><strong>전투 초기화:</strong> <code>RegionCombatReset</code>(사망 → 즉시, 이탈 → 걸어서 복귀·회복, 죽은 몹은 되살림), <code>MonsterAI.ResetCombat</code>·<code>BeginReturnHome</code>. 함께 복귀를 "집에 닿을 때까지 유지 + 초당 30% 회복"으로 바꿈(원래 7단계 항목). <span class="tag good">완료</span></li>
     <li><strong>12장 질문을 하나씩:</strong> 기획 답을 받은 것부터, 질문 하나에 커밋 하나.</li>
     <li><strong>몹별 패턴 갈라내기:</strong> 기본 구현 대신 몹 전용 구현 에셋을 하나씩.</li>
   </ol>

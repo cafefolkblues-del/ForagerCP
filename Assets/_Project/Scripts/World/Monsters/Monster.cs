@@ -158,6 +158,15 @@ namespace ForagerCP
             Respawned?.Invoke(this);
         }
 
+        /// 살아 있을 때만 회복한다. 되살리는 것은 Respawn이다.
+        public void Heal(int amount)
+        {
+            if (!_alive || amount <= 0 || _hp >= _definition.MaxHp) return;
+
+            _hp = Mathf.Min(_definition.MaxHp, _hp + amount);
+            HealthChanged?.Invoke(this);
+        }
+
         /// 체력은 그대로 두고 스폰 자리로만 돌려보낸다(맵 밖으로 빠졌을 때 구제용).
         public void ReturnHome() => TeleportTo(HomePosition);
 

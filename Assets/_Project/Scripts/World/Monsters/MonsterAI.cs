@@ -8,7 +8,8 @@ namespace ForagerCP
     /// 매 물리 프레임 다섯 단계를 돈다 (docs/MONSTER_AI_DESIGN.html 4장):
     ///   1. 가드 — 죽음·표적 없음 → Idle, 맵 아래로 빠짐 → 집으로
     ///   2. 방해 처리 — 몸을 쓰는 공격 중이면 AttackMotion, 경직·넉백 중이면 Stagger, 막혀서 빈틈이 늘었으면 Recover
-    ///   3. 어그로 — 표적을 잃으면 Return, 다시 보이면 Chase (예고·빈틈처럼 Committed인 칸에서는 미룬다)
+    ///   3. 어그로 — 표적을 잃으면 Return(집에 닿을 때까지 유지하며 회복), 다시 보이면 Chase
+    ///      (예고·빈틈·복귀처럼 Committed인 칸에서는 미룬다)
     ///   4. 지금 칸의 상태 실행 — 상태가 다음 칸 이름을 돌려준다
     ///   5. 전환 — 칸이 바뀌면 Exit → Enter → StateChanged, 바뀐 칸을 같은 프레임에 이어서 실행
     ///
@@ -44,6 +45,9 @@ namespace ForagerCP
         public RegionDefinition HomeRegion => _aggro?.HomeRegion;
 
         public bool IsHitstunned => Time.time < _memory.HitstunUntil;
+
+        /// 싸우는 중인가(대기·복귀가 아니다). 구역 전투 초기화가 "이 구역이 전투 중인가"를 여기서 묻는다.
+        public bool InCombat => Current != StateId.Idle && Current != StateId.Return;
 
         /// 한 프레임에 칸을 이어서 실행하는 최대 횟수. 칸끼리 서로 넘기는 실수가 있어도 프레임이 멈추지 않게.
         const int MaxStepsPerFrame = 4;
@@ -109,6 +113,26 @@ namespace ForagerCP
             _memory.HitstunUntil = Time.time + HitstunTime;
             _memory.CancelWindup();
             _memory.StopMotion();
+
+            // 다시 싸움이 붙었다. 복귀 중이면 돌아가기는 계속하지만 회복은 멈춘다.
+            _memory.Regenerating = false;
+        }
+
+        /// 전투 초기화(플레이어 사망): 진행 값을 전부 비우고 대기로. 위치·체력은 Monster.Respawn이 맡는다.
+        public void ResetCombat()
+        {
+            _memory.Clear();
+            ChangeTo(StateId.Idle);
+        }
+
+        /// 전투 초기화(구역 이탈): 하던 공격을 끊고 집에 닿을 때까지 돌아가며 회복한다.
+        public void BeginReturnHome()
+        {
+            _memory.CancelWindup();
+            _memory.StopMotion();
+            _memory.RecoverUntil = 0f;
+            _memory.HitstunUntil = 0f;
+            ChangeTo(StateId.Return);
         }
 
         void Start()
@@ -146,6 +170,8 @@ namespace ForagerCP
                 return;
             }
 
+            TickRegeneration();
+
             // ---- 2. 방해 처리 ----
             // 몸을 쓰는 공격은 위치를 직접 쥐는 구간이라 경직보다도 먼저 본다(맞으면 끊기므로 둘이 겹치지는 않는다).
             if (_memory.InMotion)
@@ -161,7 +187,8 @@ namespace ForagerCP
             }
             else if (Current == StateId.Stagger)
             {
-                ChangeTo(Time.time < _memory.RecoverUntil ? StateId.Recover : StateId.Chase);
+                if (_memory.Returning) ChangeTo(StateId.Return);
+                else ChangeTo(Time.time < _memory.RecoverUntil ? StateId.Recover : StateId.Chase);
             }
             // 방패에 막혀 빈틈이 늘었다. 예고 중이었어도 빈틈이 이긴다.
             else if (Time.time < _memory.RecoverUntil && Current != StateId.Recover)
@@ -180,6 +207,34 @@ namespace ForagerCP
                 if (next == Current) break;
                 ChangeTo(next);
             }
+        }
+
+        /// 복귀하며 회복. 가득 차면 끝나고, 다시 싸움이 붙으면(추적 등으로 넘어가면) 멈춘다.
+        /// 집에 먼저 닿아도 가득 찰 때까지 대기 칸에서 이어진다.
+        void TickRegeneration()
+        {
+            if (!_memory.Regenerating) return;
+
+            if (InCombat && Current != StateId.Stagger)
+            {
+                _memory.Regenerating = false;
+                return;
+            }
+
+            int max = _definition.MaxHp;
+            if (_monster.CurrentHp >= max)
+            {
+                _memory.Regenerating = false;
+                _memory.HealCarry = 0f;
+                return;
+            }
+
+            _memory.HealCarry += max * (_definition.ReturnHealPercentPerSecond / 100f) * Time.fixedDeltaTime;
+            int whole = Mathf.FloorToInt(_memory.HealCarry);
+            if (whole <= 0) return;
+
+            _memory.HealCarry -= whole;
+            _monster.Heal(whole);
         }
 
         /// 표적을 잃었으면 복귀(집이면 대기), 다시 보이면 추적. 그 밖에는 지금 칸 그대로.
@@ -201,7 +256,11 @@ namespace ForagerCP
                     return StateId.Idle;
 
                 case StateId.Return:
-                    if (_ctx.ToHome.sqrMagnitude <= 0.05f) return StateId.Idle;
+                    if (_ctx.ToHome.sqrMagnitude <= 0.05f)
+                    {
+                        _memory.Returning = false;
+                        return StateId.Idle;
+                    }
                     _motor.Step(_ctx.ToHome, _definition.MoveSpeed);
                     return StateId.Return;
 
@@ -221,7 +280,8 @@ namespace ForagerCP
 
         bool IsCommitted(StateId id)
         {
-            if (id == StateId.AttackMotion || id == StateId.Stagger) return true;
+            // 복귀는 집에 닿을 때까지 표적을 다시 보지 않는다.
+            if (id == StateId.AttackMotion || id == StateId.Stagger || id == StateId.Return) return true;
             MonsterState state = Resolve(id);
             return state != null && state.Committed;
         }
@@ -233,6 +293,12 @@ namespace ForagerCP
             StateId previous = Current;
             if (_ctx != null) Resolve(previous)?.Exit(_ctx);
             Current = next;
+
+            if (next == StateId.Return)
+            {
+                _memory.Returning = true;
+                _memory.Regenerating = true;
+            }
             if (_ctx != null) Resolve(next)?.Enter(_ctx);
 
             StateChanged?.Invoke(this, previous, next);

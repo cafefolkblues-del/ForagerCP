@@ -24,5 +24,6 @@ MonoBehaviour:
   _knockbackForce: 20
   _knockbackDuration: 0.16
   _hitstunTime: 0.22
+  _returnHealPercentPerSecond: 30
   _expReward: 6
   _respawnDelay: 0

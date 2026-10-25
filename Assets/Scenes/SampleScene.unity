@@ -26649,6 +26649,7 @@ GameObject:
   - component: {fileID: 890792619}
   - component: {fileID: 890792620}
   - component: {fileID: 890792621}
+  - component: {fileID: 890792622}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -26943,6 +26944,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 618dc596425dc194c85b68e4b9324ad9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.Playtime
+--- !u!114 &890792622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890792602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a8e5502bc1783245a4f9cc73e0edab0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.RegionCombatReset
+  _tracker: {fileID: 890792616}
+  _player: {fileID: 1954203116}
 --- !u!1001 &899148880
 PrefabInstance:
   m_ObjectHideFlags: 0

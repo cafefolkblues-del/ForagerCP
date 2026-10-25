@@ -33,6 +33,15 @@ namespace ForagerCP
         public MonsterAttack Motion;
         public float MotionStartedAt;
 
+        /// 복귀 중. 집에 닿을 때까지 표적이 다시 보여도 돌아간다(끌 경계에서 추적↔복귀가 번갈아 바뀌지 않게).
+        public bool Returning;
+
+        /// 복귀하며 회복 중. 가득 차거나 다시 싸움이 붙으면 끈다.
+        public bool Regenerating;
+
+        /// 회복량의 소수점 아래. 체력이 정수라 프레임마다 버리면 회복이 안 된다.
+        public float HealCarry;
+
         public bool IsWindingUp => WindingIndex >= 0;
         public bool InMotion => Motion != null;
 
@@ -57,6 +66,9 @@ namespace ForagerCP
             LastFired = null;
             Array.Clear(ReadyAt, 0, ReadyAt.Length);
             StopMotion();
+            Returning = false;
+            Regenerating = false;
+            HealCarry = 0f;
         }
     }
 }
