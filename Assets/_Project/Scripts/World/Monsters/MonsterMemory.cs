@@ -29,17 +29,12 @@ namespace ForagerCP
         /// 공격마다 따로 센다. 하나로 묶으면 근접을 쓴 뒤 원거리까지 같이 잠긴다.
         public float[] ReadyAt = Array.Empty<float>();
 
-        // ---- 돌진 ----
-        public Vector3 LungeDirection;
-        public float LungeSpeed;
-        public float LungeRemaining;
-        public int LungeDamage;
-        public DamageKind LungeKind;
-        public float LungeHitRadius;
-        public bool LungeHasHit;
+        /// 지금 몸을 쓰고 있는 공격(MonsterAttack.HasMotion). 없으면 null.
+        public MonsterAttack Motion;
+        public float MotionStartedAt;
 
         public bool IsWindingUp => WindingIndex >= 0;
-        public bool IsLunging => LungeRemaining > 0f;
+        public bool InMotion => Motion != null;
 
         /// 공격 수가 정해진 뒤(정의를 읽은 뒤) 한 번 부른다.
         public void PrepareCooldowns(int attackCount) => ReadyAt = new float[Mathf.Max(0, attackCount)];
@@ -50,7 +45,7 @@ namespace ForagerCP
             Winding = null;
         }
 
-        public void StopLunge() => LungeRemaining = 0f;
+        public void StopMotion() => Motion = null;
 
         /// 전투 초기화용. 쿨다운 칸 수는 그대로 두고 값만 비운다.
         public void Clear()
@@ -61,8 +56,7 @@ namespace ForagerCP
             WindupEndsAt = 0f;
             LastFired = null;
             Array.Clear(ReadyAt, 0, ReadyAt.Length);
-            StopLunge();
-            LungeHasHit = false;
+            StopMotion();
         }
     }
 }

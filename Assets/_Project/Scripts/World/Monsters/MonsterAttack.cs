@@ -14,15 +14,9 @@ namespace ForagerCP
         /// 평면 거리. 높이 차이를 섞으면 같은 칸인데 지형에 따라 사거리가 달라진다.
         public readonly float Distance;
 
-        /// 이동이 필요한 공격(돌진)이 이쪽에 부탁한다. 공격이 직접 몸을 옮기면
-        /// 이동을 아는 곳이 둘이 되어, 넉백·경직과 누가 위치를 쥐는지가 흐려진다.
-        public readonly MonsterAI Brain;
-
-        public MonsterAttackContext(Monster monster, MonsterAI brain,
-                                    IDamageable target, Transform targetTransform, float distance)
+        public MonsterAttackContext(Monster monster, IDamageable target, Transform targetTransform, float distance)
         {
             Monster = monster;
-            Brain = brain;
             Self = monster != null ? monster.transform : null;
             Target = target;
             TargetTransform = targetTransform;
@@ -87,6 +81,17 @@ namespace ForagerCP
 
         /// 윈드업이 끝나고 실제로 내지르는 순간. 여기서 피해를 주거나 투사체를 띄운다.
         public abstract void Execute(in MonsterAttackContext context);
+
+        /// 몸을 쓰는 공격(돌진·도약 등)인가. 참이면 내지른 뒤 실행기의 AttackMotion 칸에서
+        /// 끝날 때까지 TickMotion이 매 프레임 불리고, 그다음 빈틈으로 간다.
+        /// 지금은 이 자리만 있고 쓰는 공격이 없다(돌진 구현은 패턴이 정해질 때까지 폐기).
+        public virtual bool HasMotion => false;
+
+        /// 몸을 쓰는 공격의 한 프레임. 아직 진행 중이면 true.
+        ///
+        /// 몸은 ctx.Motor로만 옮기고, 진행 값(방향·남은 거리·맞혔는지)은 ctx.Memory에 적는다 —
+        /// 공격 에셋은 공유 자산이라 값을 들 수 없다. 맞거나 막히면 실행기가 먼저 끊으므로 여기서 묻지 않는다.
+        public virtual bool TickMotion(MonsterContext ctx) => false;
 
         public virtual string Describe()
             => $"{DisplayName} · 피해 {Damage} · 사거리 {Range:0.#} · {Cooldown:0.#}초"

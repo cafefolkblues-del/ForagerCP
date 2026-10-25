@@ -129,7 +129,7 @@ namespace ForagerCP
 }
 ```
 
-> 이미 만들어진 공격 클래스를 **먼저 읽어보세요.** 특히 `ChargerDashAttack`이 짧고,
+> 이미 만들어진 공격 클래스를 **먼저 읽어보세요.** 특히 `RubbleSwingAttack`이 짧고,
 > 아래 다섯 가지 규칙이 전부 들어 있어 본으로 삼기 좋습니다.
 
 ### 베껴야 할 모양 다섯 가지
@@ -137,12 +137,12 @@ namespace ForagerCP
 **① `[CreateAssetMenu]`를 답니다.** 이게 있어야 디자이너가 Create 메뉴에서 에셋을 만들 수 있습니다.
 메뉴 경로는 기존 것과 같은 묶음(`ForagerCP/몬스터 공격/…`)에 넣습니다.
 
-**② 수치는 전부 `[SerializeField]`입니다.** 돌진 속도 10, 거리 5 같은 숫자를 코드에 박으면
+**② 수치는 전부 `[SerializeField]`입니다.** 탄속 9, 범위 4 같은 숫자를 코드에 박으면
 밸런스를 고칠 때마다 당신을 불러야 합니다. 피해·사거리·쿨다운·예고는 부모가 이미 갖고 있으니
 **자기만의 수치만** 추가합니다.
 
-**③ `Execute`는 "내지르는 그 순간"에 한 번 불립니다.** 예고 대기는 `MonsterAI`가 이미 했습니다.
-여러 프레임에 걸쳐 일어나는 일(돌진 이동)은 `Execute` 안에서 코루틴이나 전용 컴포넌트로 넘깁니다.
+**③ `Execute`는 "내지르는 그 순간"에 한 번 불립니다.** 예고 대기는 실행기가 이미 했습니다.
+여러 프레임에 걸쳐 몸을 쓰는 공격(돌진·도약)은 ⑤를 봅니다.
 
 **④ 쓸 수 없는 조건이 있으면 `CanUse`를 덮습니다.**
 ```csharp
@@ -151,14 +151,19 @@ public override bool CanUse(in MonsterAttackContext context)
 ```
 `base.CanUse`를 꼭 부릅니다. 안 부르면 사거리 판정이 통째로 사라집니다.
 
-**⑤ 공격이 몸을 직접 옮기지 않습니다.** 돌진처럼 이동이 필요하면
-`context.Brain`(= `MonsterAI`)에게 **부탁합니다.**
+**⑤ 몸을 쓰는 공격은 `HasMotion` + `TickMotion` 자리를 씁니다.**
+`HasMotion`을 `true`로 두면 내지른 뒤 실행기가 `AttackMotion` 칸에서 끝날 때까지 매 프레임 `TickMotion`을 부릅니다.
 ```csharp
-context.Brain.BeginLunge(aim.normalized, _speed, _distance, Damage, Kind, _hitRadius);
+public override bool HasMotion => true;
+
+public override bool TickMotion(MonsterContext ctx)
+{
+    // 몸은 ctx.Motor로만, 진행 값(방향·남은 거리)은 ctx.Memory에. 끝났으면 false.
+}
 ```
-공격이 직접 `MovePosition`을 부르면 위치를 쥐는 곳이 둘이 되고,
-넉백·경직과 누가 몸을 옮기는지가 흐려집니다(5장 ① 참고).
-공격은 **"이 방향으로 이만큼"만 말합니다.**
+`transform`이나 `Rigidbody`를 직접 건드리면 위치를 쥐는 곳이 둘이 되어 넉백·경직과 섞입니다(5장 ① 참고).
+맞거나 막히면 실행기가 먼저 끊으므로 `TickMotion` 안에서 묻지 않습니다.
+지금 이 자리를 쓰는 공격은 없습니다(임시 돌진은 폐기, `ChargerDashAttack`은 빈 자리).
 
 ### 다 쓰고 나면
 

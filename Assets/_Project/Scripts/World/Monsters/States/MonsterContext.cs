@@ -50,7 +50,7 @@ namespace ForagerCP
             IDamageable target = Aggro.TargetDamageable;
             if (target == null || !target.IsAlive) return -1;
 
-            var attackContext = new MonsterAttackContext(Monster, Brain, target, Aggro.Target, Distance);
+            var attackContext = new MonsterAttackContext(Monster, target, Aggro.Target, Distance);
 
             for (int i = 0; i < Definition.Attacks.Count; i++)
             {
@@ -91,13 +91,17 @@ namespace ForagerCP
             Memory.LastFired = attack;
             Memory.CancelWindup();
 
-            attack.Execute(new MonsterAttackContext(Monster, Brain, Aggro.TargetDamageable, Aggro.Target, Distance));
+            // 몸을 쓰는 공격이면 내지른 뒤 AttackMotion 칸이 TickMotion을 돌린다.
+            Memory.Motion = attack.HasMotion ? attack : null;
+            Memory.MotionStartedAt = Now;
+
+            attack.Execute(new MonsterAttackContext(Monster, Aggro.TargetDamageable, Aggro.Target, Distance));
         }
 
-        /// 내지른 뒤 어디로 가나. 돌진처럼 몸을 쓰는 공격이면 그 동작이 먼저, 그다음 빈틈.
+        /// 내지른 뒤 어디로 가나. 몸을 쓰는 공격이면 그 동작이 먼저, 그다음 빈틈.
         public StateId AfterFire()
         {
-            if (Memory.IsLunging) return StateId.AttackMotion;
+            if (Memory.InMotion) return StateId.AttackMotion;
             return Now < Memory.RecoverUntil ? StateId.Recover : StateId.Chase;
         }
     }

@@ -7,7 +7,7 @@ namespace ForagerCP
     ///
     /// 매 물리 프레임 다섯 단계를 돈다 (docs/MONSTER_AI_DESIGN.html 4장):
     ///   1. 가드 — 죽음·표적 없음 → Idle, 맵 아래로 빠짐 → 집으로
-    ///   2. 방해 처리 — 돌진 중이면 AttackMotion, 경직·넉백 중이면 Stagger, 막혀서 빈틈이 늘었으면 Recover
+    ///   2. 방해 처리 — 몸을 쓰는 공격 중이면 AttackMotion, 경직·넉백 중이면 Stagger, 막혀서 빈틈이 늘었으면 Recover
     ///   3. 어그로 — 표적을 잃으면 Return, 다시 보이면 Chase (예고·빈틈처럼 Committed인 칸에서는 미룬다)
     ///   4. 지금 칸의 상태 실행 — 상태가 다음 칸 이름을 돌려준다
     ///   5. 전환 — 칸이 바뀌면 Exit → Enter → StateChanged, 바뀐 칸을 같은 프레임에 이어서 실행
@@ -36,9 +36,6 @@ namespace ForagerCP
         /// 기획에 공격 예고가 있는지 확인되면 연출이 이걸 들으면 된다.
         public event Action<MonsterAI, MonsterAttack> Telegraphing;
 
-        /// 돌진을 시작할 때 한 번. 예고와 같은 이유로 연출이 들을 자리다.
-        public event Action<MonsterAI> Lunged;
-
         /// 칸이 바뀔 때마다 (실행기, 이전 칸, 새 칸). 애니메이션·사운드·디버그 표시가 듣는다.
         public event Action<MonsterAI, StateId, StateId> StateChanged;
 
@@ -49,8 +46,6 @@ namespace ForagerCP
 
         /// 이 몬스터가 서 있는 구역. 구획 밖에 놓였으면 null. (MonsterAggro.HomeRegion 주석 참고)
         public RegionDefinition HomeRegion => _aggro?.HomeRegion;
-
-        public bool IsLunging => _memory.IsLunging;
 
         public bool IsHitstunned => Time.time < _memory.HitstunUntil;
 
@@ -105,7 +100,7 @@ namespace ForagerCP
             float stagger = _memory.LastFired != null ? _memory.LastFired.StaggerWhenBlocked : _hitstunTime;
             _memory.RecoverUntil = Mathf.Max(_memory.RecoverUntil, Time.time + stagger);
             _memory.CancelWindup();
-            _memory.StopLunge();
+            _memory.StopMotion();
         }
 
         /// 확정 스펙: 넉백을 hitstun으로 승격 — 밀리는 동안 몹의 공격 윈드업을 리셋한다.
@@ -114,7 +109,7 @@ namespace ForagerCP
         {
             _memory.HitstunUntil = Time.time + _hitstunTime;
             _memory.CancelWindup();
-            _memory.StopLunge();
+            _memory.StopMotion();
         }
 
         void Start()
@@ -153,8 +148,8 @@ namespace ForagerCP
             }
 
             // ---- 2. 방해 처리 ----
-            // 돌진은 위치를 직접 쥐는 구간이라 경직보다도 먼저 본다(맞으면 돌진이 끊기므로 둘이 겹치지는 않는다).
-            if (_memory.IsLunging)
+            // 몸을 쓰는 공격은 위치를 직접 쥐는 구간이라 경직보다도 먼저 본다(맞으면 끊기므로 둘이 겹치지는 않는다).
+            if (_memory.InMotion)
             {
                 ChangeTo(StateId.AttackMotion);
             }
@@ -215,8 +210,9 @@ namespace ForagerCP
                     return StateId.Stagger;
 
                 case StateId.AttackMotion:
-                    TickLunge();
-                    return _memory.IsLunging ? StateId.AttackMotion : _ctx.AfterFire();
+                    if (_memory.InMotion && _memory.Motion.TickMotion(_ctx)) return StateId.AttackMotion;
+                    _memory.StopMotion();
+                    return _ctx.AfterFire();
 
                 default:
                     MonsterState state = Resolve(Current);
@@ -248,59 +244,6 @@ namespace ForagerCP
 
         /// WindupState.Enter가 부른다. 이벤트는 선언한 클래스 밖에서 직접 쏠 수 없어 통로를 둔다.
         public void RaiseTelegraphing(MonsterAttack attack) => Telegraphing?.Invoke(this, attack);
-
-        /// 돌진을 시작한다. 공격 에셋이 부탁하고 이동은 여기가 맡는다.
-        /// (설계 문서 4단계에서 공격 에셋의 TickMotion으로 옮긴다.)
-        public void BeginLunge(Vector3 direction, float speed, float distance,
-                               int damage, DamageKind kind, float hitRadius)
-        {
-            if (direction.sqrMagnitude < 0.0001f || distance <= 0f) return;
-
-            _memory.LungeDirection = direction.normalized;
-            _memory.LungeSpeed = Mathf.Max(0.1f, speed);
-            _memory.LungeRemaining = distance;
-            _memory.LungeDamage = damage;
-            _memory.LungeKind = kind;
-            _memory.LungeHitRadius = Mathf.Max(0.1f, hitRadius);
-            _memory.LungeHasHit = false;
-
-            _motor.Face(_memory.LungeDirection);
-            Lunged?.Invoke(this);
-        }
-
-        /// 한 번만 맞히고, 벽에 닿거나 거리를 다 쓰면 멈춘다.
-        /// 멈춘 뒤의 빈틈은 Fire가 이미 걸어두었다(돌진 공격의 Recovery).
-        void TickLunge()
-        {
-            MonsterMemory m = _memory;
-            float step = Mathf.Min(m.LungeRemaining, m.LungeSpeed * Time.fixedDeltaTime);
-            Vector3 from = _motor.Position;
-
-            IDamageable target = _aggro.TargetDamageable;
-            if (!m.LungeHasHit && target != null && target.IsAlive)
-            {
-                Vector3 flat = _aggro.Target.position - from;
-                flat.y = 0f;
-
-                if (flat.magnitude <= m.LungeHitRadius)
-                {
-                    target.TakeDamage(m.LungeDamage, gameObject, m.LungeKind);
-                    m.LungeHasHit = true;
-                }
-            }
-
-            // 벽을 만나면 그 자리에서 끝난다. 뚫고 지나가면 구역 밖으로 나가버린다.
-            if (Physics.SphereCast(from + Vector3.up * 0.5f, m.LungeHitRadius * 0.8f,
-                    m.LungeDirection, out RaycastHit hit, step, ~0, QueryTriggerInteraction.Ignore)
-                && hit.collider.GetComponentInParent<IDamageable>() == null)
-            {
-                m.StopLunge();
-                return;
-            }
-
-            _motor.MoveTo(from + m.LungeDirection * step);
-            m.LungeRemaining -= step;
-        }
 
         void OnDrawGizmosSelected()
         {

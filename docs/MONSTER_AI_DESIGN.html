@@ -16,7 +16,7 @@
     #open         아직 정하지 않은 것
     #migration    옮기는 순서
   다이어그램은 <pre class="mermaid"> 안의 Mermaid 소스로 들어 있다. 글자로 읽어도 된다.
-  상태: 3단계 완료 (상태 뼈대 · 패턴 에셋 연결). 다음은 4단계 돌진을 공격 에셋으로. 2026-10-25.
+  상태: 4단계 완료 (몸 쓰는 공격 자리만 두고 임시 돌진 폐기). 다음은 5단계 넉백·경직 수치를 Definition으로. 2026-10-25.
 -->
 <html lang="ko">
 <head>
@@ -312,7 +312,7 @@
       <tr><td>공통 (변경 금지)</td><td>실행기, 방해 처리(경직·넉백·막힘), 어그로(탐지·구역·끈·초기화), 한 걸음 이동, 쿨다운 타이머</td></tr>
       <tr><td>높은 수준의 빈칸</td><td>추적 · 예고 · 빈틈 · 쿨다운 대기 · 후퇴. 칸마다 추상 클래스가 있고 <strong>기본 동작이 들어 있어요</strong>(<code>virtual</code>). 다른 몹만 덮어써요</td></tr>
       <tr><td>낮은 수준의 묶음</td><td><code>MonsterPattern</code> 에셋. "추적 칸에는 이것, 후퇴 칸에는 저것"만 고르는 가벼운 조립표예요</td></tr>
-      <tr><td>그대로</td><td><code>MonsterAttack</code>(공격 한 번의 동작). 돌진 같은 이동형 공격만 실행기에 이동을 부탁하는 길을 정리해요</td></tr>
+      <tr><td>그대로</td><td><code>MonsterAttack</code>(공격 한 번의 동작). 몸을 쓰는 공격(돌진·도약)이 들어갈 자리 <code>HasMotion</code> + <code>TickMotion</code>을 둬요. 임시 돌진은 폐기</td></tr>
       <tr><td>넉백 수치</td><td><code>MonsterDefinition</code>으로 옮겨요. 밀어내는 동작은 <code>Knockback</code> 컴포넌트에 그대로 둬요(플레이어도 같이 써요)</td></tr>
       <tr><td>범위</td><td>몹 4종(돌무더기·투척꾼·돌진수·골렘), 전투 초기화 포함, 보스는 자리만. 슬라임 2종은 제외(정리 대상)</td></tr>
     </tbody>
@@ -641,8 +641,8 @@ classDiagram
     <li><strong>쿨다운 타이머:</strong> "공격마다 따로, 내지른 순간부터"는 확정 규칙이에요. 쿨다운 동안 <em>무엇을 할지</em>는 몹별(CooldownWait 칸)이지만, 시간을 <em>세는 방법</em>은 공통이에요.</li>
   </ul>
 
-  <h3>왜 돌진을 실행기에서 공격 에셋으로 옮기나</h3>
-  <p>지금은 돌진 데이터 7개와 <code>TickLunge</code>가 <code>MonsterAI</code> 안에 있어요. 이동형 공격이 늘 때마다(보스의 도약, 회전 공격 등) 실행기가 커져요. 새 구조에서는 공격 에셋이 <code>TickMotion</code>으로 "이번 프레임엔 이 방향으로 이만큼"을 말하고, 실제 이동은 Motor가 해요. 위치를 쥐는 곳은 여전히 하나이고, 진행 값은 Memory에 있어요.</p>
+  <h3>왜 몸을 쓰는 공격을 공격 에셋 쪽 자리(TickMotion)로 두나</h3>
+  <p>임시 돌진은 데이터 7개와 이동 코드가 <code>MonsterAI</code> 안에 있어서, 이동형 공격이 늘 때마다(보스의 도약, 회전 공격 등) 실행기가 커지는 구조였어요. 그래서 공격 에셋이 <code>HasMotion</code>을 켜고 <code>TickMotion</code>에서 "이번 프레임엔 이만큼"을 Motor로 움직이는 자리를 만들고, 실행기 안의 돌진 코드는 지웠어요. 위치를 쥐는 곳은 여전히 Motor 하나이고 진행 값은 Memory에 있어요. 돌진 자체는 몹별 패턴을 다시 정하면서 폐기했고, <code>ChargerDashAttack</code>은 빈 자리로 남아 있어요.</p>
 
   <h3>왜 넉백 "수치"만 Definition으로 옮기나</h3>
   <p><code>Knockback</code> 컴포넌트는 플레이어도 같이 써요. 동작까지 옮기면 플레이어용이 따로 생겨요. 몹마다 다른 건 세기와 시간뿐이니 그 값만 Definition에서 넣어 줘요. 경직 시간은 "넉백보다 길어야 한다"는 확정 규칙에 묶여 있어서 같이 옮기고, 넉백보다 짧게 넣으면 검사 도구가 경고하게 해요.</p>
@@ -659,7 +659,7 @@ classDiagram
     <tbody>
       <tr><td>돌무더기</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>휘두르기 → 접촉</td><td>추적 방식</td></tr>
       <tr><td>광맥 투척꾼</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td><strong>뒤로 물러나기</strong> (최소 사거리 4)</td><td>투사체</td><td>후퇴 방식, 쿨다운 중 거리 유지</td></tr>
-      <tr><td>광석 돌진수</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>돌진 (AttackMotion 사용)</td><td>돌진 전 접근 방식</td></tr>
+      <tr><td>광석 돌진수</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>돌진 <strong>(빈 자리 — 예고·빈틈만 돌고 피해 없음)</strong></td><td>돌진 동작 자체</td></tr>
       <tr><td>광갑 골렘</td><td>기본(직선, 느림)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>내려치기 → 접촉</td><td>추적 방식</td></tr>
     </tbody>
   </table>
@@ -730,10 +730,10 @@ flowchart LR
       <tr><td>10</td><td>사거리 안인데 쓸 공격이 없으면 더 다가가지 않는다</td><td><code>CooldownWaitState</code> 기본 동작</td><td>투척꾼이 쏜 뒤 다가오지 않는지</td></tr>
       <tr><td>11</td><td>다른 구역의 플레이어는 표적이 아니다 (구획 밖 몹은 예외)</td><td>Aggro</td><td>경계벽 너머에서 안 쫓아오는지</td></tr>
       <tr><td>12</td><td>후퇴로 자기 구역을 벗어나지 않는다</td><td>Motor (구역 밖 걸음 거부)</td><td>투척꾼을 벽 쪽으로 몰기</td></tr>
-      <tr><td>13</td><td>돌진은 예고 끝 방향으로 고정, 한 번만 맞히고, 벽에서 멈춘다</td><td><code>ChargerDashAttack.TickMotion</code></td><td>예고 중 옆으로 피하면 빗나가는지</td></tr>
+      <tr><td>13</td><td><s>돌진은 예고 끝 방향으로 고정, 한 번만 맞히고, 벽에서 멈춘다</s> — 임시 돌진 폐기. 다시 만들 때 기획 메모로 참고</td><td><code>ChargerDashAttack.TickMotion</code> (빈 자리)</td><td>—</td></tr>
       <tr><td>14</td><td>자기 구역은 <code>Start</code>에서 한 번에 잡지 않는다 (값이 설 때까지 다시 묻기)</td><td>Aggro</td><td>구역 안 몹이 정상적으로 쫓는지</td></tr>
       <tr><td>15</td><td>이동은 <code>FixedUpdate</code> + <code>MovePosition</code> + <code>fixedDeltaTime</code></td><td>Motor</td><td>구조물을 안 뚫는지</td></tr>
-      <tr><td>16</td><td>예고 시작 시 <code>Telegraphing</code>, 돌진 시작 시 <code>Lunged</code></td><td><code>WindupState</code> 추상 클래스, 실행기</td><td>이벤트에 임시 로그</td></tr>
+      <tr><td>16</td><td>예고 시작 시 <code>Telegraphing</code>, <s>돌진 시작 시 <code>Lunged</code></s>(돌진과 함께 폐기)</td><td><code>WindupState</code> 추상 클래스, 실행기</td><td>이벤트에 임시 로그</td></tr>
     </tbody>
   </table>
   </div>
@@ -748,7 +748,7 @@ flowchart LR
   <table>
     <thead><tr><th>질문</th><th>지금 동작</th><th>새 구조에서 바꾸려면</th></tr></thead>
     <tbody>
-      <tr><td>돌진 뒤 빈틈은 언제부터 세나?</td><td>내지른 순간부터 세서, 돌진(약 0.45초) 동안 빈틈이 같이 깎여요. 돌진수 실제 빈틈 ≈ 0.75초</td><td>AttackMotion이 끝나고 Recover에 들어갈 때부터 세면 돼요. 흐름상 이쪽이 자연스러워요</td></tr>
+      <tr><td>몸을 쓰는 공격 뒤 빈틈은 언제부터 세나? <small>(돌진 폐기로 지금은 해당 없음)</small></td><td>내지른 순간부터 세서, 돌진(약 0.45초) 동안 빈틈이 같이 깎여요. 돌진수 실제 빈틈 ≈ 0.75초</td><td>AttackMotion이 끝나고 Recover에 들어갈 때부터 세면 돼요. 흐름상 이쪽이 자연스러워요</td></tr>
       <tr><td>구석에 몰린 투척꾼은 무엇을 하나?</td><td>물러나지도 쏘지도 못하고 제자리에 서 있어요</td><td>투척꾼 후퇴 구현에서 "막히면 옆으로" 또는 "근접 공격 칸 추가"</td></tr>
       <tr><td>투사체를 방패로 막으면 투척꾼도 멈추나?</td><td>안 멈춰요. 막힘 판정이 "내 자식 오브젝트인가"로 보는데 탄은 자식이 아니에요</td><td>투사체가 쏜 몬스터를 따로 들고 다니게 하면 멈추게 할 수 있어요</td></tr>
       <tr><td>경직 시간은 직접 넣나, 넉백에서 계산하나?</td><td>모든 몹 0.22초 고정</td><td>Definition에 직접 넣고 "넉백보다 짧으면 경고" (제안) 또는 "넉백 + 여유"로 계산</td></tr>
@@ -768,7 +768,7 @@ flowchart LR
     <li><strong>공통 부품 떼어 내기:</strong> <code>MonsterMemory</code>, <code>MonsterMotor</code>, <code>MonsterAggro</code>를 <code>MonsterAI</code> 안에서 분리해요. 동작 변화 없음. 체크리스트 → 커밋. <span class="tag good">완료 · 전후 상태 순서 비교로 확인</span></li>
     <li><strong>공격 클래스 몹별 분리:</strong> 공용 이름(근접·투사체·돌진)을 없애고 <code>RubbleSwingAttack</code>, <code>GolemSlamAttack</code>, <code>ThrowerShotAttack</code>, <code>ChargerDashAttack</code>로. 공용은 <code>ContactAttack</code> 하나. <span class="tag good">완료</span></li>
     <li><strong>상태 뼈대:</strong> <code>StateId</code>, <code>MonsterState</code>, 칸 추상 클래스 5개, 기본 구현 에셋, <code>MonsterPattern</code>. 실행기를 다섯 단계로 바꿔요. 몹 4종 패턴 에셋 연결. 체크리스트 → 커밋. <span class="tag good">완료 · 전후 상태 순서 비교로 확인</span><br><small style="color:var(--muted)">지금 동작을 그대로 두려고 정한 것: ① 예고·빈틈·돌진 중에는 어그로 검사를 미룬다(<code>MonsterState.Committed</code>) ② 복귀는 아직 "집에 닿을 때까지 유지"가 아니다 — 7단계에서 동작 변경으로 ③ 칸이 바뀌면 같은 프레임에 이어서 실행해서, 일부 전이가 기존보다 1프레임(0.02초) 빠르다</small></li>
-    <li><strong>돌진을 공격 에셋으로:</strong> <code>TickMotion</code> 도입, <code>MonsterAI</code>의 돌진 필드 제거. 체크리스트 13번 중점 → 커밋.</li>
+    <li><strong>몸 쓰는 공격 자리:</strong> <code>MonsterAttack.HasMotion</code> + <code>TickMotion</code>, 실행기의 <code>AttackMotion</code> 칸. 실행기·Memory의 돌진 코드와 <code>Lunged</code> 이벤트 제거, <code>ChargerDashAttack</code>은 빈 자리. <span class="tag good">완료</span></li>
     <li><strong>넉백·경직 수치를 Definition으로:</strong> 지금 값 그대로 옮기고 씬 검사에 경고 추가 → 커밋.</li>
     <li><strong>전투 초기화:</strong> <code>ResetCombat</code>과 구역 쪽 호출(TODO 21·22와 함께).</li>
     <li><strong>12장 질문을 하나씩:</strong> 기획 답을 받은 것부터, 질문 하나에 커밋 하나.</li>
