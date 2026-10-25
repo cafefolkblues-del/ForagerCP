@@ -28,10 +28,6 @@ namespace ForagerCP
         /// 이 높이 아래로 내려가면 맵을 뚫은 것으로 본다.
         [SerializeField] float _fallSafeY = -3f;
 
-        /// 맞으면 이만큼 공격을 못 한다(경직). 넉백 0.16초보다 살짝 길게 잡아
-        /// 밀리는 동안 쌓아둔 윈드업이 끝나자마자 터지는 일이 없게 한다.
-        [SerializeField] float _hitstunTime = 0.22f;
-
         /// 공격 예고가 시작될 때 한 번(WindupState가 부른다). 지금은 아무도 듣지 않는다 —
         /// 기획에 공격 예고가 있는지 확인되면 연출이 이걸 들으면 된다.
         public event Action<MonsterAI, MonsterAttack> Telegraphing;
@@ -97,17 +93,20 @@ namespace ForagerCP
         {
             if (source == null || !source.transform.IsChildOf(transform)) return;
 
-            float stagger = _memory.LastFired != null ? _memory.LastFired.StaggerWhenBlocked : _hitstunTime;
+            float stagger = _memory.LastFired != null ? _memory.LastFired.StaggerWhenBlocked : HitstunTime;
             _memory.RecoverUntil = Mathf.Max(_memory.RecoverUntil, Time.time + stagger);
             _memory.CancelWindup();
             _memory.StopMotion();
         }
 
+        /// 경직 시간은 종류마다 MonsterDefinition에 있다. 피격은 Start보다 먼저 올 수 있어 Monster에서 바로 읽는다.
+        float HitstunTime => _monster != null && _monster.Definition != null ? _monster.Definition.HitstunTime : 0f;
+
         /// 확정 스펙: 넉백을 hitstun으로 승격 — 밀리는 동안 몹의 공격 윈드업을 리셋한다.
         /// 이게 없으면 연타로 녹이는 동안에도 몹이 제 박자대로 때린다.
         void OnDamaged(Monster monster, int amount, GameObject source)
         {
-            _memory.HitstunUntil = Time.time + _hitstunTime;
+            _memory.HitstunUntil = Time.time + HitstunTime;
             _memory.CancelWindup();
             _memory.StopMotion();
         }

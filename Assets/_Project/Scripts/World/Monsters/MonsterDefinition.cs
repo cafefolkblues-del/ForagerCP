@@ -43,6 +43,15 @@ namespace ForagerCP
         /// 확장 2-2의 구역 경계가 들어오면 이 거리 대신 구역 판정으로 교체된다.
         [SerializeField] float _leashDistance = 12f;
 
+        [Header("피격")]
+        /// 맞았을 때 밀려나는 세기와 시간. 종류마다 다르게 밀리도록 여기 둔다(Knockback 컴포넌트는 플레이어와 공용).
+        [SerializeField] float _knockbackForce = 9f;
+        [SerializeField] float _knockbackDuration = 0.16f;
+
+        /// 맞으면 이만큼 공격을 못 한다(경직). 반드시 넉백 시간보다 길게 —
+        /// 밀리는 동안 쌓아둔 예고가 끝나자마자 터지면 안 된다(확정 규칙, 씬 검사가 경고한다).
+        [SerializeField] float _hitstunTime = 0.22f;
+
         [Header("처치 보상 / 재등장")]
         [SerializeField] int _expReward = 2;
         [SerializeField] float _respawnDelay = 15f;
@@ -56,6 +65,12 @@ namespace ForagerCP
         public float MoveSpeed => Mathf.Max(0f, _moveSpeed);
         public float DetectRange => Mathf.Max(0f, _detectRange);
         public float LeashDistance => Mathf.Max(0f, _leashDistance);
+        public float KnockbackForce => Mathf.Max(0f, _knockbackForce);
+        public float KnockbackDuration => Mathf.Max(0.01f, _knockbackDuration);
+        public float HitstunTime => Mathf.Max(0f, _hitstunTime);
+
+        /// 경직이 넉백보다 길어야 한다는 규칙을 어겼는가.
+        public bool HitstunTooShort => HitstunTime <= KnockbackDuration;
         public int ExpReward => Mathf.Max(0, _expReward);
         public float RespawnDelay => Mathf.Max(0f, _respawnDelay);
 

@@ -98,7 +98,8 @@ namespace ForagerCP
 
             _hp -= amount;
             if (_hitFlash != null) _hitFlash.Play();
-            if (_knockback != null && source != null) _knockback.ApplyFrom(source.transform);
+            if (_knockback != null && source != null)
+                _knockback.ApplyFrom(source.transform, _definition.KnockbackForce, _definition.KnockbackDuration);
 
             // 경직 통지는 사망 판정보다 먼저 — 죽는 타격도 윈드업을 끊어야 한다.
             Damaged?.Invoke(this, amount, source);

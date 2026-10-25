@@ -5,6 +5,9 @@ namespace ForagerCP
     /// 맞은 쪽을 반대 방향으로 잠깐 밀어내는 연출.
     /// 이동 컴포넌트(PlayerMotor / MonsterAI)가 매 FixedUpdate마다 MovePosition으로 위치를 덮어쓰기 때문에,
     /// 힘(AddForce)을 주는 방식으로는 밀리지 않는다. 그래서 밀리는 동안 이동을 양보받는 구조로 간다.
+    ///
+    /// 몬스터는 세기·시간을 자기 MonsterDefinition에서 넘긴다(종류마다 다르게 밀리도록).
+    /// 아래 _force/_duration은 값을 넘기지 않는 쪽(플레이어)의 기본값이다.
     [RequireComponent(typeof(Rigidbody))]
     public class Knockback : MonoBehaviour
     {
@@ -21,6 +24,7 @@ namespace ForagerCP
         bool _hasBounds;
         Vector3 _velocity;
         float _endTime;
+        float _activeDuration;
         float _lockedY;
 
         /// 이동 컴포넌트가 이 값을 보고 자기 이동을 건너뛴다.
@@ -44,13 +48,15 @@ namespace ForagerCP
             if (_hasBounds) _centerOffset = _bodyBounds.center - transform.position;
         }
 
-        public void Apply(Vector3 direction, float forceOverride = -1f)
+        /// forceOverride·durationOverride가 0 이하면 이 컴포넌트의 기본값을 쓴다.
+        public void Apply(Vector3 direction, float forceOverride = -1f, float durationOverride = -1f)
         {
             direction.y = 0f;
             if (direction.sqrMagnitude < 0.0001f) direction = -transform.forward;
 
             _velocity = direction.normalized * (forceOverride > 0f ? forceOverride : _force);
-            _endTime = Time.time + _duration;
+            _activeDuration = Mathf.Max(0.01f, durationOverride > 0f ? durationOverride : _duration);
+            _endTime = Time.time + _activeDuration;
 
             // 🐛 밀린 대상이 구조물 사이에 끼면 물리가 겹침을 밀어내며 위로 솟구쳤다(팀 리뷰: "뒤에 오브젝트가 있으면 날아감").
             // 밀리는 동안은 높이를 시작 시점으로 묶어 수평으로만 밀리게 한다.
@@ -58,10 +64,10 @@ namespace ForagerCP
         }
 
         /// 때린 쪽 위치를 주면 반대 방향으로 민다.
-        public void ApplyFrom(Transform source, float forceOverride = -1f)
+        public void ApplyFrom(Transform source, float forceOverride = -1f, float durationOverride = -1f)
         {
             if (source == null) return;
-            Apply(transform.position - source.position, forceOverride);
+            Apply(transform.position - source.position, forceOverride, durationOverride);
         }
 
         /// 벽에 부딪혔으면 남은 밀림을 버린다. 계속 밀면 콜라이더를 파고들며 튕겨 나간다.
@@ -72,7 +78,7 @@ namespace ForagerCP
             if (!IsActive) return;
 
             // 남은 시간에 비례해 감속 — 끝날 때 뚝 멈추지 않게.
-            float remaining = Mathf.Clamp01((_endTime - Time.time) / _duration);
+            float remaining = Mathf.Clamp01((_endTime - Time.time) / _activeDuration);
             Vector3 step = _velocity * (remaining * Time.fixedDeltaTime);
 
             if (IsBlocked(step))

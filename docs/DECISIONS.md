@@ -41,7 +41,7 @@ _기준: 2026-10-12 · 커밋 `2fa9e43`_
 | 막아내면 **밀리지 않음** | 완전 차단 | 새 문서가 넉백을 언급하지 않아 앞서 확정된 쪽 유지 | `PlayerHealth._knockbackWhenBlocked` |
 | 방패 중 이동 **80%** | — | 기획 명시 | `PlayerActionState._shieldMoveMultiplier` |
 | 피격 후 **무적 1초** | — | 연타에 즉사하지 않을 최소선 | `PlayerHealth._invulnerableTime` |
-| 몹 **경직 0.22초** | 넉백 0.16초보다 길게 | 밀리는 동안 쌓인 예고가 끝나자마자 터지면 안 된다 | `MonsterAI._hitstunTime` |
+| 몹 **경직 0.22초** | 넉백 0.16초보다 길게 | 밀리는 동안 쌓인 예고가 끝나자마자 터지면 안 된다 | `MonsterDefinition._hitstunTime` (몹 종류별, 씬 검사가 넉백보다 짧으면 경고) |
 | 방어구는 **피해를 0으로 못 만든다** | 최소 1 | 방어구만으로 무적이 되면 전투가 성립하지 않는다 | ⚠️ 규칙 — `PlayerHealth` |
 | **C4 점프 보류** | 대시만 | `GroundLock`을 푸는 일이라 고친 솟구침 버그가 되살아난다. 맵도 평면 | ⚠️ 보류 권고 |
 

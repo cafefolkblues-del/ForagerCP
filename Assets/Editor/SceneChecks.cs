@@ -652,6 +652,32 @@ namespace ForagerCP.EditorTools
         }
     }
 
+    // ------------------------------------------------------------------ 몬스터 수치
+
+    /// 몬스터 정의 에셋 전부(씬 밖 포함 — 스포너가 실행 중에 세우는 종류도 있다)의 수치 규칙.
+    public class MonsterDefinitionCheck : ISceneCheck
+    {
+        public string Category => "몬스터";
+
+        public IEnumerable<SceneIssue> Run(SceneCheckContext context)
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:MonsterDefinition"))
+            {
+                var definition = AssetDatabase.LoadAssetAtPath<MonsterDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                if (definition == null || !definition.HitstunTooShort) continue;
+
+                yield return new SceneIssue
+                {
+                    Severity = IssueSeverity.Warning,
+                    Category = Category,
+                    Title = $"{definition.name}: 경직({definition.HitstunTime:0.##}초)이 넉백({definition.KnockbackDuration:0.##}초)보다 길지 않음",
+                    Detail = "밀리는 동안 쌓아둔 예고가 밀림이 끝나자마자 터집니다. 경직을 넉백보다 길게 두세요(확정 규칙).",
+                    Target = definition
+                };
+            }
+        }
+    }
+
     public class LeftoverCheck : ISceneCheck
     {
         public string Category => "잔여물";

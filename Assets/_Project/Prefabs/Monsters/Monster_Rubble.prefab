@@ -193,7 +193,6 @@ MonoBehaviour:
   _body: {fileID: 6078687661690100484}
   _knockback: {fileID: 1024854063414495171}
   _fallSafeY: -3
-  _hitstunTime: 0.22
 --- !u!114 &3491346207800301519
 MonoBehaviour:
   m_ObjectHideFlags: 0

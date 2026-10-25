@@ -13,10 +13,16 @@ MonoBehaviour:
   m_Name: Monster_BigSlime
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterDefinition
   _displayName: "\uB300\uD615 \uC2AC\uB77C\uC784"
+  _prefab: {fileID: 0}
+  _bodyColor: {r: 1, g: 1, b: 1, a: 1}
   _maxHp: 60
   _attacks: []
+  _pattern: {fileID: 0}
   _moveSpeed: 1.8
   _detectRange: 10
   _leashDistance: 14
+  _knockbackForce: 20
+  _knockbackDuration: 0.16
+  _hitstunTime: 0.22
   _expReward: 6
   _respawnDelay: 0
