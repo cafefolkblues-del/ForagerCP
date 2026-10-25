@@ -1,0 +1,798 @@
+<!doctype html>
+<!--
+  몬스터 상태머신 재설계 문서. 사람과 에이전트가 함께 읽는다.
+  구조:
+    #summary      한 장 요약 (결정 사항)
+    #layers       층 구조 — 무엇이 공통이고 무엇이 몹별인가
+    #flow         전체 상태 흐름 (상태 다이어그램)
+    #tick         한 프레임에 일어나는 일
+    #classes      클래스와 에셋 구성
+    #responsibility  클래스별 책임
+    #why          판단 이유 (SO, 추상 클래스, 칸 이름 전이 등)
+    #mobs         몹 4종 조립표
+    #reset        전투 초기화
+    #boss         보스 자리
+    #rules        새 구조에서도 지킬 규칙
+    #open         아직 정하지 않은 것
+    #migration    옮기는 순서
+  다이어그램은 <pre class="mermaid"> 안의 Mermaid 소스로 들어 있다. 글자로 읽어도 된다.
+  상태: 설계안(코드 미반영). 기준 커밋 bf3c3e0, 2026-10-25.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>몬스터 AI 설계</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --surface-2: #f3f1ec;
+    --text: #1f1d1a;
+    --muted: #6b665e;
+    --border: #e4e0d8;
+    --accent: #b4532a;
+    --accent-soft: #f6e6dc;
+    --info: #2d6a8f;
+    --info-soft: #e3eef5;
+    --warn: #9a6a00;
+    --warn-soft: #fbf1d6;
+    --bad: #a3322b;
+    --bad-soft: #f8e1df;
+    --good: #3b7a45;
+    --good-soft: #e2f0e3;
+    --code-bg: #f3f1ec;
+    --mono: ui-monospace, "Cascadia Code", Consolas, "D2Coding", monospace;
+    --sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171614;
+      --surface: #1f1e1b;
+      --surface-2: #272522;
+      --text: #ece8e1;
+      --muted: #a39d93;
+      --border: #36332e;
+      --accent: #e08a5f;
+      --accent-soft: #3a271d;
+      --info: #7fb4d6;
+      --info-soft: #1d2a33;
+      --warn: #e0b54f;
+      --warn-soft: #332a14;
+      --bad: #e58a83;
+      --bad-soft: #3a1f1d;
+      --good: #85c18f;
+      --good-soft: #1e2e21;
+      --code-bg: #272522;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614;
+    --surface: #1f1e1b;
+    --surface-2: #272522;
+    --text: #ece8e1;
+    --muted: #a39d93;
+    --border: #36332e;
+    --accent: #e08a5f;
+    --accent-soft: #3a271d;
+    --info: #7fb4d6;
+    --info-soft: #1d2a33;
+    --warn: #e0b54f;
+    --warn-soft: #332a14;
+    --bad: #e58a83;
+    --bad-soft: #3a1f1d;
+    --good: #85c18f;
+    --good-soft: #1e2e21;
+    --code-bg: #272522;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.7 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+    gap: 40px;
+    padding: 0 24px;
+  }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0;
+    font-size: 14px;
+  }
+  nav.toc .brand { font-weight: 700; margin-bottom: 4px; }
+  nav.toc .meta { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  nav.toc li { counter-increment: toc; }
+  nav.toc a {
+    display: block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  nav.toc a::before { content: counter(toc) ". "; color: var(--border); }
+  nav.toc a:hover { background: var(--surface-2); color: var(--text); }
+
+  main { padding: 40px 0 120px; min-width: 0; }
+  header.hero { margin-bottom: 40px; }
+  header.hero .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+  h1 { font-size: 34px; line-height: 1.25; margin: 6px 0 12px; letter-spacing: -.01em; }
+  header.hero p { color: var(--muted); margin: 0; max-width: 680px; }
+  section { margin-top: 64px; scroll-margin-top: 24px; }
+  h2 {
+    font-size: 24px;
+    margin: 0 0 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .num { color: var(--accent); margin-right: 8px; }
+  h3 { font-size: 18px; margin: 32px 0 8px; }
+  h4 { font-size: 16px; margin: 20px 0 6px; }
+  p { margin: 10px 0; }
+  .lead { color: var(--muted); margin-top: 4px; }
+  a { color: var(--info); }
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font: 13.5px/1.6 var(--mono);
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .ref { font-family: var(--mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+  .table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .callout {
+    border-left: 4px solid var(--info);
+    background: var(--info-soft);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout.bad { border-color: var(--bad); background: var(--bad-soft); }
+  .callout.good { border-color: var(--good); background: var(--good-soft); }
+  .callout strong:first-child { display: block; margin-bottom: 2px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 16px 0; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card h4 { margin: 0 0 4px; }
+  .card p { margin: 6px 0 0; font-size: 14.5px; color: var(--muted); }
+
+  .state {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 20px 14px;
+    margin: 16px 0;
+  }
+  .state h3 { margin-top: 16px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .state h3 .ko { color: var(--muted); font-weight: 400; font-size: 15px; }
+  .state dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 14px; margin: 10px 0 0; font-size: 15px; }
+  .state dt { color: var(--muted); font-weight: 600; }
+  .state dd { margin: 0; }
+
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    vertical-align: middle;
+  }
+  .tag.bad { background: var(--bad-soft); color: var(--bad); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.info { background: var(--info-soft); color: var(--info); }
+  .tag.good { background: var(--good-soft); color: var(--good); }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; text-align: center; }
+  .diagram figcaption { color: var(--muted); font-size: 13.5px; margin-top: 10px; }
+
+  ol.steps { padding-left: 22px; }
+  ol.steps > li { margin: 8px 0; }
+  .exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 20px 14px;
+    margin: 14px 0;
+  }
+  .exercise h4 { margin-top: 14px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  details { margin: 8px 0; }
+  summary { cursor: pointer; color: var(--info); font-weight: 600; }
+
+  .layers { margin: 18px 0; }
+  .layer { border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 0 10px 10px 0; background: var(--surface); padding: 12px 16px 14px; }
+  .layer.l-common { border-left-color: var(--accent); }
+  .layer.l-slot { border-left-color: var(--info); }
+  .layer.l-asset { border-left-color: var(--good); }
+  .layer.l-keep { border-left-color: var(--border); }
+  .layer-head { font-weight: 700; margin-bottom: 10px; }
+  .layer-num { color: var(--muted); margin-right: 2px; }
+  .layer-sub { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: flex; flex-direction: column; background: var(--surface-2); border-radius: 8px; padding: 6px 12px; font-size: 14px; min-width: 120px; }
+  .chip code { background: none; padding: 0; font-weight: 600; }
+  .chip span { color: var(--muted); font-size: 13px; }
+  .layer-arrow { color: var(--muted); font-size: 13px; padding: 6px 0 6px 18px; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 0 16px; }
+    nav.toc { position: static; max-height: none; padding: 24px 0 0; border-bottom: 1px solid var(--border); }
+    nav.toc ol { columns: 2; }
+    h1 { font-size: 28px; }
+    .state dl { grid-template-columns: 1fr; }
+    .state dt { margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc" aria-label="목차">
+  <div class="brand">몬스터 AI 설계</div>
+  <div class="meta">설계안 · 코드 미반영 · 2026-10-25</div>
+  <ol>
+    <li><a href="#summary">한 장 요약</a></li>
+    <li><a href="#layers">층 구조</a></li>
+    <li><a href="#flow">전체 상태 흐름</a></li>
+    <li><a href="#tick">한 프레임</a></li>
+    <li><a href="#classes">클래스와 에셋</a></li>
+    <li><a href="#responsibility">클래스별 책임</a></li>
+    <li><a href="#why">판단 이유</a></li>
+    <li><a href="#mobs">몹 4종 조립표</a></li>
+    <li><a href="#reset">전투 초기화</a></li>
+    <li><a href="#boss">보스 자리</a></li>
+    <li><a href="#rules">지킬 규칙</a></li>
+    <li><a href="#open">정하지 않은 것</a></li>
+    <li><a href="#migration">옮기는 순서</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="hero">
+  <div class="eyebrow">ForagerCP · 설계 문서</div>
+  <h1>몬스터 상태머신 재설계</h1>
+  <p>지금은 모든 몹이 <code>MonsterAI.FixedUpdate</code> 한 곳의 판단을 같이 써요. 몹별로 이동·후퇴·공격 패턴이 달라질 예정이라, 공통 규칙은 한 곳에 묶고 몹마다 다를 자리는 에셋으로 갈아 끼우는 구조로 바꾸려는 설계안이에요. 아직 코드에 반영하지 않았어요.</p>
+</header>
+
+<!-- ================================================================ -->
+<section id="summary">
+  <h2><span class="num">1</span>한 장 요약</h2>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>결정</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>상태 구현</td><td><strong>무상태 ScriptableObject 에셋.</strong> 동작과 수치만 들고, 진행 값(타이머·방향·예고 중인 공격)은 몬스터 컴포넌트의 <code>MonsterMemory</code>가 들어요</td></tr>
+      <tr><td>전이</td><td><strong>상태가 다음 상태를 정해요.</strong> 다만 다음 상태를 에셋으로 직접 가리키지 않고 <strong>칸 이름</strong>(<code>StateId.Recover</code> 등)으로 돌려줘요. 그 칸에 무엇이 들어갈지는 몹의 패턴 에셋이 정해요</td></tr>
+      <tr><td>공통 (변경 금지)</td><td>실행기, 방해 처리(경직·넉백·막힘), 어그로(탐지·구역·끈·초기화), 한 걸음 이동, 쿨다운 타이머</td></tr>
+      <tr><td>높은 수준의 빈칸</td><td>추적 · 예고 · 빈틈 · 쿨다운 대기 · 후퇴. 칸마다 추상 클래스가 있고 <strong>기본 동작이 들어 있어요</strong>(<code>virtual</code>). 다른 몹만 덮어써요</td></tr>
+      <tr><td>낮은 수준의 묶음</td><td><code>MonsterPattern</code> 에셋. "추적 칸에는 이것, 후퇴 칸에는 저것"만 고르는 가벼운 조립표예요</td></tr>
+      <tr><td>그대로</td><td><code>MonsterAttack</code>(공격 한 번의 동작). 돌진 같은 이동형 공격만 실행기에 이동을 부탁하는 길을 정리해요</td></tr>
+      <tr><td>넉백 수치</td><td><code>MonsterDefinition</code>으로 옮겨요. 밀어내는 동작은 <code>Knockback</code> 컴포넌트에 그대로 둬요(플레이어도 같이 써요)</td></tr>
+      <tr><td>범위</td><td>몹 4종(돌무더기·투척꾼·돌진수·골렘), 전투 초기화 포함, 보스는 자리만. 슬라임 2종은 제외(정리 대상)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <strong>참고한 기존 구조</strong>
+    추상 SO 목록 패턴은 이 프로젝트에서 이미 다섯 곳이 써요(<code>MonsterAttack</code>, <code>ConsumableEffect</code>, <code>RegionRequirement</code>, <code>ShopEffect</code>, <code>SkillEffect</code>). 방해 처리 층은 플레이어 쪽 <code>PlayerActionState</code>(넉백 &gt; 경직 &gt; 대시 &gt; 방패 &gt; 이동 우선순위를 한 곳에서 중재)와 같은 역할이에요. 새 구조는 이 두 틀을 몬스터에 그대로 가져와요.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="layers">
+  <h2><span class="num">2</span>층 구조 — 무엇이 공통이고 무엇이 몹별인가</h2>
+  <p class="lead">위로 갈수록 모든 몹이 똑같고, 아래로 갈수록 몹마다 달라요. 위층은 아래층을 부르지만 아래층은 위층의 규칙을 바꿀 수 없어요.</p>
+
+  <div class="layers">
+    <div class="layer l-common">
+      <div class="layer-head"><span class="layer-num">①</span> 공통 <span class="layer-sub">모든 몹이 같음 · 몹별로 바꿀 수 없음</span></div>
+      <div class="chips">
+        <div class="chip"><code>MonsterBrain</code><span>실행기</span></div>
+        <div class="chip"><b>방해 처리</b><span>경직 · 넉백 · 막힘</span></div>
+        <div class="chip"><code>MonsterAggro</code><span>탐지 · 구역 · 끈 · 초기화</span></div>
+        <div class="chip"><code>MonsterMotor</code><span>한 걸음 이동 · 회전</span></div>
+        <div class="chip"><b>쿨다운 타이머</b><span>공격마다 따로</span></div>
+      </div>
+    </div>
+    <div class="layer-arrow" aria-hidden="true">↓ 지금 칸의 상태를 부른다</div>
+    <div class="layer l-slot">
+      <div class="layer-head"><span class="layer-num">②</span> 높은 수준의 빈칸 <span class="layer-sub">칸마다 추상 클래스 · 기본 동작 있음</span></div>
+      <div class="chips">
+        <div class="chip"><code>ChaseState</code><span>추적</span></div>
+        <div class="chip"><code>WindupState</code><span>예고</span></div>
+        <div class="chip"><code>RecoverState</code><span>빈틈</span></div>
+        <div class="chip"><code>CooldownWaitState</code><span>쿨다운 대기</span></div>
+        <div class="chip"><code>RetreatState</code><span>후퇴 (선택)</span></div>
+      </div>
+    </div>
+    <div class="layer-arrow" aria-hidden="true">↓ 칸에 어떤 구현을 넣을지는 몹별 에셋이 고른다</div>
+    <div class="layer l-asset">
+      <div class="layer-head"><span class="layer-num">③</span> 낮은 수준의 묶음 <span class="layer-sub">몹별 조립표 · 에셋만</span></div>
+      <div class="chips">
+        <div class="chip"><code>MonsterPattern</code><span>칸마다 구현 하나씩 고름</span></div>
+        <div class="chip"><code>MonsterDefinition</code><span>수치 · 넉백 · 패턴 · 공격 목록</span></div>
+      </div>
+    </div>
+    <div class="layer-arrow" aria-hidden="true">↓ 상태가 공격을 고르고 내지른다</div>
+    <div class="layer l-keep">
+      <div class="layer-head"><span class="layer-num">④</span> 그대로 <span class="layer-sub">공격 한 번</span></div>
+      <div class="chips">
+        <div class="chip"><code>MonsterAttack</code><span>몹별 공격 클래스 + 공용 접촉</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>층</th><th>바뀌는 단위</th><th>누가 고치나</th><th>왜 이 층인가</th></tr></thead>
+    <tbody>
+      <tr><td>① 공통</td><td>게임 전체</td><td>프로그래머, 드물게</td><td>여기가 몹마다 다르면 "맞으면 예고가 끊긴다" 같은 확정 규칙이 몹마다 어긋나요. 지금 누더기의 원인이 이 규칙들이 판단 순서 안에 섞여 있던 것이에요</td></tr>
+      <tr><td>② 빈칸</td><td>상태 구현 하나</td><td>프로그래머, 새 행동이 필요할 때</td><td>모든 몹에 반드시 있지만 몹마다 다를 수 있는 자리예요. 기본 동작을 넣어 두어 대부분의 몹은 손대지 않아요</td></tr>
+      <tr><td>③ 묶음</td><td>몹 한 종류</td><td>디자이너, 에셋만</td><td>몹 종류 = 상태 구현 + 공격 + 수치의 조합. 새 몹을 만들 때 코드를 안 열어요</td></tr>
+      <tr><td>④ 공격</td><td>공격 한 번</td><td>지금과 같음</td><td>이미 잘 갈라져 있어요</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="flow">
+  <h2><span class="num">3</span>전체 상태 흐름</h2>
+  <p class="lead">상태는 세 종류예요. <strong>공통 상태</strong>(실행기가 직접 들고 있음), <strong>빈칸 상태</strong>(몹별 구현을 갈아 끼움), <strong>공격 동작 상태</strong>(공격 에셋이 진행을 맡음).</p>
+
+  <div class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+  state "공통: Idle 대기" as Idle
+  state "공통: Return 복귀" as Return
+  state "공통: Stagger 경직" as Stagger
+  state "빈칸: Chase 추적" as Chase
+  state "빈칸: Retreat 후퇴" as Retreat
+  state "빈칸: Windup 예고" as Windup
+  state "공격: AttackMotion 진행" as Motion
+  state "빈칸: Recover 빈틈" as Recover
+  state "빈칸: CooldownWait 대기" as Wait
+
+  [*] --> Idle
+  Idle --> Chase : 어그로 획득
+  Return --> Chase : 어그로 획득
+  Return --> Idle : 집 도착
+
+  Chase --> Windup : 공격 고름
+  Chase --> Retreat : 너무 가까움
+  Chase --> Wait : 사거리 안, 쓸 공격 없음
+  Retreat --> Chase : 충분히 멀어짐
+  Wait --> Chase : 공격 준비됨 또는 사거리 밖
+  Windup --> Motion : 내지름, 이동형 공격
+  Windup --> Recover : 내지름
+  Motion --> Recover : 동작 끝
+  Recover --> Chase : 빈틈 끝
+
+  Stagger --> Chase : 경직 끝
+</pre>
+    <figcaption>그림에 없는 두 경로는 모든 상태에 적용돼요. ① <strong>어디서든</strong> 맞으면 Stagger, 방패에 막히면 Recover로 강제 전환(방해 처리). ② <strong>어디서든</strong> 어그로를 잃으면 Return으로 강제 전환(어그로). 이 둘은 상태가 정하지 않고 실행기가 가로채요.</figcaption>
+  </div>
+
+  <h3>누가 전이를 정하나</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>전이</th><th>정하는 곳</th><th>이유</th></tr></thead>
+    <tbody>
+      <tr><td>전투 안의 흐름 (추적 → 예고 → 빈틈 …)</td><td><strong>각 상태의 <code>Tick</code>이 칸 이름을 돌려줌</strong></td><td>합의한 방식. 몹마다 흐름을 바꾸고 싶으면 그 칸의 구현을 덮어쓰면 돼요</td></tr>
+      <tr><td>맞음 → Stagger, 막힘 → Recover</td><td>실행기 (방해 처리)</td><td>상태마다 맡기면 하나만 빠뜨려도 "맞아도 공격이 나가는" 버그가 생겨요</td></tr>
+      <tr><td>어그로 잃음 → Return, 획득 → Chase</td><td>실행기 (어그로)</td><td>"다른 구역 플레이어는 표적이 아니다"는 버그 수정에서 나온 게임 규칙이라 몹이 바꾸면 안 돼요</td></tr>
+      <tr><td>Return → Idle (집 도착)</td><td>Return 상태</td><td>공통 상태라 몹별 차이 없음. "집에 닿을 때까지 유지"라 지금의 끈 경계 진동이 사라져요</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="tick">
+  <h2><span class="num">4</span>한 프레임에 일어나는 일</h2>
+  <p class="lead">지금의 110줄짜리 if 사다리가 아래 다섯 단계로 줄어요. 단계 2~3이 공통 규칙이고, 몹별 행동은 단계 4에서만 일어나요.</p>
+
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  T0([MonsterBrain.FixedUpdate]) --> T1["1. 가드<br/>죽음 · 표적 없음 → Idle, 낙하 → 집으로"]
+  T1 --> T2["2. 방해 처리<br/>경직 · 넉백 중이면 Stagger 유지, 상태 실행 안 함"]
+  T2 --> T3["3. 어그로<br/>탐지 · 구역 · 끈 검사 → 잃으면 Return, 얻으면 Chase"]
+  T3 --> T4["4. 지금 칸의 상태 실행<br/>next = 상태.Tick(ctx)"]
+  T4 --> T5["5. 전환<br/>next가 다르면 Exit → Enter → StateChanged"]
+  EV1(["Monster.Damaged"]) -.-> T2
+  EV2(["PlayerHealth.Blocked"]) -.-> T2
+</pre>
+    <figcaption>점선은 이벤트. 맞은 순간과 막힌 순간은 프레임을 기다리지 않고 바로 방해 처리로 들어가요(지금과 같음).</figcaption>
+  </div>
+
+  <h3>상태 하나가 받는 것 (<code>MonsterContext</code>)</h3>
+  <pre><code>ctx.Memory    // 이 몬스터의 진행 값 (타이머, 예고 중인 공격, 후퇴 방향 …)
+ctx.Motor     // 한 걸음 이동, 회전 — 위치는 반드시 이걸로만 옮긴다
+ctx.Aggro     // 표적, 거리, 같은 구역인지
+ctx.Attacks   // 쓸 수 있는 공격 고르기, 쿨다운 확인 — 쿨다운 타이머는 여기만 쓴다
+ctx.Definition // 수치
+ctx.Now       // 시간. Time.time을 직접 부르지 않는다 (창 열면 정지 대비)</code></pre>
+  <p>상태는 이것만 보고 일해요. 상태 에셋 자신은 아무 값도 기억하지 않아요(무상태).</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="classes">
+  <h2><span class="num">5</span>클래스와 에셋 구성</h2>
+
+  <div class="diagram">
+<pre class="mermaid">
+classDiagram
+  direction TB
+  class MonsterBrain {
+    &lt;&lt;MonoBehaviour · 공통&gt;&gt;
+    StateId Current
+    MonsterMemory memory
+    FixedUpdate()
+    ResetCombat()
+    event StateChanged
+  }
+  class MonsterMemory {
+    &lt;&lt;일반 클래스 · 진행 값&gt;&gt;
+    float stateEnteredAt
+    float recoverUntil
+    int windingAttack
+    float readyAt 배열
+    Vector3 motionDir
+  }
+  class MonsterAggro {
+    &lt;&lt;일반 클래스 · 공통&gt;&gt;
+    HasTarget()
+    InSameRegion()
+    PastLeash()
+    Reset()
+  }
+  class MonsterMotor {
+    &lt;&lt;일반 클래스 · 공통&gt;&gt;
+    Step(direction, speed)
+    Face(direction)
+  }
+  class MonsterState {
+    &lt;&lt;abstract SO · 무상태&gt;&gt;
+    virtual Enter(ctx)
+    abstract Tick(ctx) StateId
+    virtual Exit(ctx)
+  }
+  class ChaseState {
+    &lt;&lt;abstract SO&gt;&gt;
+    기본 직선 추적
+  }
+  class WindupState {
+    &lt;&lt;abstract SO&gt;&gt;
+    기본 멈춰서 바라봄
+  }
+  class RecoverState {
+    &lt;&lt;abstract SO&gt;&gt;
+    기본 멈춰서 바라봄
+  }
+  class CooldownWaitState {
+    &lt;&lt;abstract SO&gt;&gt;
+    기본 제자리
+  }
+  class RetreatState {
+    &lt;&lt;abstract SO&gt;&gt;
+    기본 구역 안 뒤로
+  }
+  class MonsterPattern {
+    &lt;&lt;SO · 몹별 조립표&gt;&gt;
+    ChaseState chase
+    WindupState windup
+    RecoverState recover
+    CooldownWaitState cooldownWait
+    RetreatState retreat 선택
+  }
+  class MonsterDefinition {
+    &lt;&lt;SO · 기존 + 추가&gt;&gt;
+    수치 · 공격 목록
+    + MonsterPattern pattern
+    + 넉백 세기 · 시간
+    + 경직 시간
+  }
+  class MonsterAttack {
+    &lt;&lt;abstract SO · 기존&gt;&gt;
+    CanUse(ctx)
+    Execute(ctx)
+    virtual TickMotion(ctx) bool
+  }
+
+  MonsterBrain *-- MonsterMemory
+  MonsterBrain *-- MonsterAggro
+  MonsterBrain *-- MonsterMotor
+  MonsterBrain --> MonsterDefinition
+  MonsterDefinition --> MonsterPattern
+  MonsterDefinition --> MonsterAttack
+  MonsterPattern --> MonsterState
+  MonsterState <|-- ChaseState
+  MonsterState <|-- WindupState
+  MonsterState <|-- RecoverState
+  MonsterState <|-- CooldownWaitState
+  MonsterState <|-- RetreatState
+</pre>
+    <figcaption>◆는 "몬스터 한 마리가 자기 것으로 가짐"(진행 값, 마리마다 따로). 화살표는 "에셋을 참조"(같은 종류끼리 공유). 삼각형은 상속.</figcaption>
+  </div>
+
+  <h3>칸 이름 (<code>enum StateId</code>)</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>칸</th><th>종류</th><th>구현은 어디서</th></tr></thead>
+    <tbody>
+      <tr><td><code>Idle</code>, <code>Return</code>, <code>Stagger</code></td><td>공통</td><td>실행기 안에 고정. 패턴 에셋에 칸이 없어요</td></tr>
+      <tr><td><code>Chase</code>, <code>Windup</code>, <code>Recover</code>, <code>CooldownWait</code></td><td>빈칸 (필수)</td><td>패턴 에셋. 비우면 기본 구현 에셋을 써요</td></tr>
+      <tr><td><code>Retreat</code></td><td>빈칸 (선택)</td><td>패턴 에셋. 비우면 후퇴하지 않아요(Chase가 Retreat를 돌려줘도 무시하고 Chase 유지)</td></tr>
+      <tr><td><code>AttackMotion</code></td><td>공격 동작</td><td>지금 내지른 공격 에셋의 <code>TickMotion</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="responsibility">
+  <h2><span class="num">6</span>클래스별 책임</h2>
+  <p class="lead">"하는 일"과 함께 "하지 않는 일"을 적었어요. 책임이 섞이는 걸 막는 건 주로 후자예요.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>클래스</th><th>하는 일</th><th>하지 않는 일</th></tr></thead>
+    <tbody>
+      <tr><td><code>MonsterBrain</code><br><span class="ref">컴포넌트 · 지금 MonsterAI 자리</span></td><td>매 프레임 단계 1~5 실행, 칸 이름 → 구현 찾기, 전환 시 Exit/Enter 호출, <code>StateChanged</code>·<code>Telegraphing</code> 이벤트, 이벤트 구독(피격·막힘)</td><td>추적 방식, 후퇴 방식, 공격 고르는 규칙을 몰라요. 몹 이름으로 분기하지 않아요</td></tr>
+      <tr><td><code>MonsterMemory</code></td><td>이 몬스터의 진행 값 보관. <code>Clear()</code>로 한 번에 초기화</td><td>판단하지 않아요. 값만 들어요</td></tr>
+      <tr><td><code>MonsterAggro</code></td><td>표적 찾기, 탐지 거리·같은 구역·끈 판정, 어그로 초기화(표적 놓기, 진행 값 비우기)</td><td>이동하지 않아요. 복귀 이동은 Return 상태가 Motor로 해요</td></tr>
+      <tr><td><code>MonsterMotor</code></td><td>한 걸음 이동(<code>MovePosition</code> + <code>fixedDeltaTime</code>), 회전, 구역 밖으로 나가는 걸음 거부, 넉백 중 이동 거부</td><td>어디로 갈지 정하지 않아요</td></tr>
+      <tr><td><code>Knockback</code><br><span class="ref">기존 컴포넌트</span></td><td>밀어내기 동작. 세기·시간은 <code>MonsterDefinition</code>에서 받아요</td><td>몬스터 전용이 아니에요(플레이어 공용)</td></tr>
+      <tr><td><code>MonsterState</code> 계열<br><span class="ref">SO</span></td><td>칸 하나의 행동. Motor로 움직이고, Attacks로 고르고, 다음 칸 이름을 돌려줘요</td><td>값을 기억하지 않아요(Memory에 적어요). 위치를 직접 바꾸지 않아요. 경직·어그로 판단을 하지 않아요</td></tr>
+      <tr><td><code>MonsterPattern</code><br><span class="ref">SO</span></td><td>칸마다 어떤 구현을 쓸지 고르는 조립표</td><td>로직이 없어요. 수치도 없어요(수치는 상태 에셋이나 Definition에)</td></tr>
+      <tr><td><code>MonsterDefinition</code><br><span class="ref">SO · 기존</span></td><td>몹 종류 한 개 = 수치 + 패턴 + 공격 목록 + 넉백·경직 값</td><td>진행 값을 들지 않아요</td></tr>
+      <tr><td><code>MonsterAttack</code><br><span class="ref">SO · 기존</span></td><td>쓸 수 있는지, 내지르는 순간 무엇을 하는지. 이동형이면 <code>TickMotion</code>으로 매 프레임 "이번엔 이만큼"을 말해요</td><td>몸을 직접 옮기지 않아요(Motor에 부탁). 쿨다운을 직접 세지 않아요</td></tr>
+      <tr><td><code>Monster</code><br><span class="ref">기존</span></td><td>체력, 사망, 재등장, 피격 이벤트</td><td>바뀌지 않아요</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="why">
+  <h2><span class="num">7</span>판단 이유</h2>
+
+  <h3>왜 상태를 SO 에셋으로 만드나</h3>
+  <ul>
+    <li><strong>몹 조합을 디자이너가 인스펙터에서 바꿀 수 있어요.</strong> "돌무더기도 거리 유지형 추적으로 바꿔 보자"가 코드 수정 없이 에셋 칸 하나로 끝나요.</li>
+    <li><strong>이 프로젝트가 이미 쓰는 틀이에요.</strong> 추상 SO 목록이 다섯 곳에 있어서 팀원이 한 번 익히면 다른 곳도 같은 모양으로 읽어요.</li>
+    <li><strong>상태의 수치를 상태 에셋에 둘 수 있어요.</strong> 예: "거리 유지형 추적"의 유지 거리. 몹 수치(<code>MonsterDefinition</code>)가 모든 상태의 수치를 떠안지 않아도 돼요.</li>
+  </ul>
+
+  <h3>왜 무상태여야 하나</h3>
+  <p>SO 에셋은 같은 종류의 몬스터 전부가 <strong>하나를 공유</strong>해요. 상태 에셋 안에 "예고 끝 시각"을 적으면 돌무더기 다섯 마리가 시계 하나를 나눠 쓰게 되고, 플레이 모드에서 바뀐 값이 에셋 파일에 저장돼 다음 플레이까지 따라와요(이 함정은 이미 한 번 밟았어요, <code>CODING_GUIDE.md</code> 1장). 그래서 진행 값은 몬스터마다 따로 있는 <code>MonsterMemory</code>에 적어요. "정의는 에셋, 진행은 컴포넌트" 규칙 그대로예요.</p>
+
+  <h3>왜 다음 상태를 "칸 이름"으로 돌려주나</h3>
+  <ul>
+    <li><strong>상태가 다음을 정한다</strong>(합의)와 <strong>몹별로 구현을 갈아 끼운다</strong>(층 구조)를 함께 살리려면 이 방법뿐이에요. 상태가 다음 상태 에셋을 직접 가리키면, 예고 에셋이 "돌무더기용 빈틈 에셋"을 박아 두게 되어 같은 예고를 다른 몹에 못 써요.</li>
+    <li>에셋끼리 서로 가리키는 고리(추적 → 예고 → 빈틈 → 추적)가 생기지 않아요. 고리가 있으면 하나를 지울 때 어디가 끊기는지 찾기 어려워요.</li>
+    <li>칸 이름이 <code>enum</code> 하나에 모여 있어서 "이 몹이 어떤 상태를 오갈 수 있나"를 한 곳에서 읽을 수 있어요.</li>
+  </ul>
+
+  <h3>왜 칸마다 추상 클래스를 따로 두나 (<code>MonsterState</code> 하나로 끝내지 않고)</h3>
+  <ul>
+    <li><strong>잘못 끼우는 걸 인스펙터가 막아요.</strong> 패턴 에셋의 추적 칸은 타입이 <code>ChaseState</code>라서 빈틈 에셋을 끌어다 놓을 수 없어요.</li>
+    <li><strong>칸마다 기본 동작이 달라요.</strong> 추적의 기본은 "직선 접근", 빈틈의 기본은 "멈춰서 바라보기". 이 기본값을 칸의 추상 클래스에 넣어 두면, 새 구현은 다른 부분만 덮어써요.</li>
+    <li>칸 추상 클래스에 <strong>그 칸이 지켜야 할 규칙</strong>을 넣을 수 있어요. 예: <code>WindupState</code>는 <code>Enter</code>에서 항상 <code>Telegraphing</code>을 쏘고, 하위 클래스는 이걸 끌 수 없어요.</li>
+  </ul>
+
+  <h3>왜 <code>abstract</code>가 아니라 <code>virtual</code>(기본 동작 있음)인가</h3>
+  <p>몹 4종을 지금 코드로 보면 예고·빈틈·쿨다운 대기는 넷 다 "멈춰서 바라보기"예요. 전부 비워 두면 같은 코드를 네 번 쓰게 돼요. 기본 동작을 두고 다른 몹만 덮어쓰면, 새 몹 대부분은 상태 코드를 한 줄도 안 써요. 단 <code>Tick</code>은 칸마다 반드시 다음을 정해야 해서 <code>MonsterState</code>에서는 <code>abstract</code>이고, 칸 추상 클래스가 기본 구현을 채워요.</p>
+
+  <h3>왜 경직·막힘·어그로는 상태에 맡기지 않나</h3>
+  <p>"상태가 다음을 정한다"를 여기까지 넓히면, 모든 상태 구현이 "맞았나? 막혔나? 표적이 다른 구역인가?"를 각자 확인해야 해요. 하나만 빠뜨려도 "맞아도 공격이 나간다", "벽 너머로 쫓아온다" 같은 이미 고친 버그가 그 몹에서만 되살아나요. 플레이어 쪽 <code>PlayerActionState</code>가 같은 이유로 우선순위를 한 곳에서 중재해요.</p>
+
+  <h3>왜 공통 부품을 "어그로 초기화" 하나보다 넓게 잡나</h3>
+  <ul>
+    <li><strong>한 걸음 이동 (Motor):</strong> 어디로 갈지는 몹마다 달라도, 한 걸음 옮기는 방법(<code>MovePosition</code>, <code>fixedDeltaTime</code>, 넉백 중 양보, 구역 밖 거부)은 같아야 구조물을 뚫거나 밀림이 상쇄되는 버그가 안 생겨요.</li>
+    <li><strong>쿨다운 타이머:</strong> "공격마다 따로, 내지른 순간부터"는 확정 규칙이에요. 쿨다운 동안 <em>무엇을 할지</em>는 몹별(CooldownWait 칸)이지만, 시간을 <em>세는 방법</em>은 공통이에요.</li>
+  </ul>
+
+  <h3>왜 돌진을 실행기에서 공격 에셋으로 옮기나</h3>
+  <p>지금은 돌진 데이터 7개와 <code>TickLunge</code>가 <code>MonsterAI</code> 안에 있어요. 이동형 공격이 늘 때마다(보스의 도약, 회전 공격 등) 실행기가 커져요. 새 구조에서는 공격 에셋이 <code>TickMotion</code>으로 "이번 프레임엔 이 방향으로 이만큼"을 말하고, 실제 이동은 Motor가 해요. 위치를 쥐는 곳은 여전히 하나이고, 진행 값은 Memory에 있어요.</p>
+
+  <h3>왜 넉백 "수치"만 Definition으로 옮기나</h3>
+  <p><code>Knockback</code> 컴포넌트는 플레이어도 같이 써요. 동작까지 옮기면 플레이어용이 따로 생겨요. 몹마다 다른 건 세기와 시간뿐이니 그 값만 Definition에서 넣어 줘요. 경직 시간은 "넉백보다 길어야 한다"는 확정 규칙에 묶여 있어서 같이 옮기고, 넉백보다 짧게 넣으면 검사 도구가 경고하게 해요.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="mobs">
+  <h2><span class="num">8</span>몹 4종 조립표</h2>
+  <p class="lead">첫 단계는 "지금 동작을 그대로 재현"이 목표라 대부분 기본 구현이에요. 오른쪽 열이 앞으로 몹별로 갈라질 자리예요.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>몹</th><th>추적</th><th>예고</th><th>빈틈</th><th>쿨다운 대기</th><th>후퇴</th><th>공격 목록</th><th>앞으로 갈라질 자리</th></tr></thead>
+    <tbody>
+      <tr><td>돌무더기</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>휘두르기 → 접촉</td><td>추적 방식</td></tr>
+      <tr><td>광맥 투척꾼</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td><strong>뒤로 물러나기</strong> (최소 사거리 4)</td><td>투사체</td><td>후퇴 방식, 쿨다운 중 거리 유지</td></tr>
+      <tr><td>광석 돌진수</td><td>기본(직선)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>돌진 (AttackMotion 사용)</td><td>돌진 전 접근 방식</td></tr>
+      <tr><td>광갑 골렘</td><td>기본(직선, 느림)</td><td>기본</td><td>기본</td><td>기본(제자리)</td><td>없음</td><td>내려치기 → 접촉</td><td>추적 방식</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>에셋 개수: 패턴 에셋은 몹 종류당 하나(구역별 강화판 R1~R5는 패턴을 공유하고 수치만 달라요). 상태 구현 에셋은 첫 단계에 칸별 기본 5개 + 후퇴 1개예요.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="reset">
+  <h2><span class="num">9</span>전투 초기화</h2>
+  <p class="lead">기획: 전투 중 사망하거나 구역 밖으로 나가면 그 구역 몬스터 전원이 <strong>원래 배치와 체력으로</strong> 돌아와요(TODO 22번). "새로 만든다"가 아니라 "처음 상태로 되돌린다"예요.</p>
+
+  <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  TRIG["플레이어 사망<br/>또는 구역 이탈"] --> REG["구역 관리자<br/>(TODO 21·22)"]
+  REG --> EACH["그 구역 몬스터마다"]
+  EACH --> M1["Monster.Respawn()<br/>체력 회복 · 집으로 순간이동"]
+  EACH --> M2["MonsterBrain.ResetCombat()"]
+  M2 --> A1["Memory.Clear()<br/>타이머 · 예고 · 동작 · 쿨다운 비움"]
+  M2 --> A2["Aggro.Reset()<br/>표적 놓기"]
+  M2 --> A3["현재 칸 Exit → Idle"]
+</pre>
+    <figcaption>평소의 "어그로를 잃음 → 복귀"는 Aggro.Reset만 하고 걸어서 돌아가요. 전투 초기화는 여기에 체력·위치·진행 값까지 한 번에 되돌려요.</figcaption>
+  </div>
+  <div class="callout warn">
+    <strong>지금 코드와 다른 점</strong>
+    지금 <code>MonsterSpawner.Respawn()</code>은 지우고 새로 만들어요(<code>DestroyImmediate</code>). 새 구조에서는 지우지 않고 위 순서로 되돌리는 쪽이 기획 의도에 맞아요. 또 지금은 <code>Monster.Respawn()</code>을 해도 AI의 쿨다운·빈틈 값이 남는데, <code>ResetCombat</code>이 이 구멍을 막아요.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="boss">
+  <h2><span class="num">10</span>보스 자리 (구현은 기획 뒤)</h2>
+  <p class="lead">보스 기획이 정해지지 않아 구현하지 않아요. 다만 지금 구조가 보스를 막지 않는지만 확인해 두었어요.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>보스에게 필요할 것</th><th>새 구조에서 들어갈 자리</th></tr></thead>
+    <tbody>
+      <tr><td>페이즈 전환 (체력 50% 아래면 다른 패턴)</td><td><code>MonsterPattern</code>을 상속한 <code>PhasedPattern</code>: 조건별로 다른 조립표를 돌려줌. 실행기는 "지금 쓸 조립표"만 물어보면 돼요</td></tr>
+      <tr><td>연속 패턴 (3연타, 정해진 순서)</td><td>Chase 칸 구현이 공격 순서를 Memory에 적으며 고르기. 또는 공격 에셋 하나가 여러 번 내지르는 <code>TickMotion</code></td></tr>
+      <tr><td>슈퍼아머 (특정 공격 중 경직 무시)</td><td>방해 처리에 "지금 상태·공격이 경직을 허용하나"를 묻는 질문 하나 추가. 규칙은 여전히 실행기 한 곳</td></tr>
+      <tr><td>방어불가 공격의 다른 예고 연출</td><td>이미 있음: <code>Telegraphing</code> 이벤트에 공격 에셋이 같이 넘어가요</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="rules">
+  <h2><span class="num">11</span>새 구조에서도 지킬 규칙</h2>
+  <p class="lead">지금 코드의 주석과 확정 기획에서 모은 것이에요. 구조를 바꾼 뒤 플레이 모드에서 하나씩 확인하는 회귀 체크리스트로 써요. 오른쪽 열은 새 구조에서 이 규칙을 지키는 곳이에요.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>#</th><th>규칙</th><th>지키는 곳</th><th>확인 방법</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>위치는 한 곳만 쥔다. 넉백 중엔 이동하지 않고, 공격 에셋은 몸을 직접 옮기지 않는다</td><td>Motor</td><td>맞으면 뒤로 밀리는지</td></tr>
+      <tr><td>2</td><td>피격 시 경직, 예고·돌진 취소. 경직은 넉백보다 길다</td><td>방해 처리 + Definition 검사</td><td>예고 중에 때리면 공격이 안 나오는지</td></tr>
+      <tr><td>3</td><td>죽는 타격도 예고를 끊는다</td><td>방해 처리 (<code>Damaged</code>가 사망보다 먼저)</td><td>예고 중 막타</td></tr>
+      <tr><td>4</td><td>예고 중엔 제자리, 표적만 바라본다</td><td><code>WindupState</code> 기본 동작</td><td>예고 중 옆으로 피해지는지</td></tr>
+      <tr><td>5</td><td>근접은 내지르는 순간 사거리를 다시 본다</td><td><code>RubbleSwingAttack</code> · <code>GolemSlamAttack</code></td><td>4번과 함께</td></tr>
+      <tr><td>6</td><td>쿨다운은 공격마다 따로, 내지른 순간부터</td><td>쿨다운 타이머 (공통)</td><td>골렘: 내려치기 쿨 중에도 접촉 피해</td></tr>
+      <tr><td>7</td><td>빈틈 중엔 이동·다른 공격 없음</td><td><code>RecoverState</code> 기본 동작</td><td>돌무더기 휘두른 직후 접촉 피해 없음</td></tr>
+      <tr><td>8</td><td>방패에 막히면 <code>StaggerWhenBlocked</code>만큼 멈춘다</td><td>방해 처리 → Recover 강제</td><td>막은 뒤 멈추는지</td></tr>
+      <tr><td>9</td><td>공격 우선순위 = 에셋 목록 순서</td><td>공격 고르기 (공통)</td><td>목록 순서를 바꾸면 행동이 바뀌는지</td></tr>
+      <tr><td>10</td><td>사거리 안인데 쓸 공격이 없으면 더 다가가지 않는다</td><td><code>CooldownWaitState</code> 기본 동작</td><td>투척꾼이 쏜 뒤 다가오지 않는지</td></tr>
+      <tr><td>11</td><td>다른 구역의 플레이어는 표적이 아니다 (구획 밖 몹은 예외)</td><td>Aggro</td><td>경계벽 너머에서 안 쫓아오는지</td></tr>
+      <tr><td>12</td><td>후퇴로 자기 구역을 벗어나지 않는다</td><td>Motor (구역 밖 걸음 거부)</td><td>투척꾼을 벽 쪽으로 몰기</td></tr>
+      <tr><td>13</td><td>돌진은 예고 끝 방향으로 고정, 한 번만 맞히고, 벽에서 멈춘다</td><td><code>ChargerDashAttack.TickMotion</code></td><td>예고 중 옆으로 피하면 빗나가는지</td></tr>
+      <tr><td>14</td><td>자기 구역은 <code>Start</code>에서 한 번에 잡지 않는다 (값이 설 때까지 다시 묻기)</td><td>Aggro</td><td>구역 안 몹이 정상적으로 쫓는지</td></tr>
+      <tr><td>15</td><td>이동은 <code>FixedUpdate</code> + <code>MovePosition</code> + <code>fixedDeltaTime</code></td><td>Motor</td><td>구조물을 안 뚫는지</td></tr>
+      <tr><td>16</td><td>예고 시작 시 <code>Telegraphing</code>, 돌진 시작 시 <code>Lunged</code></td><td><code>WindupState</code> 추상 클래스, 실행기</td><td>이벤트에 임시 로그</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="open">
+  <h2><span class="num">12</span>아직 정하지 않은 것</h2>
+  <p class="lead">지금 코드를 읽다가 찾은 동작 문제와 설계 중 생긴 질문이에요. 첫 단계(구조만 바꾸기)에서는 지금 동작을 그대로 재현하고, 아래는 기획 확인 뒤 하나씩 정해요.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>질문</th><th>지금 동작</th><th>새 구조에서 바꾸려면</th></tr></thead>
+    <tbody>
+      <tr><td>돌진 뒤 빈틈은 언제부터 세나?</td><td>내지른 순간부터 세서, 돌진(약 0.45초) 동안 빈틈이 같이 깎여요. 돌진수 실제 빈틈 ≈ 0.75초</td><td>AttackMotion이 끝나고 Recover에 들어갈 때부터 세면 돼요. 흐름상 이쪽이 자연스러워요</td></tr>
+      <tr><td>구석에 몰린 투척꾼은 무엇을 하나?</td><td>물러나지도 쏘지도 못하고 제자리에 서 있어요</td><td>투척꾼 후퇴 구현에서 "막히면 옆으로" 또는 "근접 공격 칸 추가"</td></tr>
+      <tr><td>투사체를 방패로 막으면 투척꾼도 멈추나?</td><td>안 멈춰요. 막힘 판정이 "내 자식 오브젝트인가"로 보는데 탄은 자식이 아니에요</td><td>투사체가 쏜 몬스터를 따로 들고 다니게 하면 멈추게 할 수 있어요</td></tr>
+      <tr><td>경직 시간은 직접 넣나, 넉백에서 계산하나?</td><td>모든 몹 0.22초 고정</td><td>Definition에 직접 넣고 "넉백보다 짧으면 경고" (제안) 또는 "넉백 + 여유"로 계산</td></tr>
+      <tr><td>경직으로 무한히 묶을 수 있는데 괜찮나?</td><td>맞을 때마다 예고가 취소되고 쿨다운은 안 써서, 계속 때리면 몬스터가 영영 못 때려요(확정 스펙의 결과)</td><td>보스 슈퍼아머 자리(10장)로 예외만 처리</td></tr>
+      <tr><td>재등장을 어떻게 표현하나?</td><td>구역 몹 에셋은 <code>RespawnDelay = 99999</code>, 슬라임은 0. "없음"이 두 가지</td><td>"재등장 안 함"을 체크 상자 하나로. 전투 초기화와 별개</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section id="migration">
+  <h2><span class="num">13</span>옮기는 순서</h2>
+  <p class="lead">구조 변경과 동작 변경을 한 커밋에 섞지 않는 것이 핵심이에요. 섞으면 무엇이 깨뜨렸는지 찾기 어려워요.</p>
+  <ol class="steps">
+    <li><strong>기준 기록:</strong> 11장 체크리스트를 지금 코드로 한 번 돌려 결과를 적어 둬요(가능하면 녹화).</li>
+    <li><strong>공통 부품 떼어 내기:</strong> <code>MonsterMemory</code>, <code>MonsterMotor</code>, <code>MonsterAggro</code>를 <code>MonsterAI</code> 안에서 분리해요. 동작 변화 없음. 체크리스트 → 커밋.</li>
+    <li><strong>상태 뼈대:</strong> <code>StateId</code>, <code>MonsterState</code>, 칸 추상 클래스 5개, 기본 구현 에셋, <code>MonsterPattern</code>. 실행기를 다섯 단계로 바꿔요. 몹 4종 패턴 에셋 연결. 체크리스트 → 커밋.</li>
+    <li><strong>돌진을 공격 에셋으로:</strong> <code>TickMotion</code> 도입, <code>MonsterAI</code>의 돌진 필드 제거. 체크리스트 13번 중점 → 커밋.</li>
+    <li><strong>넉백·경직 수치를 Definition으로:</strong> 지금 값 그대로 옮기고 씬 검사에 경고 추가 → 커밋.</li>
+    <li><strong>전투 초기화:</strong> <code>ResetCombat</code>과 구역 쪽 호출(TODO 21·22와 함께).</li>
+    <li><strong>12장 질문을 하나씩:</strong> 기획 답을 받은 것부터, 질문 하나에 커밋 하나.</li>
+    <li><strong>몹별 패턴 갈라내기:</strong> 기본 구현 대신 몹 전용 구현 에셋을 하나씩.</li>
+  </ol>
+  <div class="callout">
+    <strong>문서 정리</strong>
+    <code>CODING_GUIDE.md</code> 2장의 "한 프레임 순서"는 구조가 바뀌면 이 문서 4장으로 대체해야 해요. 3단계가 끝날 때 함께 고치는 게 좋아요.
+  </div>
+</section>
+
+</main>
+</div>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";
+  const dark = document.documentElement.dataset.theme === "dark" ||
+    (document.documentElement.dataset.theme !== "light" &&
+     window.matchMedia("(prefers-color-scheme: dark)").matches);
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: dark ? "dark" : "neutral",
+    fontFamily: getComputedStyle(document.body).fontFamily,
+    flowchart: { htmlLabels: true, curve: "basis" },
+  });
+</script>
+</body>
+</html>
