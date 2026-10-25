@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 예고 뒤 직선으로 들이받는다. 3구역 광석 돌진수가 쓴다.
+    /// 광석 돌진수의 돌진. 예고 뒤 직선으로 들이받는다.
     ///
     /// 이동을 여기서 직접 하지 않고 MonsterAI에 부탁하는 이유: 위치를 쥐는 곳이 둘이 되면
     /// 넉백·경직과 누가 몸을 옮기는지가 흐려진다. 공격은 "이 방향으로 이만큼"만 말한다.
-    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/돌진", fileName = "Attack_Lunge")]
-    public class LungeAttack : MonsterAttack
+    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/돌진수 돌진", fileName = "Attack_Charger_Dash")]
+    public class ChargerDashAttack : MonsterAttack
     {
         [Header("돌진")]
         [SerializeField] float _speed = 10f;

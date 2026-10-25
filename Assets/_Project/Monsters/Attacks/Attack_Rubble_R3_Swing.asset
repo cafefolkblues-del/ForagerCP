@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a901a44ef7a964843b160c528ca27474, type: 3}
   m_Name: Attack_Rubble_R3_Swing
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MeleeAttack
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.RubbleSwingAttack
   _displayName: "\uD718\uB450\uB974\uAE30"
   _damage: 12
   _range: 1.2

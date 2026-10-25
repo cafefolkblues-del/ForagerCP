@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0055e0d47ebf9e43af6ec281b986c3d, type: 3}
   m_Name: Attack_Thrower_R2_Shot
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.ProjectileAttack
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.ThrowerShotAttack
   _displayName: "\uAD11\uBB3C \uB358\uC9C0\uAE30"
   _damage: 8
   _range: 8

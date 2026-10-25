@@ -2,10 +2,10 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 투사체를 띄운다. 맞히는 일은 날아가는 쪽이 한다 — 쏜 뒤에 플레이어가 움직이므로
+    /// 광맥 투척꾼의 투사체. 맞히는 일은 날아가는 쪽이 한다 — 쏜 뒤에 플레이어가 움직이므로
     /// 발사 시점에 명중을 정하면 피할 수가 없다.
-    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/투사체", fileName = "Attack_Projectile")]
-    public class ProjectileAttack : MonsterAttack
+    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/투척꾼 투사체", fileName = "Attack_Thrower_Shot")]
+    public class ThrowerShotAttack : MonsterAttack
     {
         [Header("투사체")]
         [SerializeField] GameObject _prefab;

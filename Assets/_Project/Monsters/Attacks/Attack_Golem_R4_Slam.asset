@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a901a44ef7a964843b160c528ca27474, type: 3}
+  m_Script: {fileID: 11500000, guid: 497172bff8e143190a222a28a724569c, type: 3}
   m_Name: Attack_Golem_R4_Slam
-  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MeleeAttack
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.GolemSlamAttack
   _displayName: "\uB0B4\uB824\uCC0D\uAE30"
   _damage: 16
   _range: 1.6

@@ -85,12 +85,13 @@
 
 ## 3. 공격 하나 추가하기
 
-지금 공격 종류는 넷입니다 — `MeleeAttack`(근접), `ProjectileAttack`(투사체),
-`LungeAttack`(돌진), `ContactAttack`(몸통 접촉).
+공격 클래스는 **몹별로 하나씩** 둡니다 — `RubbleSwingAttack`(돌무더기 휘두르기), `GolemSlamAttack`(골렘 내려치기),
+`ThrowerShotAttack`(투척꾼 투사체), `ChargerDashAttack`(돌진수 돌진). 공용은 `ContactAttack`(몸통 접촉) 하나뿐입니다.
+"근접" 같은 공용 이름으로 묶으면 한 몹을 고칠 때 다른 몹까지 같이 바뀌기 때문입니다.
 
 아직 없는 것은 **보스의 원형 범위 공격**(기획서 5구역 "붉은 내려찍기")입니다.
 그걸 예로 듭니다. 파일은 하나입니다 —
-`Assets/_Project/Scripts/World/Monsters/Attacks/SmashAttack.cs`
+`Assets/_Project/Scripts/World/Monsters/Attacks/BossSmashAttack.cs`
 
 ```csharp
 using UnityEngine;
@@ -98,8 +99,8 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 예고 뒤 자기 주변 원형으로 때린다. 보스의 붉은 내려찍기가 쓴다.
-    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/범위", fileName = "Attack_Smash")]
-    public class SmashAttack : MonsterAttack
+    [CreateAssetMenu(menuName = "ForagerCP/몬스터 공격/범위", fileName = "Attack_Boss_Smash")]
+    public class BossSmashAttack : MonsterAttack
     {
         [Header("범위")]
         [SerializeField] float _radius = 4f;
@@ -112,7 +113,7 @@ namespace ForagerCP
 }
 ```
 
-> 이미 만들어진 네 종류를 **먼저 읽어보세요.** 특히 `LungeAttack`이 짧고,
+> 이미 만들어진 공격 클래스를 **먼저 읽어보세요.** 특히 `ChargerDashAttack`이 짧고,
 > 아래 다섯 가지 규칙이 전부 들어 있어 본으로 삼기 좋습니다.
 
 ### 베껴야 할 모양 다섯 가지
@@ -130,7 +131,7 @@ namespace ForagerCP
 **④ 쓸 수 없는 조건이 있으면 `CanUse`를 덮습니다.**
 ```csharp
 public override bool CanUse(in MonsterAttackContext context)
-    => _prefab != null && base.CanUse(context);   // ProjectileAttack의 실제 코드
+    => _prefab != null && base.CanUse(context);   // ThrowerShotAttack의 실제 코드
 ```
 `base.CanUse`를 꼭 부릅니다. 안 부르면 사거리 판정이 통째로 사라집니다.
 

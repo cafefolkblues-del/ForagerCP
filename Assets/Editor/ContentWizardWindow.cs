@@ -236,7 +236,7 @@ namespace ForagerCP.EditorTools
         IEnumerable<string> PlannedPaths()
         {
             if (_kind != ContentKind.Structure) yield return $"{ItemFolder}/{_assetId}.asset";
-            if (_kind == ContentKind.Monster) yield return $"{AttackFolder}/{_assetId}_Melee.asset";
+            if (_kind == ContentKind.Monster) yield return $"{AttackFolder}/{_assetId}_Contact.asset";
             if (_model == null) yield return $"{MaterialFolder}/{_assetId}.mat";
             yield return $"{PrefabFolder()}/{_assetId}.prefab";
         }
@@ -307,7 +307,7 @@ namespace ForagerCP.EditorTools
             var definition = ScriptableObject.CreateInstance<MonsterDefinition>();
             Set(definition, "_displayName", DisplayNameOrId());
             Set(definition, "_maxHp", Mathf.Max(1, _monsterHp));
-            Set(definition, "_attacks", new List<MonsterAttack> { CreateMeleeAttack() });
+            Set(definition, "_attacks", new List<MonsterAttack> { CreateContactAttack() });
             Set(definition, "_moveSpeed", Mathf.Max(0f, _moveSpeed));
             Set(definition, "_detectRange", Mathf.Max(0f, _detectRange));
             Set(definition, "_leashDistance", Mathf.Max(0f, _leashDistance));
@@ -320,17 +320,18 @@ namespace ForagerCP.EditorTools
             return definition;
         }
 
-        /// 공격은 따로 에셋이다. 마법사는 근접 하나를 만들어 끼워주고, 원거리·방어불가는
-        /// 디자이너가 공격 에셋을 더 만들어 목록에 추가하면 된다 — 마법사를 안 고쳐도 된다.
-        MeleeAttack CreateMeleeAttack()
+        /// 공격은 따로 에셋이다. 마법사는 공용인 몸통 접촉 하나만 만들어 끼워준다.
+        /// 몬스터 공격 클래스는 몹별로 하나씩이라(접촉만 공용), 이 몹만의 공격은
+        /// 클래스를 만든 뒤 에셋을 목록 위쪽에 추가한다.
+        ContactAttack CreateContactAttack()
         {
-            var attack = ScriptableObject.CreateInstance<MeleeAttack>();
-            Set(attack, "_displayName", DisplayNameOrId() + " 근접");
+            var attack = ScriptableObject.CreateInstance<ContactAttack>();
+            Set(attack, "_displayName", DisplayNameOrId() + " 접촉");
             Set(attack, "_damage", Mathf.Max(0, _attackPower));
             Set(attack, "_cooldown", Mathf.Max(0.05f, _attackInterval));
             Set(attack, "_range", Mathf.Max(0.1f, _attackRange));
 
-            string path = $"{AttackFolder}/{_assetId}_Melee.asset";
+            string path = $"{AttackFolder}/{_assetId}_Contact.asset";
             AssetDatabase.CreateAsset(attack, path);
             _createdPaths.Add(path);
             return attack;
