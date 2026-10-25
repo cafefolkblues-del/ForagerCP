@@ -3,23 +3,24 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 몬스터의 판단. 상태: 대기 → 추적 → 예고 → 공격 → 복귀.
-    /// 경로 탐색은 아직 직선 추적이다 — 맵에 장애물이 드물어서 NavMesh를 굽는 비용이 더 크다.
-    /// 슬라임이 구조물에 끼기 시작하면 NavMeshAgent로 갈아끼우면 되고, 그때 바꿀 곳은 MonsterMotor다.
+    /// 몬스터 상태머신의 실행기. 모든 몹이 같고, 몹별로 바꿀 수 없다.
     ///
-    /// 무엇을 내지를지는 여기가 정하지 않는다 — MonsterDefinition이 든 공격 목록에서
-    /// 지금 쓸 수 있는 것을 고를 뿐이다. 공격 종류가 늘어도 이 파일은 안 늘어난다.
+    /// 매 물리 프레임 다섯 단계를 돈다 (docs/MONSTER_AI_DESIGN.html 4장):
+    ///   1. 가드 — 죽음·표적 없음 → Idle, 맵 아래로 빠짐 → 집으로
+    ///   2. 방해 처리 — 돌진 중이면 AttackMotion, 경직·넉백 중이면 Stagger, 막혀서 빈틈이 늘었으면 Recover
+    ///   3. 어그로 — 표적을 잃으면 Return, 다시 보이면 Chase (예고·빈틈처럼 Committed인 칸에서는 미룬다)
+    ///   4. 지금 칸의 상태 실행 — 상태가 다음 칸 이름을 돌려준다
+    ///   5. 전환 — 칸이 바뀌면 Exit → Enter → StateChanged, 바뀐 칸을 같은 프레임에 이어서 실행
     ///
-    /// 공통 부품 셋을 쓴다: 진행 값(MonsterMemory), 한 걸음 이동(MonsterMotor), 표적·구역 판정(MonsterAggro).
-    /// 몹별 상태로 갈라지는 다음 단계는 docs/MONSTER_AI_DESIGN.html 13장.
+    /// 몹마다 다른 행동은 4단계에서만 일어난다. 2·3단계를 상태에 맡기지 않는 이유:
+    /// 상태마다 "맞았나? 벽 너머인가?"를 각자 물으면 하나만 빠뜨려도 이미 고친 버그가 그 몹에서만 되살아난다.
+    /// (플레이어 쪽 PlayerActionState가 같은 이유로 우선순위를 한 곳에서 중재한다.)
     ///
-    /// ⚠️ 지금 전이 순서는 돌진 → 경직/넉백 → 빈틈 → 예고 → 리쉬 → 탐지·구역 → 후퇴 → 공격 → 추적이고,
-    /// 위에 있는 것이 먼저 가로챈다. 건드릴 때 이 순서를 먼저 확인할 것.
+    /// 칸에 어떤 구현이 들어갈지는 MonsterDefinition.Pattern이 정한다. 공통 칸(Idle·Return·Stagger·AttackMotion)은
+    /// 여기 들어 있다. 경로 탐색은 아직 직선 추적이다 — 바꿀 곳은 MonsterMotor다.
     [RequireComponent(typeof(Monster))]
     public class MonsterAI : MonoBehaviour
     {
-        public enum State { Idle, Chase, Retreat, Windup, Attack, Recover, Lunge, Return }
-
         [SerializeField] Transform _target;
         [SerializeField] Rigidbody _body;
         [SerializeField] Knockback _knockback;
@@ -31,15 +32,17 @@ namespace ForagerCP
         /// 밀리는 동안 쌓아둔 윈드업이 끝나자마자 터지는 일이 없게 한다.
         [SerializeField] float _hitstunTime = 0.22f;
 
-        /// 공격 예고가 시작될 때 한 번. 지금은 아무도 듣지 않는다 —
+        /// 공격 예고가 시작될 때 한 번(WindupState가 부른다). 지금은 아무도 듣지 않는다 —
         /// 기획에 공격 예고가 있는지 확인되면 연출이 이걸 들으면 된다.
-        /// 이음새만 두는 이유: 예고 시간이 0이면 이 이벤트도 안 나가 지금 동작이 그대로다.
         public event Action<MonsterAI, MonsterAttack> Telegraphing;
 
         /// 돌진을 시작할 때 한 번. 예고와 같은 이유로 연출이 들을 자리다.
         public event Action<MonsterAI> Lunged;
 
-        public State Current { get; private set; } = State.Idle;
+        /// 칸이 바뀔 때마다 (실행기, 이전 칸, 새 칸). 애니메이션·사운드·디버그 표시가 듣는다.
+        public event Action<MonsterAI, StateId, StateId> StateChanged;
+
+        public StateId Current { get; private set; } = StateId.Idle;
 
         /// 지금 예고 중인 공격. 없으면 null.
         public MonsterAttack Winding => _memory.Winding;
@@ -51,13 +54,18 @@ namespace ForagerCP
 
         public bool IsHitstunned => Time.time < _memory.HitstunUntil;
 
+        /// 한 프레임에 칸을 이어서 실행하는 최대 횟수. 칸끼리 서로 넘기는 실수가 있어도 프레임이 멈추지 않게.
+        const int MaxStepsPerFrame = 4;
+
         // 필드 초기화로 만드는 이유: 피격 이벤트가 Start보다 먼저 올 수 있다.
         readonly MonsterMemory _memory = new MonsterMemory();
         MonsterMotor _motor;
         MonsterAggro _aggro;
+        MonsterContext _ctx;
 
         Monster _monster;
         MonsterDefinition _definition;
+        MonsterPattern _pattern;
         PlayerHealth _player;
 
         void Awake()
@@ -89,6 +97,7 @@ namespace ForagerCP
         }
 
         /// 내 공격이 정면 방패에 막혔다. 1구역의 "막으면 잠시 멈추니 반격할 수 있다"가 이것이다.
+        /// 빈틈을 늘려 두면 다음 프레임 방해 처리가 Recover로 보낸다.
         void OnBlocked(PlayerHealth health, GameObject source)
         {
             if (source == null || !source.transform.IsChildOf(transform)) return;
@@ -111,6 +120,7 @@ namespace ForagerCP
         void Start()
         {
             _definition = _monster.Definition;
+            _pattern = _definition != null ? _definition.Pattern : null;
             _memory.PrepareCooldowns(_definition != null ? _definition.Attacks.Count : 0);
 
             // 플레이어는 씬에 하나뿐이라 시작할 때 한 번만 찾는다.
@@ -121,13 +131,15 @@ namespace ForagerCP
             }
 
             _aggro.Acquire(_target);
+            _ctx = new MonsterContext(this, _monster, _definition, _memory, _motor, _aggro);
         }
 
         void FixedUpdate()
         {
+            // ---- 1. 가드 ----
             if (_definition == null || !_monster.IsAlive || !_aggro.HasTarget)
             {
-                Current = State.Idle;
+                ChangeTo(StateId.Idle);
                 _memory.CancelWindup();
                 return;
             }
@@ -140,148 +152,105 @@ namespace ForagerCP
                 return;
             }
 
-            // 돌진은 위치를 직접 쥐는 구간이라 다른 판단보다 먼저 처리한다.
+            // ---- 2. 방해 처리 ----
+            // 돌진은 위치를 직접 쥐는 구간이라 경직보다도 먼저 본다(맞으면 돌진이 끊기므로 둘이 겹치지는 않는다).
             if (_memory.IsLunging)
             {
-                Current = State.Lunge;
-                TickLunge();
-                return;
+                ChangeTo(StateId.AttackMotion);
             }
-
-            // 경직 중에는 이동도 공격도 없다. 넉백이 위치를 맡는 구간과 겹친다.
-            if (IsHitstunned) return;
-
-            // 맞고 밀리는 동안은 Knockback이 위치를 맡는다. 여기서 같이 MovePosition하면 밀림이 상쇄된다.
-            if (_knockback != null && _knockback.IsActive) return;
-
-            Vector3 toTarget = _aggro.ToTarget(transform.position);
-            float distanceToTarget = toTarget.magnitude;
-            Vector3 toHome = _aggro.ToHome(transform.position);
-
-            // 내지른 뒤의 빈틈. 이동도 다음 공격도 없다 — 이 구간이 플레이어의 반격 창이다.
-            if (Time.time < _memory.RecoverUntil)
+            // 경직·넉백 중에는 이동도 공격도 없다. 밀리는 동안은 Knockback이 위치를 맡는다 —
+            // 여기서 같이 MovePosition하면 밀림이 상쇄된다.
+            else if (IsHitstunned || (_knockback != null && _knockback.IsActive))
             {
-                Current = State.Recover;
-                _motor.Face(toTarget);
+                ChangeTo(StateId.Stagger);
                 return;
             }
-
-            // 예고 중에는 제자리에서 표적만 본다. 쫓아가며 때리면 예고가 피할 시간이 못 된다.
-            if (_memory.IsWindingUp)
+            else if (Current == StateId.Stagger)
             {
-                Current = State.Windup;
-                _motor.Face(toTarget);
-
-                if (Time.time < _memory.WindupEndsAt) return;
-
-                Fire(_memory.WindingIndex, distanceToTarget);
-                return;
+                ChangeTo(Time.time < _memory.RecoverUntil ? StateId.Recover : StateId.Chase);
             }
-
-            // 표적 상실 → 복귀는 구역 경계 판정이 들어와도 이 분기를 그대로 쓴다.
-            if (_aggro.PastLeash(toHome, _definition.LeashDistance))
+            // 방패에 막혀 빈틈이 늘었다. 예고 중이었어도 빈틈이 이긴다.
+            else if (Time.time < _memory.RecoverUntil && Current != StateId.Recover)
             {
-                Current = State.Return;
-                _motor.Step(toHome, _definition.MoveSpeed);
-                return;
+                ChangeTo(StateId.Recover);
             }
 
-            // 차단벽 너머의 플레이어는 표적이 아니다(3차 프로토타입 피드백 1번).
-            if (_aggro.IsLost(distanceToTarget, _definition.DetectRange))
+            _ctx.Measure(transform.position);
+
+            // ---- 3~5. 어그로 → 상태 실행 → 전환 ----
+            for (int i = 0; i < MaxStepsPerFrame; i++)
             {
-                // 표적을 놓치면 스폰 지점으로 돌아간다.
-                Current = toHome.sqrMagnitude > 0.05f ? State.Return : State.Idle;
-                if (Current == State.Return) _motor.Step(toHome, _definition.MoveSpeed);
-                return;
-            }
+                if (!IsCommitted(Current)) ChangeTo(DecideByAggro());
 
-            // 원거리형은 붙으면 물러난다. 물러날 거리는 공격이 들고 있는 최소 사거리에서 나온다 —
-            // 따로 수치를 두면 "안 쏘는 거리"와 "물러나는 거리"가 어긋난다.
-            // 기획이 "구역 밖으로 이동하지 않는다"로 못박아서, 구역을 벗어나는 걸음이면 물러나지 않는다.
-            if (distanceToTarget < _definition.RetreatRange
-                && _motor.TryStepWithin(-toTarget, _definition.MoveSpeed, _aggro.HomeRegion))
-            {
-                Current = State.Retreat;
-                _motor.Face(toTarget);
-                return;
+                StateId next = TickCurrent();
+                if (next == Current) break;
+                ChangeTo(next);
             }
-
-            int choice = PickAttack(distanceToTarget);
-            if (choice >= 0)
-            {
-                Current = State.Attack;
-                _motor.Face(toTarget);
-                Begin(choice, distanceToTarget);
-                return;
-            }
-
-            // 사거리 안인데 쓸 것이 없으면(재사용 대기) 제자리에서 기다린다.
-            // 더 다가가면 원거리 몬스터가 코앞까지 붙는다.
-            if (distanceToTarget <= _definition.MaxAttackRange)
-            {
-                Current = State.Attack;
-                _motor.Face(toTarget);
-                return;
-            }
-
-            Current = State.Chase;
-            _motor.Face(toTarget);
-            _motor.Step(toTarget, _definition.MoveSpeed);
         }
 
-        /// 쓸 수 있는 것 중 목록에서 앞선 것. 우선순위를 코드가 아니라 에셋 순서가 정한다.
-        int PickAttack(float distance)
+        /// 표적을 잃었으면 복귀(집이면 대기), 다시 보이면 추적. 그 밖에는 지금 칸 그대로.
+        StateId DecideByAggro()
         {
-            IDamageable target = _aggro.TargetDamageable;
-            if (target == null || !target.IsAlive) return -1;
+            bool lost = _aggro.PastLeash(_ctx.ToHome, _definition.LeashDistance)
+                        || _aggro.IsLost(_ctx.Distance, _definition.DetectRange);
 
-            var context = new MonsterAttackContext(_monster, this, target, _aggro.Target, distance);
-
-            for (int i = 0; i < _definition.Attacks.Count; i++)
-            {
-                MonsterAttack attack = _definition.Attacks[i];
-                if (attack == null) continue;
-                if (Time.time < _memory.ReadyAt[i]) continue;
-                if (!attack.CanUse(context)) continue;
-
-                return i;
-            }
-            return -1;
+            if (lost) return _ctx.ToHome.sqrMagnitude > 0.05f ? StateId.Return : StateId.Idle;
+            if (Current == StateId.Idle || Current == StateId.Return) return StateId.Chase;
+            return Current;
         }
 
-        /// 예고가 0이면 그 자리에서 바로 내지른다.
-        void Begin(int index, float distance)
+        StateId TickCurrent()
         {
-            MonsterAttack attack = _definition.Attacks[index];
-            if (attack.Windup <= 0f)
+            switch (Current)
             {
-                Fire(index, distance);
-                return;
+                case StateId.Idle:
+                    return StateId.Idle;
+
+                case StateId.Return:
+                    if (_ctx.ToHome.sqrMagnitude <= 0.05f) return StateId.Idle;
+                    _motor.Step(_ctx.ToHome, _definition.MoveSpeed);
+                    return StateId.Return;
+
+                case StateId.Stagger:
+                    return StateId.Stagger;
+
+                case StateId.AttackMotion:
+                    TickLunge();
+                    return _memory.IsLunging ? StateId.AttackMotion : _ctx.AfterFire();
+
+                default:
+                    MonsterState state = Resolve(Current);
+                    return state != null ? state.Tick(_ctx) : StateId.Chase;
             }
-
-            _memory.WindingIndex = index;
-            _memory.WindupEndsAt = Time.time + attack.Windup;
-            _memory.Winding = attack;
-            Current = State.Windup;
-
-            Telegraphing?.Invoke(this, attack);
         }
 
-        void Fire(int index, float distance)
+        bool IsCommitted(StateId id)
         {
-            MonsterAttack attack = _definition.Attacks[index];
-
-            // 재사용 대기는 내지른 때부터 센다. 예고 시작부터 세면 예고가 긴 공격이
-            // 사실상 더 자주 나간다.
-            _memory.ReadyAt[index] = Time.time + attack.Cooldown;
-            _memory.RecoverUntil = Time.time + attack.Recovery;
-            _memory.LastFired = attack;
-            _memory.CancelWindup();
-
-            attack.Execute(new MonsterAttackContext(_monster, this, _aggro.TargetDamageable, _aggro.Target, distance));
+            if (id == StateId.AttackMotion || id == StateId.Stagger) return true;
+            MonsterState state = Resolve(id);
+            return state != null && state.Committed;
         }
+
+        void ChangeTo(StateId next)
+        {
+            if (next == Current) return;
+
+            StateId previous = Current;
+            if (_ctx != null) Resolve(previous)?.Exit(_ctx);
+            Current = next;
+            if (_ctx != null) Resolve(next)?.Enter(_ctx);
+
+            StateChanged?.Invoke(this, previous, next);
+        }
+
+        /// 칸 이름 → 이 몹의 구현. 공통 칸은 null.
+        public MonsterState Resolve(StateId id) => MonsterPattern.Resolve(_pattern, id);
+
+        /// WindupState.Enter가 부른다. 이벤트는 선언한 클래스 밖에서 직접 쏠 수 없어 통로를 둔다.
+        public void RaiseTelegraphing(MonsterAttack attack) => Telegraphing?.Invoke(this, attack);
 
         /// 돌진을 시작한다. 공격 에셋이 부탁하고 이동은 여기가 맡는다.
+        /// (설계 문서 4단계에서 공격 에셋의 TickMotion으로 옮긴다.)
         public void BeginLunge(Vector3 direction, float speed, float distance,
                                int damage, DamageKind kind, float hitRadius)
         {

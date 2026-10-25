@@ -31,6 +31,10 @@ namespace ForagerCP
         /// 먼저 쓰이길 바라는 것을 위에 둔다(원거리 → 근접 순이 보통).
         [SerializeField] List<MonsterAttack> _attacks = new List<MonsterAttack>();
 
+        /// 행동 조립표(추적·예고·빈틈·쿨다운 대기·후퇴에 어떤 구현을 쓸지).
+        /// 구역별 강화판은 같은 패턴을 공유한다. 비우면 기본 구현만 쓰고 후퇴하지 않는다.
+        [SerializeField] MonsterPattern _pattern;
+
         [Header("이동 / 인지")]
         [SerializeField] float _moveSpeed = 2.5f;
         [SerializeField] float _detectRange = 8f;
@@ -48,6 +52,7 @@ namespace ForagerCP
         public Color BodyColor => _bodyColor;
         public int MaxHp => Mathf.Max(1, _maxHp);
         public IReadOnlyList<MonsterAttack> Attacks => _attacks;
+        public MonsterPattern Pattern => _pattern;
         public float MoveSpeed => Mathf.Max(0f, _moveSpeed);
         public float DetectRange => Mathf.Max(0f, _detectRange);
         public float LeashDistance => Mathf.Max(0f, _leashDistance);

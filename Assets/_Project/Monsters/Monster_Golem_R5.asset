@@ -19,6 +19,7 @@ MonoBehaviour:
   _attacks:
   - {fileID: 11400000, guid: 1d9a16eec8abc5c4c92b37bb13d5047a, type: 2}
   - {fileID: 11400000, guid: be1fd4065586d8e46b1d1f49ab65139d, type: 2}
+  _pattern: {fileID: 11400000, guid: a44e204b2cbf16547a6757f7325b7433, type: 2}
   _moveSpeed: 1.2
   _detectRange: 5
   _leashDistance: 14

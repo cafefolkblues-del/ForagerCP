@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ae650fb6db670846a9e5915fd7f09ab, type: 3}
+  m_Name: Pattern_Thrower
+  m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterPattern
+  _chase: {fileID: 11400000, guid: ebb810e38dffb2d409c9478232a22a9d, type: 2}
+  _windup: {fileID: 11400000, guid: 5e601d7784d2ea84bb0c52b5be4b6423, type: 2}
+  _recover: {fileID: 11400000, guid: 006f843731a572f4f8f82dffc25db25a, type: 2}
+  _cooldownWait: {fileID: 11400000, guid: 140e1466635ef844299879ca108d516e, type: 2}
+  _retreat: {fileID: 11400000, guid: 26fffa891a93ee747a1b840c8bde6c94, type: 2}

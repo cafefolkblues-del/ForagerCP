@@ -33,13 +33,19 @@ namespace ForagerCP
         /// 구역이 null이면(구획 밖 몬스터) 따지지 않는다.
         public bool TryStepWithin(Vector3 direction, float speed, RegionDefinition region)
         {
+            if (!CanStepWithin(direction, speed, region)) return false;
+
+            MoveTo(Position + direction.normalized * (speed * Time.fixedDeltaTime));
+            return true;
+        }
+
+        /// TryStepWithin과 같은 판정을 옮기지 않고 묻기만 한다.
+        public bool CanStepWithin(Vector3 direction, float speed, RegionDefinition region)
+        {
             if (direction.sqrMagnitude < 0.0001f) return false;
 
             Vector3 next = Position + direction.normalized * (speed * Time.fixedDeltaTime);
-            if (region != null && RegionMap.At(next) != region) return false;
-
-            MoveTo(next);
-            return true;
+            return region == null || RegionMap.At(next) == region;
         }
 
         /// MovePosition: 콜라이더를 밀어내며 이동해 구조물을 관통하지 않는다.

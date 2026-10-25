@@ -18,6 +18,7 @@ MonoBehaviour:
   _maxHp: 22
   _attacks:
   - {fileID: 11400000, guid: 9a1543e33846fbd4a8c4d1c71748d631, type: 2}
+  _pattern: {fileID: 11400000, guid: 4463e49b3cfd1004c89bbd367a7d9c81, type: 2}
   _moveSpeed: 2.2
   _detectRange: 8
   _leashDistance: 14
