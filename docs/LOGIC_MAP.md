@@ -100,13 +100,15 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 
 ## 5. 몬스터: AI · 공격
 
-몬스터 한 마리 = **에셋 2종 + 컴포넌트 3개**
+몬스터 한 마리 = **에셋 4종(정의 · 공격 · 패턴 · 상태) + 컴포넌트 3개** (2026-10-26 재설계 — 자세한 그림은 `docs/MONSTER_AI_DESIGN.html`)
 
-- `MonsterDefinition`(SO) — 수치, 공격 목록(순서 = 우선순위), 색. 상태 없음
-- `MonsterAttack`(SO) — `CanUse` / `Execute`. 하위: Melee · Contact · Lunge · Projectile. 상태 없음
-- `Monster` — 체력, 생사, 피격, 재생성
-- `MonsterAI` — 상태 머신, 이동, 공격 선택, 쿨다운
-- `Knockback` — 밀려나는 동안의 위치
+- `MonsterDefinition`(SO) — 수치, 공격 목록(순서 = 우선순위), 패턴, 넉백·경직·복귀 회복, 색. 상태 없음
+- `MonsterPattern`(SO) — 칸(추적·예고·빈틈·쿨다운 대기·후퇴)마다 어떤 상태 에셋을 쓸지. 상태 에셋도 무상태 SO
+- `MonsterAttack`(SO) — `CanUse` / `Execute` / `TickMotion`. 몹별 하나씩 + 공용 `ContactAttack`. 상태 없음
+- `Monster` — 체력, 생사, 피격, 재생성, 회복
+- `MonsterAI` — 실행기: 가드 → 방해 처리 → 어그로 → 상태 실행 → 전환. 공통 부품 `MonsterMemory`·`MonsterMotor`·`MonsterAggro`
+- `Knockback` — 밀려나는 동안의 위치 (세기·시간은 정의에서)
+- 구역 전투 초기화 — `RegionCombatReset`(씬 GameState): 사망 → 즉시, 구역 이탈 → 걸어서 복귀·회복
 
 생성·재생성
 
@@ -116,11 +118,15 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 
 ### 5-1. AI 우선순위
 
-![몬스터 AI](logic_map/png/08_monster_ai.png)
+> ⚠️ 아래 그림(`08_monster_ai.png`)은 재설계 전 if 사다리다. 지금 흐름은 `docs/MONSTER_AI_DESIGN.html` 3·4장을 본다.
+
+![몬스터 AI (재설계 전)](logic_map/png/08_monster_ai.png)
 
 ### 5-2. 공격 한 번
 
-![몬스터 공격](logic_map/png/09_monster_attack.png)
+> ⚠️ 그림의 공격 클래스 이름·돌진은 재설계 전 기준이다. 공격은 몹별 클래스로 나뉘었고 임시 돌진은 폐기됐다.
+
+![몬스터 공격 (재설계 전)](logic_map/png/09_monster_attack.png)
 
 ---
 
@@ -259,6 +265,7 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 - **HarvestPower / PlayerEquipment / PlayerBuffs .Changed** → StatsPanelView
 - **PlayerHealth.Changed** → PlayerHealthBar · HeartBarView · CombatFeedback · StatsPanelView
 - **PlayerHealth.Blocked** → MonsterAI(모든 개체, 자기 공격만 반응) · CombatFeedback
+- **PlayerHealth.Died** → RegionCombatReset(싸우던 구역 즉시 초기화)
 - **PlayerAttacker.ChargeRatioChanged** → ChargeBarView
 - **PlayerInteractor.TargetChanged** → InteractionPromptView
 - **MineralNode.Harvested** → HarvestRewardService · CombatFeedback
@@ -273,7 +280,7 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 - **ProgressFlags.Raised** → RegionAccess
 - **RegionAccess.Unlocked** → RegionBarrier · RegionBannerView
 - **RegionAccess.Refused** → RegionBannerView
-- **RegionTracker.Changed / PushedBack** → RegionBannerView
+- **RegionTracker.Changed / PushedBack** → RegionBannerView · RegionCombatReset(Changed만, 떠난 구역 초기화)
 - **SkillBoard.Changed / Refused** → SkillPanelView
 - **\*.Milestone** → SaveService(자동 저장)
 - **SaveService.Loaded** → DropService
@@ -283,7 +290,7 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 **구독자가 아직 없는 이벤트** — 연출·사운드를 붙일 자리
 
 `PlayerDash.Dashed` · `PlayerAttacker.SwingStarted` · `PlayerShield.ShieldingChanged` · `PlayerShield.Blocked` ·
-`PlayerHealth.Died` · `Monster.Respawned` · `MonsterAI.Telegraphing` · `MonsterAI.Lunged` ·
+`Monster.Respawned` · `MonsterAI.Telegraphing` · `MonsterAI.StateChanged` · `RegionCombatReset.RegionReset` ·
 `BlockPlacer.Placed` · `ConsumableUser.Used / Refused` · `SkillBoard.Learned` · `CraftingStation.Finished`
 
 > 몬스터·광물 이벤트 구독자(`CombatRewardService`, `CombatFeedback`, `MonsterHealthBarSpawner`)는 시작할 때
@@ -318,7 +325,7 @@ _기준: 2026-10-23 · 커밋 `da011b7` + 버그 3건 수정분_
 - 창이 열리는 순간 LMB를 누르고 있었다면 `AttackReleased`가 나간다(스윙 여부는 `PlayerAttacker`가 정함).
 - 소모품을 고른 채 E를 누르면 `BlockPlacer`도 `Rejected(NotPlaceable)`를 쏜다(배너는 무시).
 - 투사체를 방패로 막아도 쏜 몬스터는 경직되지 않는다.
-- 돌진 공격은 발사 시점에 후딜이 시작돼서, 후딜 시간이 돌진 시간과 겹친다.
+- *(2026-10-26 돌진 폐기 — 아래는 기록)* 돌진 공격은 발사 시점에 후딜이 시작돼서, 후딜 시간이 돌진 시간과 겹친다.
 - 플레이어가 죽으면 같은 프레임에 `PlayerHealth.Changed`가 두 번(0 → 가득) 나간다.
 - 영구 개방이 꺼진 잠금 구역은 `IsUnlocked`가 항상 false다. 벽이 안 사라지고, 열 때마다 비용을 다시 낸다.
 - 불러온 세이브에 없는 구역이 이미 열려 있었다면, 불러와도 그 벽은 다시 나타나지 않는다.

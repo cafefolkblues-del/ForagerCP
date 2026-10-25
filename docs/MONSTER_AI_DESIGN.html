@@ -273,7 +273,7 @@
 
 <nav class="toc" aria-label="목차">
   <div class="brand">몬스터 AI 설계</div>
-  <div class="meta">설계안 · 코드 미반영 · 2026-10-25</div>
+  <div class="meta">브랜치 refactor/monster-ai · 2026-10-26</div>
   <ol>
     <li><a href="#summary">한 장 요약</a></li>
     <li><a href="#layers">층 구조</a></li>
@@ -296,7 +296,7 @@
 <header class="hero">
   <div class="eyebrow">ForagerCP · 설계 문서</div>
   <h1>몬스터 상태머신 재설계</h1>
-  <p>지금은 모든 몹이 <code>MonsterAI.FixedUpdate</code> 한 곳의 판단을 같이 써요. 몹별로 이동·후퇴·공격 패턴이 달라질 예정이라, 공통 규칙은 한 곳에 묶고 몹마다 다를 자리는 에셋으로 갈아 끼우는 구조로 바꾸려는 설계안이에요. 아직 코드에 반영하지 않았어요.</p>
+  <p>처음에는 모든 몹이 <code>MonsterAI.FixedUpdate</code> 한 곳의 판단을 같이 썼어요. 몹별로 이동·후퇴·공격 패턴이 달라질 예정이라, 공통 규칙은 한 곳에 묶고 몹마다 다를 자리는 에셋으로 갈아 끼우는 구조로 바꾼 설계예요. 13장 6단계까지 코드에 반영했고(브랜치 <code>refactor/monster-ai</code>), 남은 일은 13장 7·8단계와 12장 질문이에요.</p>
 </header>
 
 <!-- ================================================================ -->
@@ -334,7 +334,7 @@
     <div class="layer l-common">
       <div class="layer-head"><span class="layer-num">①</span> 공통 <span class="layer-sub">모든 몹이 같음 · 몹별로 바꿀 수 없음</span></div>
       <div class="chips">
-        <div class="chip"><code>MonsterBrain</code><span>실행기</span></div>
+        <div class="chip"><code>MonsterAI</code><span>실행기</span></div>
         <div class="chip"><b>방해 처리</b><span>경직 · 넉백 · 막힘</span></div>
         <div class="chip"><code>MonsterAggro</code><span>탐지 · 구역 · 끈 · 초기화</span></div>
         <div class="chip"><code>MonsterMotor</code><span>한 걸음 이동 · 회전</span></div>
@@ -402,12 +402,15 @@ stateDiagram-v2
 
   [*] --> Idle
   Idle --> Chase : 어그로 획득
-  Return --> Chase : 어그로 획득
   Return --> Idle : 집 도착
 
   Chase --> Windup : 공격 고름
   Chase --> Retreat : 너무 가까움
   Chase --> Wait : 사거리 안, 쓸 공격 없음
+  Chase --> Recover : 예고 0 즉발, 빈틈 있음
+  Wait --> Retreat : 너무 가까움
+  Stagger --> Recover : 빈틈 남음
+  Stagger --> Return : 복귀 중이었음
   Retreat --> Chase : 충분히 멀어짐
   Wait --> Chase : 공격 준비됨 또는 사거리 밖
   Windup --> Motion : 내지름, 이동형 공격
@@ -417,7 +420,7 @@ stateDiagram-v2
 
   Stagger --> Chase : 경직 끝
 </pre>
-    <figcaption>그림에 없는 두 경로는 모든 상태에 적용돼요. ① <strong>어디서든</strong> 맞으면 Stagger, 방패에 막히면 Recover로 강제 전환(방해 처리). ② <strong>어디서든</strong> 어그로를 잃으면 Return으로 강제 전환(어그로). 이 둘은 상태가 정하지 않고 실행기가 가로채요.</figcaption>
+    <figcaption>그림에 없는 두 경로는 모든 상태에 적용돼요. 복귀(Return)는 집에 닿아야만 끝나요(Idle을 거쳐 다시 Chase). ① <strong>어디서든</strong> 맞으면 Stagger, 방패에 막히면 Recover로 강제 전환(방해 처리). ② 예고·빈틈·몸 쓰는 공격·복귀 중이 아니면(Committed가 아니면) 어그로를 잃는 즉시 Return으로 강제 전환(어그로). 이 둘은 상태가 정하지 않고 실행기가 가로채요.</figcaption>
   </div>
 
   <h3>누가 전이를 정하나</h3>
@@ -428,7 +431,7 @@ stateDiagram-v2
       <tr><td>전투 안의 흐름 (추적 → 예고 → 빈틈 …)</td><td><strong>각 상태의 <code>Tick</code>이 칸 이름을 돌려줌</strong></td><td>합의한 방식. 몹마다 흐름을 바꾸고 싶으면 그 칸의 구현을 덮어쓰면 돼요</td></tr>
       <tr><td>맞음 → Stagger, 막힘 → Recover</td><td>실행기 (방해 처리)</td><td>상태마다 맡기면 하나만 빠뜨려도 "맞아도 공격이 나가는" 버그가 생겨요</td></tr>
       <tr><td>어그로 잃음 → Return, 획득 → Chase</td><td>실행기 (어그로)</td><td>"다른 구역 플레이어는 표적이 아니다"는 버그 수정에서 나온 게임 규칙이라 몹이 바꾸면 안 돼요</td></tr>
-      <tr><td>Return → Idle (집 도착)</td><td>Return 상태</td><td>공통 상태라 몹별 차이 없음. "집에 닿을 때까지 유지"라 지금의 끈 경계 진동이 사라져요</td></tr>
+      <tr><td>Return → Idle (집 도착)</td><td>Return 상태</td><td>공통 상태라 몹별 차이 없음. "집에 닿을 때까지 유지"라 끈 경계 진동이 없어요. 돌아가는 동안 초당 30% 회복(9장)</td></tr>
     </tbody>
   </table>
   </div>
@@ -442,7 +445,7 @@ stateDiagram-v2
   <div class="diagram">
 <pre class="mermaid">
 flowchart TD
-  T0([MonsterBrain.FixedUpdate]) --> T1["1. 가드<br/>죽음 · 표적 없음 → Idle, 낙하 → 집으로"]
+  T0([MonsterAI.FixedUpdate]) --> T1["1. 가드<br/>죽음 · 표적 없음 → Idle, 낙하 → 집으로"]
   T1 --> T2["2. 방해 처리<br/>경직 · 넉백 중이면 Stagger 유지, 상태 실행 안 함"]
   T2 --> T3["3. 어그로<br/>탐지 · 구역 · 끈 검사 → 잃으면 Return, 얻으면 Chase"]
   T3 --> T4["4. 지금 칸의 상태 실행<br/>next = 상태.Tick(ctx)"]
@@ -450,16 +453,21 @@ flowchart TD
   EV1(["Monster.Damaged"]) -.-> T2
   EV2(["PlayerHealth.Blocked"]) -.-> T2
 </pre>
-    <figcaption>점선은 이벤트. 맞은 순간과 막힌 순간은 프레임을 기다리지 않고 바로 방해 처리로 들어가요(지금과 같음).</figcaption>
+    <figcaption>점선은 이벤트. 맞은 순간과 막힌 순간에는 Memory에 값(경직·빈틈 끝 시각, 예고·동작 취소)만 적고, 칸은 다음 물리 프레임의 방해 처리에서 바뀌어요.</figcaption>
   </div>
 
   <h3>상태 하나가 받는 것 (<code>MonsterContext</code>)</h3>
-  <pre><code>ctx.Memory    // 이 몬스터의 진행 값 (타이머, 예고 중인 공격, 후퇴 방향 …)
-ctx.Motor     // 한 걸음 이동, 회전 — 위치는 반드시 이걸로만 옮긴다
-ctx.Aggro     // 표적, 거리, 같은 구역인지
-ctx.Attacks   // 쓸 수 있는 공격 고르기, 쿨다운 확인 — 쿨다운 타이머는 여기만 쓴다
-ctx.Definition // 수치
-ctx.Now       // 시간. Time.time을 직접 부르지 않는다 (창 열면 정지 대비)</code></pre>
+  <pre><code>ctx.Memory        // 이 몬스터의 진행 값 (타이머, 예고 중인 공격, 복귀·회복 중인지 …)
+ctx.Motor         // 한 걸음 이동, 회전 — 위치는 반드시 이걸로만 옮긴다
+ctx.Aggro         // 표적, 자기 구역
+ctx.ToTarget / Distance / ToHome   // 프레임 시작에 한 번 잰 평면 벡터·거리
+ctx.Definition    // 수치
+ctx.Retreat       // 이 몹의 후퇴 칸 구현 (없으면 null)
+ctx.PickAttack()  // 쓸 수 있는 공격 번호 (목록 순서 = 우선순위, 없으면 -1)
+ctx.StartAttack(i) // 예고 시작 또는 즉발 → 다음 칸 이름을 돌려준다
+ctx.Fire(i) / AfterFire()  // 내지르기(쿨다운·빈틈 기록) / 내지른 뒤 갈 칸
+ctx.Now           // 시간. Time.time을 직접 부르지 않는다 (창 열면 정지 대비)
+ctx.Brain         // 실행기(MonsterAI). 상태는 RaiseTelegraphing 정도만 부른다</code></pre>
   <p>상태는 이것만 보고 일해요. 상태 에셋 자신은 아무 값도 기억하지 않아요(무상태).</p>
 </section>
 
@@ -471,32 +479,40 @@ ctx.Now       // 시간. Time.time을 직접 부르지 않는다 (창 열면 정
 <pre class="mermaid">
 classDiagram
   direction TB
-  class MonsterBrain {
-    &lt;&lt;MonoBehaviour · 공통&gt;&gt;
+  class MonsterAI {
+    &lt;&lt;MonoBehaviour · 실행기 · 공통&gt;&gt;
     StateId Current
-    MonsterMemory memory
+    bool InCombat
     FixedUpdate()
+    Resolve(StateId)
     ResetCombat()
+    BeginReturnHome()
     event StateChanged
+    event Telegraphing
   }
   class MonsterMemory {
     &lt;&lt;일반 클래스 · 진행 값&gt;&gt;
-    float stateEnteredAt
-    float recoverUntil
-    int windingAttack
-    float readyAt 배열
-    Vector3 motionDir
+    float HitstunUntil
+    float RecoverUntil
+    int WindingIndex
+    float ReadyAt 배열
+    MonsterAttack Motion
+    bool Returning
+    bool Regenerating
+    Clear()
   }
   class MonsterAggro {
     &lt;&lt;일반 클래스 · 공통&gt;&gt;
-    HasTarget()
-    InSameRegion()
+    Acquire(target)
+    HomeRegion
     PastLeash()
-    Reset()
+    IsLost()
   }
   class MonsterMotor {
     &lt;&lt;일반 클래스 · 공통&gt;&gt;
     Step(direction, speed)
+    TryStepWithin(direction, speed, region)
+    MoveTo(position)
     Face(direction)
   }
   class MonsterState {
@@ -539,18 +555,20 @@ classDiagram
     + MonsterPattern pattern
     + 넉백 세기 · 시간
     + 경직 시간
+    + 복귀 회복 %
   }
   class MonsterAttack {
     &lt;&lt;abstract SO · 기존&gt;&gt;
     CanUse(ctx)
     Execute(ctx)
+    virtual HasMotion
     virtual TickMotion(ctx) bool
   }
 
-  MonsterBrain *-- MonsterMemory
-  MonsterBrain *-- MonsterAggro
-  MonsterBrain *-- MonsterMotor
-  MonsterBrain --> MonsterDefinition
+  MonsterAI *-- MonsterMemory
+  MonsterAI *-- MonsterAggro
+  MonsterAI *-- MonsterMotor
+  MonsterAI --> MonsterDefinition
   MonsterDefinition --> MonsterPattern
   MonsterDefinition --> MonsterAttack
   MonsterPattern --> MonsterState
@@ -586,16 +604,18 @@ classDiagram
   <table>
     <thead><tr><th>클래스</th><th>하는 일</th><th>하지 않는 일</th></tr></thead>
     <tbody>
-      <tr><td><code>MonsterBrain</code><br><span class="ref">컴포넌트 · 지금 MonsterAI 자리</span></td><td>매 프레임 단계 1~5 실행, 칸 이름 → 구현 찾기, 전환 시 Exit/Enter 호출, <code>StateChanged</code>·<code>Telegraphing</code> 이벤트, 이벤트 구독(피격·막힘)</td><td>추적 방식, 후퇴 방식, 공격 고르는 규칙을 몰라요. 몹 이름으로 분기하지 않아요</td></tr>
+      <tr><td><code>MonsterAI</code><br><span class="ref">컴포넌트 · 실행기</span></td><td>매 프레임 단계 1~5 실행, 칸 이름 → 구현 찾기, 전환 시 Exit/Enter 호출, 공통 칸(Idle·Return·Stagger·AttackMotion) 실행, 복귀 회복, <code>StateChanged</code>·<code>Telegraphing</code> 이벤트, 피격·막힘 구독, 전투 초기화 진입점(<code>ResetCombat</code>·<code>BeginReturnHome</code>)</td><td>추적 방식, 후퇴 방식, 공격 고르는 규칙을 몰라요. 몹 이름으로 분기하지 않아요</td></tr>
       <tr><td><code>MonsterMemory</code></td><td>이 몬스터의 진행 값 보관. <code>Clear()</code>로 한 번에 초기화</td><td>판단하지 않아요. 값만 들어요</td></tr>
-      <tr><td><code>MonsterAggro</code></td><td>표적 찾기, 탐지 거리·같은 구역·끈 판정, 어그로 초기화(표적 놓기, 진행 값 비우기)</td><td>이동하지 않아요. 복귀 이동은 Return 상태가 Motor로 해요</td></tr>
-      <tr><td><code>MonsterMotor</code></td><td>한 걸음 이동(<code>MovePosition</code> + <code>fixedDeltaTime</code>), 회전, 구역 밖으로 나가는 걸음 거부, 넉백 중 이동 거부</td><td>어디로 갈지 정하지 않아요</td></tr>
+      <tr><td><code>MonsterAggro</code></td><td>표적 보관, 자기 구역(값이 설 때까지 다시 묻기), 탐지 거리·같은 구역·끈 판정</td><td>이동하지 않아요. 복귀 이동은 Return 상태가 Motor로 해요</td></tr>
+      <tr><td><code>MonsterMotor</code></td><td>한 걸음 이동(<code>MovePosition</code> + <code>fixedDeltaTime</code>), 회전, 구역 밖으로 나가는 걸음 거부</td><td>어디로 갈지 정하지 않아요. 넉백 중 이동 양보는 실행기가 해요(넉백 중에는 상태를 아예 실행하지 않음)</td></tr>
       <tr><td><code>Knockback</code><br><span class="ref">기존 컴포넌트</span></td><td>밀어내기 동작. 세기·시간은 <code>MonsterDefinition</code>에서 받아요</td><td>몬스터 전용이 아니에요(플레이어 공용)</td></tr>
-      <tr><td><code>MonsterState</code> 계열<br><span class="ref">SO</span></td><td>칸 하나의 행동. Motor로 움직이고, Attacks로 고르고, 다음 칸 이름을 돌려줘요</td><td>값을 기억하지 않아요(Memory에 적어요). 위치를 직접 바꾸지 않아요. 경직·어그로 판단을 하지 않아요</td></tr>
+      <tr><td><code>MonsterState</code> 계열<br><span class="ref">SO</span></td><td>칸 하나의 행동. Motor로 움직이고, <code>ctx.PickAttack</code>으로 고르고, 다음 칸 이름을 돌려줘요</td><td>값을 기억하지 않아요(Memory에 적어요). 위치를 직접 바꾸지 않아요. 경직·어그로 판단을 하지 않아요</td></tr>
       <tr><td><code>MonsterPattern</code><br><span class="ref">SO</span></td><td>칸마다 어떤 구현을 쓸지 고르는 조립표</td><td>로직이 없어요. 수치도 없어요(수치는 상태 에셋이나 Definition에)</td></tr>
       <tr><td><code>MonsterDefinition</code><br><span class="ref">SO · 기존</span></td><td>몹 종류 한 개 = 수치 + 패턴 + 공격 목록 + 넉백·경직 값</td><td>진행 값을 들지 않아요</td></tr>
       <tr><td><code>MonsterAttack</code><br><span class="ref">SO · 기존</span></td><td>쓸 수 있는지, 내지르는 순간 무엇을 하는지. 이동형이면 <code>TickMotion</code>으로 매 프레임 "이번엔 이만큼"을 말해요</td><td>몸을 직접 옮기지 않아요(Motor에 부탁). 쿨다운을 직접 세지 않아요</td></tr>
-      <tr><td><code>Monster</code><br><span class="ref">기존</span></td><td>체력, 사망, 재등장, 피격 이벤트</td><td>바뀌지 않아요</td></tr>
+      <tr><td><code>MonsterContext</code></td><td>상태가 받는 묶음. 공격 고르기·내지르기(쿨다운·빈틈 기록)도 여기서 — 확정 규칙이라 상태가 각자 세지 않게</td><td>판단하지 않아요</td></tr>
+      <tr><td><code>Monster</code><br><span class="ref">기존</span></td><td>체력, 사망, 재등장(<code>Respawn</code>), 회복(<code>Heal</code>), 피격 이벤트</td><td>이동·판단을 하지 않아요</td></tr>
+      <tr><td><code>RegionCombatReset</code><br><span class="ref">컴포넌트 · 씬 GameState</span></td><td>사망·구역 이탈을 듣고 그 구역 몹을 되돌림(9장)</td><td>몹 상태를 직접 바꾸지 않아요 — <code>Monster.Respawn</code>과 <code>MonsterAI</code> 진입점만 불러요</td></tr>
     </tbody>
   </table>
   </div>
@@ -637,7 +657,7 @@ classDiagram
 
   <h3>왜 공통 부품을 "어그로 초기화" 하나보다 넓게 잡나</h3>
   <ul>
-    <li><strong>한 걸음 이동 (Motor):</strong> 어디로 갈지는 몹마다 달라도, 한 걸음 옮기는 방법(<code>MovePosition</code>, <code>fixedDeltaTime</code>, 넉백 중 양보, 구역 밖 거부)은 같아야 구조물을 뚫거나 밀림이 상쇄되는 버그가 안 생겨요.</li>
+    <li><strong>한 걸음 이동 (Motor):</strong> 어디로 갈지는 몹마다 달라도, 한 걸음 옮기는 방법(<code>MovePosition</code>, <code>fixedDeltaTime</code>, 구역 밖 거부. 넉백 중 양보는 실행기가 상태를 멈춰서 해요)은 같아야 구조물을 뚫거나 밀림이 상쇄되는 버그가 안 생겨요.</li>
     <li><strong>쿨다운 타이머:</strong> "공격마다 따로, 내지른 순간부터"는 확정 규칙이에요. 쿨다운 동안 <em>무엇을 할지</em>는 몹별(CooldownWait 칸)이지만, 시간을 <em>세는 방법</em>은 공통이에요.</li>
   </ul>
 
@@ -664,7 +684,7 @@ classDiagram
     </tbody>
   </table>
   </div>
-  <p>에셋 개수: 패턴 에셋은 몹 종류당 하나(구역별 강화판 R1~R5는 패턴을 공유하고 수치만 달라요). 상태 구현 에셋은 첫 단계에 칸별 기본 5개 + 후퇴 1개예요.</p>
+  <p>에셋 개수: 패턴 에셋은 몹 종류당 하나(구역별 강화판 R1~R5는 패턴을 공유하고 수치만 달라요). 상태 구현 에셋은 기본 5개예요(추적·예고·빈틈·쿨다운 대기 기본 4개 + 후퇴 1개).</p>
 </section>
 
 <!-- ================================================================ -->
@@ -773,7 +793,7 @@ flowchart LR
       <tr><td>몸을 쓰는 공격 뒤 빈틈은 언제부터 세나? <small>(돌진 폐기로 지금은 해당 없음)</small></td><td>내지른 순간부터 세서, 돌진(약 0.45초) 동안 빈틈이 같이 깎여요. 돌진수 실제 빈틈 ≈ 0.75초</td><td>AttackMotion이 끝나고 Recover에 들어갈 때부터 세면 돼요. 흐름상 이쪽이 자연스러워요</td></tr>
       <tr><td>구석에 몰린 투척꾼은 무엇을 하나?</td><td>물러나지도 쏘지도 못하고 제자리에 서 있어요</td><td>투척꾼 후퇴 구현에서 "막히면 옆으로" 또는 "근접 공격 칸 추가"</td></tr>
       <tr><td>투사체를 방패로 막으면 투척꾼도 멈추나?</td><td>안 멈춰요. 막힘 판정이 "내 자식 오브젝트인가"로 보는데 탄은 자식이 아니에요</td><td>투사체가 쏜 몬스터를 따로 들고 다니게 하면 멈추게 할 수 있어요</td></tr>
-      <tr><td>경직 시간은 직접 넣나, 넉백에서 계산하나?</td><td>모든 몹 0.22초 고정</td><td>Definition에 직접 넣고 "넉백보다 짧으면 경고" (제안) 또는 "넉백 + 여유"로 계산</td></tr>
+      <tr><td>경직 시간은 직접 넣나, 넉백에서 계산하나?</td><td>몹 정의마다 넣는 값(지금은 전부 0.22초). 넉백보다 짧으면 씬 검사가 경고</td><td>Definition에 직접 넣고 "넉백보다 짧으면 경고" (제안) 또는 "넉백 + 여유"로 계산</td></tr>
       <tr><td>경직으로 무한히 묶을 수 있는데 괜찮나?</td><td>맞을 때마다 예고가 취소되고 쿨다운은 안 써서, 계속 때리면 몬스터가 영영 못 때려요(확정 스펙의 결과)</td><td>보스 슈퍼아머 자리(10장)로 예외만 처리</td></tr>
       <tr><td>재등장을 어떻게 표현하나?</td><td>구역 몹 에셋은 <code>RespawnDelay = 99999</code>, 슬라임은 0. "없음"이 두 가지</td><td>"재등장 안 함"을 체크 상자 하나로. 전투 초기화와 별개</td></tr>
     </tbody>

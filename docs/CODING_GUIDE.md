@@ -29,14 +29,16 @@
 
 ## 1. 몬스터는 어떤 부품으로 되어 있나
 
-한 마리는 **컴포넌트 3개 + 에셋 2종류**로 돌아갑니다.
+한 마리는 **컴포넌트 3개 + 에셋 4종류**로 돌아갑니다.
 
 | 것 | 역할 | 런타임 상태를 갖나 |
 |---|---|---|
-| `MonsterDefinition` (에셋) | 체력·이동속도·탐지거리 등 **수치** | ✗ 절대 안 됨 |
-| `MonsterAttack` (에셋) | 공격 하나의 수치와 **무슨 일이 일어나는지** | ✗ 절대 안 됨 |
-| `Monster` (컴포넌트) | 체력, 생사, 피격, 재등장 | ○ |
-| `MonsterAI` (컴포넌트) | 상태 전이, 이동, 어떤 공격을 쓸지 고르기 | ○ |
+| `MonsterDefinition` (에셋) | 체력·이동속도·탐지거리·넉백·경직 등 **수치**, 공격 목록, 패턴 | ✗ 절대 안 됨 |
+| `MonsterAttack` (에셋) | 공격 하나의 수치와 **무슨 일이 일어나는지**. 몹별로 하나씩 | ✗ 절대 안 됨 |
+| `MonsterPattern` (에셋) | 칸마다 어떤 상태를 쓸지 고르는 조립표 | ✗ 절대 안 됨 |
+| 상태 (에셋, `ChaseState` 등 상속) | 칸 하나의 행동 (추적·예고·빈틈·쿨다운 대기·후퇴) | ✗ 절대 안 됨 — 진행 값은 `ctx.Memory` |
+| `Monster` (컴포넌트) | 체력, 생사, 피격, 재등장, 회복 | ○ |
+| `MonsterAI` (컴포넌트) | 실행기 — 방해 처리·어그로·상태 실행·전환. 진행 값(`MonsterMemory`)을 든다 | ○ |
 | `Knockback` (컴포넌트) | 맞았을 때 밀려나는 동안의 **위치** | ○ |
 
 **에셋(ScriptableObject)에 런타임 상태를 넣으면 안 됩니다.**
@@ -58,11 +60,11 @@
 
 ```
 1. 가드      — 죽었나 / 표적이 없나 → Idle,  바닥 아래로 빠졌나 → 스폰 자리로
-2. 방해 처리 — 돌진 중 → AttackMotion,  경직·넉백 중 → Stagger(아무것도 안 함),
+2. 방해 처리 — 몸 쓰는 공격 중 → AttackMotion,  경직·넉백 중 → Stagger(아무것도 안 함),
                방패에 막혀 빈틈이 늘었다 → Recover
 3. 어그로    — 탐지 밖·다른 구역·끈 초과 → Return(집이면 Idle),  다시 보이면 → Chase
                (Return은 집에 닿을 때까지 유지하며 초당 30% 회복 — 표적이 다시 보여도 돌아간다)
-               (예고·빈틈·돌진 중에는 미룬다 — 휘두르다 말고 돌아가지 않는다)
+               (예고·빈틈·몸 쓰는 공격·복귀 중에는 미룬다 — 휘두르다 말고 돌아가지 않는다)
 4. 상태 실행 — 지금 칸의 상태 에셋이 일하고, 다음 칸 이름(StateId)을 돌려준다
 5. 전환      — 칸이 바뀌면 Exit → Enter → StateChanged, 바뀐 칸을 같은 프레임에 이어서 실행
 ```
@@ -131,7 +133,7 @@ namespace ForagerCP
 ```
 
 > 이미 만들어진 공격 클래스를 **먼저 읽어보세요.** 특히 `RubbleSwingAttack`이 짧고,
-> 아래 다섯 가지 규칙이 전부 들어 있어 본으로 삼기 좋습니다.
+> 아래 규칙 ①③이 들어 있습니다. ②는 `ThrowerShotAttack`(탄속·발수), ④도 `ThrowerShotAttack`, ⑤는 지금 쓰는 공격이 없어 예시 코드만 있습니다.
 
 ### 베껴야 할 모양 다섯 가지
 
@@ -179,7 +181,7 @@ public override bool TickMotion(MonsterContext ctx)
 
 | 하려는 일 | 쓸 것 | 쓰지 말 것 | 왜 |
 |---|---|---|---|
-| 몬스터 이동 | `_body.MovePosition(...)` | `transform.position +=` | 직접 옮기면 **콜라이더를 뚫습니다**. 플레이어 대시가 광물을 뚫던 버그가 이것이었습니다 |
+| 몬스터 이동 | `ctx.Motor.Step(...)` (안에서 `MovePosition`) | `transform.position +=` | 직접 옮기면 **콜라이더를 뚫습니다**. 플레이어 대시가 광물을 뚫던 버그가 이것이었습니다 |
 | 이동·물리 처리 | `FixedUpdate()` | `Update()` | 물리는 고정 간격으로 돕니다. `Update`에서 밀면 프레임레이트에 따라 속도가 달라집니다 |
 | `FixedUpdate` 안의 시간 | `Time.fixedDeltaTime` | `Time.deltaTime` | 틀린 값이 들어가 속도가 미묘하게 어긋납니다 |
 | 다른 컴포넌트 참조 | `Awake()`에서 한 번 캐시 | 매 프레임 `GetComponent` | 프레임마다 찾으면 느립니다 |
@@ -207,8 +209,8 @@ public override bool TickMotion(MonsterContext ctx)
 ### ② 타이머는 전부 `Time.time` 기준입니다
 
 ```csharp
-_readyAt[index] = Time.time + attack.Cooldown;   // 언제 다시 쓸 수 있나
-if (Time.time < _readyAt[index]) continue;       // 아직이면 건너뛴다
+Memory.ReadyAt[index] = Now + attack.Cooldown;   // 언제 다시 쓸 수 있나 (MonsterContext.Fire)
+if (Now < Memory.ReadyAt[i]) continue;           // 아직이면 건너뛴다 (MonsterContext.PickAttack)
 ```
 
 "남은 시간을 매 프레임 깎는" 방식이 아니라 **"언제 끝나는가"를 적어두는** 방식입니다.
@@ -231,7 +233,7 @@ if (Time.time < _readyAt[index]) continue;       // 아직이면 건너뛴다
 
 ### ④ 재사용 대기는 공격마다 따로 돕니다
 
-`MonsterAI`가 `float[] _readyAt`을 공격 개수만큼 들고 있습니다.
+`MonsterMemory.ReadyAt`이 공격 개수만큼 칸을 들고 있습니다(쓰는 곳은 `MonsterContext`뿐).
 하나로 묶으면 근접을 쓴 뒤 투사체까지 같이 잠깁니다. 새 공격을 추가해도 이건 자동으로 따라옵니다.
 
 ### ⑤ 공격 **목록 순서**가 우선순위입니다
@@ -279,8 +281,8 @@ if (Time.time < _readyAt[index]) continue;       // 아직이면 건너뛴다
 - 전투 중 **사망하거나 구역 밖으로 나가면 전원 원래 배치·체력으로 복원**됩니다
 
 마지막 항목이 코딩에 영향이 큽니다. "다시 나온다"가 아니라 **"처음 상태로 되돌린다"**입니다.
-그래서 몬스터를 지웠다 새로 만드는 게 아니라, **죽은 것도 살려서 제자리에 돌려놓는** 쪽이 맞습니다
-(`Monster.Respawn()` / `ReturnHome()`이 그 용도로 이미 있습니다).
+그래서 몬스터를 지웠다 새로 만드는 게 아니라, **죽은 것도 살려서 제자리에 돌려놓는** 쪽이 맞습니다.
+→ **구현됨**: `RegionCombatReset`. 사망하면 즉시, 구역을 나가면 살아 있는 몹은 걸어서 복귀하며 회복합니다(`docs/MONSTER_AI_DESIGN.html` 9장).
 
 ### 몬스터 처치에는 보상이 없습니다
 

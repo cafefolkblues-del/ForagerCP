@@ -23,7 +23,7 @@
 | 버전 관리 | Git (독립 레포, `main`) | `Library/`, `UserSettings/`, MCP 플러그인 DLL 더미는 추적 제외 |
 
 의도적으로 **안 쓴 것**
-- **NavMesh** — 맵에 장애물이 드물어 굽는 비용이 더 크다. 직선 추적으로 충분하고, 교체 지점은 `MonsterAI.MoveTowards` 하나뿐이다.
+- **NavMesh** — 맵에 장애물이 드물어 굽는 비용이 더 크다. 직선 추적으로 충분하고, 교체 지점은 `MonsterMotor` 하나뿐이다.
 - **DOTween 등 트윈 라이브러리** — 연출이 점멸/펀치/페이드 수준이라 코루틴과 `MoveTowards`로 충분하다.
 - ~~세이브/로드~~ — 1주차엔 제외했지만 지금은 있다(`Core/Save`).
 
@@ -42,13 +42,14 @@ Assets/
 │   │   │   ├── Grid/        MapGrid / GridPlacement / MapFolder / MapPalette
 │   │   │   └── Pooling/     PoolManager / GameObjectPool / PooledInstance / IPooled
 │   │   ├── Player/          이동·조준·채집공격·상호작용·체력·카메라
-│   │   ├── World/           MineralNode, Monsters/(Monster, MonsterAI, MonsterDefinition)
+│   │   ├── World/           MineralNode, Monsters/(Monster, MonsterAI, MonsterDefinition, States/, Attacks/)
 │   │   ├── Economy/         Inventory, GoldWallet, ConverterStation, ShopStation, ShopItem
 │   │   ├── Progression/     PlayerLevel
 │   │   ├── UI/              HUD·창·체력바·프롬프트 뷰
 │   │   ├── Fx/              HitFlash, Knockback
 │   │   └── DebugTools/      DebugCheats (F1~F5)
-│   ├── Items/               광물·몬스터 정의 에셋(SO)
+│   ├── Items/               광물 정의 에셋(SO) (+ 정리 대상 슬라임 정의)
+│   ├── Monsters/            몬스터 정의 · Attacks/ · Patterns/ · States/ 에셋
 │   ├── Prefabs/             Minerals / Stations / Structures / Monsters / UI
 │   ├── Materials/, Fonts/   임시 도형 머티리얼, TMP 폰트 에셋
 │   └── MapPalette.asset     배치 팔레트 목록
@@ -131,7 +132,7 @@ GameInput ──▶ PlayerMotor / PlayerAttacker / PlayerInteractor / UiRouter
 | 죽음 패널티(획득량 감소 디버프) 수치 | `PlayerHealth.Died` 이벤트만 열고, 구독 지점을 주석으로 명시 |
 | 인벤 용량 제약 / 셔틀 악용 보완책 | `Inventory._enforceCapacity` **기본 false**. 구조(슬롯+스택)는 완성, 규칙만 비움. `Add()`가 담긴 수량을 반환해 초과분 처리를 한 줄로 얹을 수 있게 |
 | 상점 품목 구성 | `ShopPanel`은 목록·구매 흐름만. 판정·차감은 전부 `ShopStation`이 소유 |
-| 구역(아일랜드) 경계 | `MonsterAI`의 leash 분기에 주석. 지금은 스폰 지점 거리로 대체 |
+| 구역(아일랜드) 경계 | `MonsterAggro.PastLeash`에 주석. 지금은 스폰 지점 거리로 대체 |
 
 ### 3-8. 방어적으로 배선한다
 
@@ -236,7 +237,7 @@ GameInput ──▶ PlayerMotor / PlayerAttacker / PlayerInteractor / UiRouter
 
 ## 8. 알려진 제약 / 앞으로
 
-- 경로 탐색이 직선 추적이라 슬라임이 구조물에 낄 수 있다 → 문제가 되면 `MonsterAI.MoveTowards`만 교체
+- 경로 탐색이 직선 추적이라 몬스터가 구조물에 낄 수 있다 → 문제가 되면 `MonsterMotor`만 교체
 - 아이템 아이콘이 없어 인벤토리가 **색 칩**으로 종류를 구분한다 → 아이콘이 들어오면 자동으로 덮인다
 - 상점은 품목 기획 대기 중이라 껍데기다
 - 폰트 Dynamic 아틀라스는 새 글자를 굽고 나면 에셋 파일이 바뀐다 → 폰트 에셋에 **의미 없는 diff가 생길 수 있다**
