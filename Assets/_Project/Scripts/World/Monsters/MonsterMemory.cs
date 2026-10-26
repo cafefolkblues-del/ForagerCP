@@ -36,6 +36,12 @@ namespace ForagerCP
         /// 복귀 중. 집에 닿을 때까지 표적이 다시 보여도 돌아간다(끌 경계에서 추적↔복귀가 번갈아 바뀌지 않게).
         public bool Returning;
 
+        // 돌진 진행 값. 몬스터마다 따로 보관한다.
+        public Vector3 DashDirection;  // 돌진 방향
+        public float DashTravelled;    // 이동한 거리
+        public bool DashHasHit;        // 이미 피해를 줬는지
+        public bool DashInitialized;   // 돌진을 초기화했는지
+
         /// 복귀하며 회복 중. 가득 차거나 다시 싸움이 붙으면 끈다.
         public bool Regenerating;
 
@@ -54,7 +60,15 @@ namespace ForagerCP
             Winding = null;
         }
 
-        public void StopMotion() => Motion = null;
+        public void StopMotion()
+        {
+            Motion = null;
+
+            DashDirection = Vector3.zero;
+            DashTravelled = 0f;
+            DashHasHit = false;
+            DashInitialized = false;
+        }
 
         /// 전투 초기화용. 쿨다운 칸 수는 그대로 두고 값만 비운다.
         public void Clear()
