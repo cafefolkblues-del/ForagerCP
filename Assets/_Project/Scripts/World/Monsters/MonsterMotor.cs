@@ -48,6 +48,40 @@ namespace ForagerCP
             return region == null || RegionMap.At(next) == region;
         }
 
+        /// 몸의 충돌체로 경로를 훑어 장애물 앞까지 갈 수 있는 거리를 묻는다. 이동은 하지 않는다.
+        /// ignoredTarget의 충돌체는 호출하는 공격이 별도로 타격을 판정한다.
+        public float GetAllowedStep(Vector3 direction, float step, Transform ignoredTarget)
+        {
+            if (_body == null || step <= 0f || direction.sqrMagnitude < 0.0001f)
+                return 0f;
+
+            float allowedStep = step;
+
+            RaycastHit[] hits = _body.SweepTestAll(
+                direction.normalized,
+                step,
+                QueryTriggerInteraction.Ignore
+            );
+
+            foreach (RaycastHit hit in hits)
+            {
+                Collider collider = hit.collider;
+                if (collider == null) continue;
+
+                // 바닥이나 경사면은 벽으로 처리하지 않는다.
+                if (Mathf.Abs(hit.normal.y) > 0.7f) continue;
+
+                // 컴포넌트를 매번 찾지 않고 대상의 자식 충돌체까지 제외한다.
+                if (ignoredTarget != null && collider.transform.IsChildOf(ignoredTarget))
+                    continue;
+
+                // 몸이 장애물에 닿기 직전까지만 이동한다.
+                allowedStep = Mathf.Min(allowedStep, Mathf.Max(0f, hit.distance - 0.01f));
+            }
+
+            return allowedStep;
+        }
+
         /// MovePosition: 콜라이더를 밀어내며 이동해 구조물을 관통하지 않는다.
         public void MoveTo(Vector3 position)
         {
