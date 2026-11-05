@@ -22,6 +22,7 @@ namespace ForagerCP
         public int WindingIndex = -1;
         public float WindupEndsAt;
         public MonsterAttack Winding;
+        public Vector3 WindupDirection;
 
         /// 마지막으로 내지른 공격. 막혔을 때 얼마나 멈출지를 여기서 읽는다.
         public MonsterAttack LastFired;
@@ -61,6 +62,7 @@ namespace ForagerCP
         {
             WindingIndex = -1;
             Winding = null;
+            WindupDirection = Vector3.zero;
         }
 
         public void StopMotion()
