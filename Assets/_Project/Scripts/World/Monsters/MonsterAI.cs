@@ -46,6 +46,8 @@ namespace ForagerCP
 
         public bool IsHitstunned => Time.time < _memory.HitstunUntil;
 
+        public bool IsReturning => _memory.Returning;
+
         /// 싸우는 중인가(대기·복귀가 아니다). 구역 전투 초기화가 "이 구역이 전투 중인가"를 여기서 묻는다.
         public bool InCombat => Current != StateId.Idle && Current != StateId.Return;
 
@@ -130,6 +132,7 @@ namespace ForagerCP
         {
             _memory.CancelWindup();
             _memory.StopMotion();
+            if (_knockback != null) _knockback.Stop();
             _memory.RecoverUntil = 0f;
             _memory.HitstunUntil = 0f;
             ChangeTo(StateId.Return);
@@ -210,7 +213,7 @@ namespace ForagerCP
         }
 
         /// 복귀하며 회복. 가득 차면 끝나고, 다시 싸움이 붙으면(추적 등으로 넘어가면) 멈춘다.
-        /// 집에 먼저 닿아도 가득 찰 때까지 대기 칸에서 이어진다.
+        /// 집에 도착하면 남은 체력을 모두 회복하고 전투 진행 값을 초기화한다.
         void TickRegeneration()
         {
             if (!_memory.Regenerating) return;
@@ -258,7 +261,9 @@ namespace ForagerCP
                 case StateId.Return:
                     if (_ctx.ToHome.sqrMagnitude <= 0.05f)
                     {
-                        _memory.Returning = false;
+                        // 다음 전투는 최대 체력과 초기화된 공격 상태로 시작한다.
+                        _monster.Heal(_definition.MaxHp - _monster.CurrentHp);
+                        _memory.Clear();
                         return StateId.Idle;
                     }
                     _motor.Step(_ctx.ToHome, _definition.MoveSpeed);
