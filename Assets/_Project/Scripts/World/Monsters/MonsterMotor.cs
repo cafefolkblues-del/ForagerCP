@@ -45,8 +45,12 @@ namespace ForagerCP
             if (direction.sqrMagnitude < 0.0001f) return false;
 
             Vector3 next = Position + direction.normalized * (speed * Time.fixedDeltaTime);
-            return region == null || RegionMap.At(next) == region;
+            return CanMoveWithin(next, region);
         }
+
+        /// 일반 이동과 넉백이 공유하는 위치 검사. 구역이 없으면 기존처럼 제한하지 않는다.
+        public bool CanMoveWithin(Vector3 position, RegionDefinition region)
+            => region == null || RegionMap.At(position) == region;
 
         /// 몸의 충돌체로 경로를 훑어 장애물 앞까지 갈 수 있는 거리를 묻는다. 이동은 하지 않는다.
         /// ignoredTarget의 충돌체는 호출하는 공격이 별도로 타격을 판정한다.
