@@ -20,6 +20,7 @@ namespace ForagerCP
         DamageKind _kind;
         GameObject _source;
         bool _flying;
+        bool _checkSpawnOverlap;
 
         public void Launch(Vector3 direction, float speed, float distance,
                            int damage, DamageKind kind, GameObject source)
@@ -31,6 +32,7 @@ namespace ForagerCP
             _kind = kind;
             _source = source;
             _flying = true;
+            _checkSpawnOverlap = true;
 
             transform.rotation = Quaternion.LookRotation(_direction);
         }
@@ -38,6 +40,24 @@ namespace ForagerCP
         void Update()
         {
             if (!_flying) return;
+
+            // 근접 발사 시 처음부터 겹친 대상은 이동 캐스트만으로 놓칠 수 있다.
+            if (_checkSpawnOverlap)
+            {
+                _checkSpawnOverlap = false;
+                Collider[] overlaps = Physics.OverlapSphere(transform.position, _radius,
+                    _hitMask, QueryTriggerInteraction.Ignore);
+                // 생성 위치가 벽 안이면 벽에서 끝낸다. 벽과 표적이 겹쳐도 벽을 우선한다.
+                foreach (Collider overlap in overlaps)
+                {
+                    if (overlap.transform.IsChildOf(transform)) continue;
+                    if (overlap.GetComponentInParent<IDamageable>() == null && TryHit(overlap)) return;
+                }
+                foreach (Collider overlap in overlaps)
+                {
+                    if (!overlap.transform.IsChildOf(transform) && TryHit(overlap)) return;
+                }
+            }
 
             float step = Mathf.Min(
                 _speed * Time.deltaTime,
