@@ -14,6 +14,7 @@ namespace ForagerCP
         [SerializeField] private float _hitRadius = 0.9f;
 
         public override bool HasMotion => true;
+        public override bool RecoveryStartsAfterMotion => true;
 
         public override void Execute(in MonsterAttackContext context) { }
 

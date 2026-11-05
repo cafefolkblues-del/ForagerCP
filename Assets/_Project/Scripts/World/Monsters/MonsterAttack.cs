@@ -84,8 +84,10 @@ namespace ForagerCP
 
         /// 몸을 쓰는 공격(돌진·도약 등)인가. 참이면 내지른 뒤 실행기의 AttackMotion 칸에서
         /// 끝날 때까지 TickMotion이 매 프레임 불리고, 그다음 빈틈으로 간다.
-        /// 지금은 이 자리만 있고 쓰는 공격이 없다(돌진 구현은 패턴이 정해질 때까지 폐기).
         public virtual bool HasMotion => false;
+
+        /// 이동 공격 종료 후부터 회복 시간을 계산할지 결정한다.
+        public virtual bool RecoveryStartsAfterMotion => false;
 
         /// 몸을 쓰는 공격의 한 프레임. 아직 진행 중이면 true.
         ///

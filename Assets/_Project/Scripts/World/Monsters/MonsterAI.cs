@@ -268,10 +268,33 @@ namespace ForagerCP
                     return StateId.Stagger;
 
                 case StateId.AttackMotion:
-                    if (_memory.InMotion && _memory.Motion.TickMotion(_ctx)) return StateId.AttackMotion;
-                    _memory.StopMotion();
-                    return _ctx.AfterFire();
+                    {
+                        MonsterAttack motion = _memory.Motion;
 
+                        if (motion == null)
+                            return _ctx.AfterFire();
+
+                        bool running = motion.TickMotion(_ctx);
+
+                        // 피격·방패 방어 등으로 취소된 경우 기존 처리를 유지한다.
+                        if (_memory.Motion != motion)
+                            return Current;
+
+                        if (running)
+                            return StateId.AttackMotion;
+
+                        // 정상적으로 돌진이 끝난 순간부터 회복 시간을 계산한다.
+                        if (motion.RecoveryStartsAfterMotion)
+                        {
+                            _memory.RecoverUntil = Mathf.Max(
+                                _memory.RecoverUntil,
+                                _ctx.Now + motion.Recovery
+                            );
+                        }
+
+                        _memory.StopMotion();
+                        return _ctx.AfterFire();
+                    }
                 default:
                     MonsterState state = Resolve(Current);
                     return state != null ? state.Tick(_ctx) : StateId.Chase;
