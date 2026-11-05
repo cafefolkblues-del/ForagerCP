@@ -81,6 +81,7 @@ namespace ForagerCP
         void OnEnable()
         {
             GetComponent<Monster>().Damaged += OnDamaged;
+            if (_knockback != null) _knockback.MovementAllowed = CanMoveWithinHomeRegion;
 
             // 막혔을 때 멈추는 쪽이 자기 자신이라, 플레이어가 몬스터를 찾아 때리는 대신
             // 몬스터가 '내 공격이 막혔나'를 듣는다. 플레이어 쪽이 몬스터를 알 필요가 없다.
@@ -90,8 +91,12 @@ namespace ForagerCP
         void OnDisable()
         {
             GetComponent<Monster>().Damaged -= OnDamaged;
+            if (_knockback != null) _knockback.MovementAllowed = null;
             if (_player != null) _player.Blocked -= OnBlocked;
         }
+
+        bool CanMoveWithinHomeRegion(Vector3 position)
+            => _motor.CanMoveWithin(position, _aggro.HomeRegion);
 
         /// 내 공격이 정면 방패에 막혔다. 1구역의 "막으면 잠시 멈추니 반격할 수 있다"가 이것이다.
         /// 빈틈을 늘려 두면 다음 프레임 방해 처리가 Recover로 보낸다.
@@ -169,6 +174,15 @@ namespace ForagerCP
             if (transform.position.y < _fallSafeY)
             {
                 _memory.CancelWindup();
+                _monster.ReturnHome();
+                return;
+            }
+
+            // 물리 밀림 등으로 이미 경계를 넘었으면, 기존 순간 복귀로 구역 안에 복구한다.
+            // 경계 검사로 모든 복귀 걸음이 거절되어 구역 밖에 멈추는 것을 막는다.
+            if (!CanMoveWithinHomeRegion(_motor.Position))
+            {
+                BeginReturnHome();
                 _monster.ReturnHome();
                 return;
             }
@@ -266,7 +280,9 @@ namespace ForagerCP
                         _memory.Clear();
                         return StateId.Idle;
                     }
-                    _motor.Step(_ctx.ToHome, _definition.MoveSpeed);
+                    // L자 구역처럼 직선 복귀가 다른 구역을 가로지르면 기존 순간 복귀로 복구한다.
+                    if (!_motor.TryStepWithin(_ctx.ToHome, _definition.MoveSpeed, _aggro.HomeRegion))
+                        _monster.ReturnHome();
                     return StateId.Return;
 
                 case StateId.Stagger:

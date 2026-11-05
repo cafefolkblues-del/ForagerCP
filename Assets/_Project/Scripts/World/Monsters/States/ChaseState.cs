@@ -35,7 +35,7 @@ namespace ForagerCP
         protected virtual void Approach(MonsterContext ctx)
         {
             ctx.Motor.Face(ctx.ToTarget);
-            ctx.Motor.Step(ctx.ToTarget, ctx.Definition.MoveSpeed);
+            ctx.Motor.TryStepWithin(ctx.ToTarget, ctx.Definition.MoveSpeed, ctx.Aggro.HomeRegion);
         }
     }
 }
