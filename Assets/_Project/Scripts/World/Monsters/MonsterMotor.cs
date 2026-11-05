@@ -13,11 +13,15 @@ namespace ForagerCP
     {
         readonly Transform _transform;
         readonly Rigidbody _body;
+        readonly Collider[] _ownColliders;
+        readonly RaycastHit[] _pathHits = new RaycastHit[32];
+        readonly Collider[] _pathOverlaps = new Collider[32];
 
         public MonsterMotor(Transform transform, Rigidbody body)
         {
             _transform = transform;
             _body = body;
+            _ownColliders = transform.GetComponentsInChildren<Collider>();
         }
 
         public Vector3 Position => _body != null ? _body.position : _transform.position;
@@ -51,6 +55,52 @@ namespace ForagerCP
         /// 일반 이동과 넉백이 공유하는 위치 검사. 구역이 없으면 기존처럼 제한하지 않는다.
         public bool CanMoveWithin(Vector3 position, RegionDefinition region)
             => region == null || RegionMap.At(position) == region;
+
+        /// 우회 경로 후보 검사만 한다. 실제 이동은 기존 TryStepWithin이 담당한다.
+        public bool CanTraverse(Vector3 from, Vector3 to, RegionDefinition region)
+        {
+            Vector3 delta = to - from;
+            delta.y = 0f;
+            float length = delta.magnitude;
+            float spacing = MapGrid.Active != null ? Mathf.Max(0.1f, MapGrid.Active.CellSize * 0.4f) : 0.4f;
+            int samples = Mathf.Max(1, Mathf.CeilToInt(length / spacing));
+            for (int i = 0; i <= samples; i++)
+                if (!CanMoveWithin(Vector3.Lerp(from, to, (float)i / samples), region)) return false;
+
+            Bounds bounds = new Bounds(Position + Vector3.up * 0.5f, Vector3.one * 0.6f);
+            bool found = false;
+            foreach (Collider own in _ownColliders)
+            {
+                if (own == null || !own.enabled || own.isTrigger) continue;
+                if (!found) { bounds = own.bounds; found = true; }
+                else bounds.Encapsulate(own.bounds);
+            }
+            float radius = Mathf.Max(0.05f, Mathf.Max(bounds.extents.x, bounds.extents.z) - 0.03f);
+            float halfHeight = Mathf.Max(radius, bounds.extents.y - 0.03f);
+            Vector3 center = from + bounds.center - Position;
+            Vector3 vertical = Vector3.up * (halfHeight - radius);
+            Vector3 top = center + vertical;
+            Vector3 bottom = center - vertical;
+
+            int overlaps = Physics.OverlapCapsuleNonAlloc(top + delta, bottom + delta, radius,
+                _pathOverlaps, ~0, QueryTriggerInteraction.Ignore);
+            if (overlaps == _pathOverlaps.Length) return false;
+            for (int i = 0; i < overlaps; i++)
+                if (!_pathOverlaps[i].transform.IsChildOf(_transform)) return false;
+
+            if (length < 0.0001f) return true;
+            int hits = Physics.CapsuleCastNonAlloc(top, bottom, radius, delta / length,
+                _pathHits, length, ~0, QueryTriggerInteraction.Ignore);
+            if (hits == _pathHits.Length) return false;
+            for (int i = 0; i < hits; i++)
+            {
+                RaycastHit hit = _pathHits[i];
+                if (hit.collider == null || hit.collider.transform.IsChildOf(_transform)) continue;
+                if (hit.distance <= 0.0001f || Mathf.Abs(hit.normal.y) > 0.7f) continue;
+                return false;
+            }
+            return true;
+        }
 
         /// 몸의 충돌체로 경로를 훑어 장애물 앞까지 갈 수 있는 거리를 묻는다. 이동은 하지 않는다.
         /// ignoredTarget의 충돌체는 호출하는 공격이 별도로 타격을 판정한다.

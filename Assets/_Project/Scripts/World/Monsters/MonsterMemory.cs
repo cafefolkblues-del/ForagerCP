@@ -48,6 +48,9 @@ namespace ForagerCP
         /// 회복량의 소수점 아래. 체력이 정수라 프레임마다 버리면 회복이 안 된다.
         public float HealCarry;
 
+        /// 투척꾼의 우회 경로와 재탐색 시각. 공유 상태 에셋에 저장하지 않는다.
+        public ThrowerNavigation ThrowerNavigation;
+
         public bool IsWindingUp => WindingIndex >= 0;
         public bool InMotion => Motion != null;
 
@@ -83,6 +86,7 @@ namespace ForagerCP
             Returning = false;
             Regenerating = false;
             HealCarry = 0f;
+            ThrowerNavigation = null;
         }
     }
 }
