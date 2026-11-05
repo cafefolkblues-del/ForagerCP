@@ -16,7 +16,7 @@ MonoBehaviour:
   _damage: 20
   _range: 5
   _minRange: 0
-  _cooldown: 4
+  _cooldown: 3
   _windup: 1
   _recovery: 1.2
   _staggerWhenBlocked: 0
