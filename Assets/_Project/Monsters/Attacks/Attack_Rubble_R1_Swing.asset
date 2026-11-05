@@ -21,3 +21,4 @@ MonoBehaviour:
   _recovery: 0.8
   _staggerWhenBlocked: 0
   _kind: 0
+  _halfAngle: 60
