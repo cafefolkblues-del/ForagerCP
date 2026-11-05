@@ -21,3 +21,4 @@ MonoBehaviour:
   _recovery: 1.5
   _staggerWhenBlocked: 0
   _kind: 0
+  _halfWidth: 0.8
