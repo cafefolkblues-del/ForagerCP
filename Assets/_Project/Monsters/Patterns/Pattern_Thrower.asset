@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ae650fb6db670846a9e5915fd7f09ab, type: 3}
   m_Name: Pattern_Thrower
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterPattern
-  _chase: {fileID: 11400000, guid: ebb810e38dffb2d409c9478232a22a9d, type: 2}
-  _windup: {fileID: 11400000, guid: 5e601d7784d2ea84bb0c52b5be4b6423, type: 2}
-  _recover: {fileID: 11400000, guid: 006f843731a572f4f8f82dffc25db25a, type: 2}
-  _cooldownWait: {fileID: 11400000, guid: 140e1466635ef844299879ca108d516e, type: 2}
-  _retreat: {fileID: 11400000, guid: 26fffa891a93ee747a1b840c8bde6c94, type: 2}
+  _chase: {fileID: 11400000, guid: b5aabeb489ba4956a08c5603219dda51, type: 2}
+  _windup: {fileID: 11400000, guid: b9575baa99144a15a5a813058180b878, type: 2}
+  _recover: {fileID: 11400000, guid: ca0d8b0e77f64a5da2a9edf0f4e03a0d, type: 2}
+  _cooldownWait: {fileID: 11400000, guid: 8bf078d97cb24fc696592bdc1c4a1b21, type: 2}
+  _retreat: {fileID: 0}

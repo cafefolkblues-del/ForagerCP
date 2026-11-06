@@ -22,6 +22,7 @@ namespace ForagerCP
         public int WindingIndex = -1;
         public float WindupEndsAt;
         public MonsterAttack Winding;
+        public Vector3 WindupDirection;
 
         /// 마지막으로 내지른 공격. 막혔을 때 얼마나 멈출지를 여기서 읽는다.
         public MonsterAttack LastFired;
@@ -36,11 +37,20 @@ namespace ForagerCP
         /// 복귀 중. 집에 닿을 때까지 표적이 다시 보여도 돌아간다(끌 경계에서 추적↔복귀가 번갈아 바뀌지 않게).
         public bool Returning;
 
+        // 돌진 진행 값. 몬스터마다 따로 보관한다.
+        public Vector3 DashDirection;  // 돌진 방향
+        public float DashTravelled;    // 이동한 거리
+        public bool DashHasHit;        // 이미 피해를 줬는지
+        public bool DashInitialized;   // 돌진을 초기화했는지
+
         /// 복귀하며 회복 중. 가득 차거나 다시 싸움이 붙으면 끈다.
         public bool Regenerating;
 
         /// 회복량의 소수점 아래. 체력이 정수라 프레임마다 버리면 회복이 안 된다.
         public float HealCarry;
+
+        /// 투척꾼의 우회 경로와 재탐색 시각. 공유 상태 에셋에 저장하지 않는다.
+        public ThrowerNavigation ThrowerNavigation;
 
         public bool IsWindingUp => WindingIndex >= 0;
         public bool InMotion => Motion != null;
@@ -52,9 +62,18 @@ namespace ForagerCP
         {
             WindingIndex = -1;
             Winding = null;
+            WindupDirection = Vector3.zero;
         }
 
-        public void StopMotion() => Motion = null;
+        public void StopMotion()
+        {
+            Motion = null;
+
+            DashDirection = Vector3.zero;
+            DashTravelled = 0f;
+            DashHasHit = false;
+            DashInitialized = false;
+        }
 
         /// 전투 초기화용. 쿨다운 칸 수는 그대로 두고 값만 비운다.
         public void Clear()
@@ -69,6 +88,7 @@ namespace ForagerCP
             Returning = false;
             Regenerating = false;
             HealCarry = 0f;
+            ThrowerNavigation = null;
         }
     }
 }

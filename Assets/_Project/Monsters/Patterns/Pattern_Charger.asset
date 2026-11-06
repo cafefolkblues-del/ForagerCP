@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Pattern_Charger
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MonsterPattern
   _chase: {fileID: 11400000, guid: ebb810e38dffb2d409c9478232a22a9d, type: 2}
-  _windup: {fileID: 11400000, guid: 5e601d7784d2ea84bb0c52b5be4b6423, type: 2}
+  _windup: {fileID: 11400000, guid: 118de69239a14bd9b89a7c1055490552, type: 2}
   _recover: {fileID: 11400000, guid: 006f843731a572f4f8f82dffc25db25a, type: 2}
   _cooldownWait: {fileID: 11400000, guid: 140e1466635ef844299879ca108d516e, type: 2}
   _retreat: {fileID: 0}

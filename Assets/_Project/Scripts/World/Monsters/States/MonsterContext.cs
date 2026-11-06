@@ -84,18 +84,31 @@ namespace ForagerCP
         {
             MonsterAttack attack = Definition.Attacks[index];
 
-            // 재사용 대기는 내지른 때부터 센다. 예고 시작부터 세면 예고가 긴 공격이
-            // 사실상 더 자주 나간다.
+            // 쿨다운은 공격 실행 순간부터 계산한다.
             Memory.ReadyAt[index] = Now + attack.Cooldown;
-            Memory.RecoverUntil = Now + attack.Recovery;
+
+            bool deferRecovery =
+                attack.HasMotion && attack.RecoveryStartsAfterMotion;
+
+            // 돌진은 종료 시점에 회복 시간을 설정한다.
+            Memory.RecoverUntil = deferRecovery
+                ? Now
+                : Now + attack.Recovery;
+
             Memory.LastFired = attack;
             Memory.CancelWindup();
 
-            // 몸을 쓰는 공격이면 내지른 뒤 AttackMotion 칸이 TickMotion을 돌린다.
             Memory.Motion = attack.HasMotion ? attack : null;
             Memory.MotionStartedAt = Now;
 
-            attack.Execute(new MonsterAttackContext(Monster, Aggro.TargetDamageable, Aggro.Target, Distance));
+            attack.Execute(
+                new MonsterAttackContext(
+                    Monster,
+                    Aggro.TargetDamageable,
+                    Aggro.Target,
+                    Distance
+                )
+            );
         }
 
         /// 내지른 뒤 어디로 가나. 몸을 쓰는 공격이면 그 동작이 먼저, 그다음 빈틈.

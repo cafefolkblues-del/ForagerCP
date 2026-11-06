@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ForagerCP
@@ -29,6 +30,9 @@ namespace ForagerCP
 
         /// 이동 컴포넌트가 이 값을 보고 자기 이동을 건너뛴다.
         public bool IsActive => Time.time < _endTime;
+
+        /// 선택적인 목적지 검사. 설정하지 않은 대상(플레이어 등)은 기존 넉백을 그대로 쓴다.
+        public Func<Vector3, bool> MovementAllowed { get; set; }
 
         void Awake()
         {
@@ -89,6 +93,11 @@ namespace ForagerCP
 
             Vector3 target = _body.position + step;
             target.y = _lockedY;
+            if (MovementAllowed != null && !MovementAllowed(target))
+            {
+                Stop();
+                return;
+            }
             _body.MovePosition(target);
         }
 

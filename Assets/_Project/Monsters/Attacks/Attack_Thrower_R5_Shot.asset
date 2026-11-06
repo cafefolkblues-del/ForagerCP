@@ -15,7 +15,7 @@ MonoBehaviour:
   _displayName: "\uAD11\uBB3C \uB358\uC9C0\uAE30"
   _damage: 14
   _range: 8
-  _minRange: 4
+  _minRange: 0
   _cooldown: 2.5
   _windup: 0.9
   _recovery: 0.6

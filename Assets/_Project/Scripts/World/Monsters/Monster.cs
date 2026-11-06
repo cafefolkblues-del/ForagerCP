@@ -96,6 +96,10 @@ namespace ForagerCP
         {
             if (!_alive || amount <= 0) return;
 
+            // 복귀 중에는 피해와 피격 효과·넉백을 모두 차단한다.
+            if (TryGetComponent<MonsterAI>(out var ai) && ai.IsReturning)
+                return;
+
             _hp -= amount;
             if (_hitFlash != null) _hitFlash.Play();
             if (_knockback != null && source != null)
