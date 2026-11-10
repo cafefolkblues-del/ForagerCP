@@ -24,6 +24,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 
 REPO = "cafefolkblues-del/ForagerCP"
@@ -118,15 +119,32 @@ def message(day, tasks, assignee):
     }
 
 
-def send(payload):
+FORUM_NEEDS_THREAD = 220001  # 포럼 채널 웹후크는 글 제목(thread_name)이 있어야 한다
+
+
+def post(url, payload):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST",
+                                 headers={"Content-Type": "application/json", "User-Agent": "foragercp-daily-tasks"})
+    try:
+        with urllib.request.urlopen(req):
+            return None
+    except urllib.error.HTTPError as e:
+        try:
+            return json.loads(e.read().decode("utf-8"))
+        except Exception:
+            return {"message": f"HTTP {e.code}"}
+
+
+def send(payload, thread_name):
+    """일반 채널이면 그대로, 포럼 채널이면 날짜 제목으로 새 글을 만들어 올린다."""
     url = os.environ.get("DISCORD_WEBHOOK_URL")
     if not url:
         sys.exit("DISCORD_WEBHOOK_URL이 없습니다. --dry-run으로 미리보기만 하거나 환경 변수를 넣어 주세요.")
-    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST",
-                                 headers={"Content-Type": "application/json", "User-Agent": "foragercp-daily-tasks"})
-    with urllib.request.urlopen(req) as r:
-        if r.status not in (200, 204):
-            sys.exit(f"디스코드 전송 실패: {r.status}")
+    err = post(url, payload)
+    if err and err.get("code") == FORUM_NEEDS_THREAD:
+        err = post(url, {**payload, "thread_name": thread_name[:100]})
+    if err:
+        sys.exit(f"디스코드 전송 실패: {err}")
 
 
 def main():
@@ -146,7 +164,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
-        send(payload)
+        send(payload, f"📋 {today.month}/{today.day} ({WEEKDAY[today.weekday()]}) 할 일")
         print("보냈습니다.")
 
 
