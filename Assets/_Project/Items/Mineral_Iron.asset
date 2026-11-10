@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Iron
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uCCA0 \uAD11\uC11D"
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 133acc66e03f4e6aab32d5428c34931c, type: 3}
   _maxStack: 99
   _goldValue: 30
   _sortOrder: 1

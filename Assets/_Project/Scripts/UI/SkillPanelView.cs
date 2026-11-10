@@ -28,6 +28,7 @@ namespace ForagerCP
 
         [Header("색")]
         [SerializeField] Color _lockedIcon = new Color(1f, 1f, 1f, 0.10f);
+        [SerializeField] Color _lockedSprite = new Color(0.3f, 0.3f, 0.3f, 0.5f);
 
         /// 칸 바탕. 잠긴 칸은 바탕까지 어둡게 해야 한눈에 걸러진다 — 테두리 유무만으로는 약하다.
         [SerializeField] Color _learnedBack = new Color(0.20f, 0.23f, 0.31f, 1f);
@@ -187,8 +188,12 @@ namespace ForagerCP
                 _backs[i].color = learned ? _learnedBack : available ? _availableBack : _lockedBack;
 
                 _icons[i].sprite = skill.Icon;
-                _icons[i].color = learned ? skill.UiColor
-                    : available ? skill.UiColor * 0.55f
+                _icons[i].preserveAspect = true;
+                // 그림 아이콘은 자기 색을 그대로 쓰고 밝기로만 상태를 알린다. 없으면 예전처럼 색 칸.
+                Color tint = skill.Icon != null ? Color.white : skill.UiColor;
+                _icons[i].color = learned ? tint
+                    : available ? new Color(tint.r * 0.55f, tint.g * 0.55f, tint.b * 0.55f, skill.Icon != null ? 1f : tint.a * 0.55f)
+                    : skill.Icon != null ? _lockedSprite
                     : _lockedIcon;
 
                 // 테두리는 '손댈 수 있는가'를 알린다. 잠긴 노드는 테두리도 없어 한눈에 걸러진다.
