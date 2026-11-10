@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Stone
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uB3CC"
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: d055e9f28c464a44aa5355687e3e08cd, type: 3}
   _maxStack: 99
   _goldValue: 10
   _sortOrder: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Gold
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uAE08 \uAD11\uC11D"
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: ff2fab2a4f7f4b24a7711270ccaf6579, type: 3}
   _maxStack: 99
   _goldValue: 60
   _sortOrder: 3

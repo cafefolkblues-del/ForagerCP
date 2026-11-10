@@ -15,7 +15,7 @@ MonoBehaviour:
   _displayName: "\uD718\uB450\uB974\uAE30"
   _summary: 
   _cell: {x: 1, y: 0}
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 6eb6d3c27f9f467e8e536af60271e2a4, type: 3}
   _uiColor: {r: 0.95, g: 0.75, b: 0.35, a: 1}
   _cost: 1
   _effects:
