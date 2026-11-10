@@ -1,0 +1,26 @@
+# 매일 아침 9시(KST) 오늘 할 일을 디스코드에 올린다.
+# 저장소 Settings → Secrets and variables → Actions 에 DISCORD_WEBHOOK_URL 을 넣어야 동작한다.
+name: 디스코드 오늘 할 일
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # UTC 00:00 = KST 09:00
+  workflow_dispatch:        # Actions 탭에서 손으로 실행
+
+permissions:
+  issues: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/discord_today.py
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

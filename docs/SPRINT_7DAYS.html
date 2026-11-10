@@ -1,0 +1,217 @@
+<!doctype html>
+<!--
+  7일 작업 계획 (2026-11-10 ~ 11-16). 장혁 · 프로그래밍.
+  근거: docs/NEXT_WORK.md, GitHub 프로젝트 이슈 #25~#61의 예상 시간.
+  하루 목표 12~15h(예상 시간 단위) — 10/12·10/19 커밋 기록에서 잡은 '지속 가능한 속도'.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7일 작업 계획</title>
+<style>
+  :root {
+    --bg: #fbfaf7; --surface: #ffffff; --surface-2: #f3f1ec;
+    --text: #1f1d1a; --muted: #6b665e; --border: #e4e0d8;
+    --accent: #b4532a; --accent-soft: #f6e6dc;
+    --info: #2d6a8f; --info-soft: #e3eef5;
+    --warn: #9a6a00; --warn-soft: #fbf1d6;
+    --bad: #a3322b; --bad-soft: #f8e1df;
+    --good: #3b7a45; --good-soft: #e2f0e3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #191816; --surface: #22201d; --surface-2: #2b2925;
+      --text: #ece8e1; --muted: #a39d92; --border: #3a3732;
+      --accent: #e08a5f; --accent-soft: #3d2a20;
+      --info: #7fb3d4; --info-soft: #1f2e38;
+      --warn: #e0b54d; --warn-soft: #3a3020;
+      --bad: #e58a83; --bad-soft: #3d2322;
+      --good: #85c08e; --good-soft: #213326;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  a { color: var(--info); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { color: var(--muted); font-size: 13px; }
+
+  .day { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+  .day-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+  .day-head h3 { margin: 0; font-size: 17px; }
+  .day-head .date { color: var(--muted); font-size: 14px; }
+  .day-head .theme { margin-left: auto; font-size: 13px; color: var(--accent); background: var(--accent-soft); padding: 2px 10px; border-radius: 999px; }
+  .load { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; font-size: 13px; color: var(--muted); }
+  .bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 999px; overflow: hidden; position: relative; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .bar::after { content: ""; position: absolute; top: 0; bottom: 0; left: 80%; width: 2px; background: var(--muted); opacity: .5; }
+  ul.tasks { list-style: none; margin: 0; padding: 0; }
+  ul.tasks li { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 7px 0; border-top: 1px dashed var(--border); align-items: start; }
+  ul.tasks li:first-child { border-top: 0; }
+  .num { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; padding-top: 1px; }
+  .h { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .what small { display: block; color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; font-size: 12px; padding: 0 7px; border-radius: 6px; margin-left: 4px; vertical-align: 1px; }
+  .t-wait { background: var(--warn-soft); color: var(--warn); }
+  .t-art { background: var(--info-soft); color: var(--info); }
+  .t-tool { background: var(--good-soft); color: var(--good); }
+  .fallback { margin-top: 8px; font-size: 13px; background: var(--warn-soft); color: var(--text); border-radius: 8px; padding: 8px 12px; }
+  .fallback b { color: var(--warn); }
+  .done { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .done b { color: var(--good); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--surface-2); font-weight: 600; font-size: 13px; color: var(--muted); }
+  tr:last-child td { border-bottom: 0; }
+  .table-wrap { overflow-x: auto; }
+  .note { background: var(--info-soft); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+  .later { columns: 2 260px; column-gap: 24px; padding-left: 18px; margin: 0; }
+  .later li { break-inside: avoid; margin-bottom: 4px; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 560px) {
+    ul.tasks li { grid-template-columns: 48px 1fr; }
+    ul.tasks li .h { grid-column: 2; }
+    .day-head .theme { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>7일 작업 계획</h1>
+<p class="sub">2026-11-10(화) ~ 11-16(월) · 장혁 · 프로그래밍 · 기준 문서 <code>docs/NEXT_WORK.md</code></p>
+
+<div class="summary">
+  <div class="stat"><b>16개</b><span>7일 동안 처리할 이슈</span></div>
+  <div class="stat"><b>약 95h</b><span>예상 시간 합계 (하루 평균 13.6h)</span></div>
+  <div class="stat"><b>12~15h</b><span>하루 목표 · 막대의 세로선 = 12h</span></div>
+  <div class="stat"><b>11/11 · 11/12</b><span>기획 답변 마감 (아래 표)</span></div>
+</div>
+
+<p class="note" style="margin-top:14px">
+  <b>짜는 원칙.</b> ① 검증 도구(치트 · 수치 임포터)를 맨 앞에 둔다. 그 뒤 모든 작업의 확인 시간이 줄어든다.
+  ② 구역 진행이라는 뼈대(점령 → 확보 → 개방)를 재료 흐름(스킬 · 용광로 · 제작대)보다 먼저 세운다.
+  ③ 기획 답을 기다리는 날에는 <b>대체 작업</b>을 미리 정해 두어, 답이 늦어도 그날이 비지 않게 한다.
+  "h"는 이슈에 적은 예상 시간 단위이고 실제 작업 시간이 아니다.
+</p>
+
+<h2>일정</h2>
+
+<section class="day">
+  <div class="day-head"><h3>1일차</h3><span class="date">11/10 화</span><span class="theme">도구 · 정리</span></div>
+  <div class="load"><div class="bar"><i style="width:96%"></i></div>14.5h</div>
+  <ul class="tasks">
+    <li><span class="num">—</span><span class="what">미커밋 작업 커밋<small>아이콘 연결 · 광물 모델 4종 · NEXT_WORK.md · 이 문서</small></span><span class="h">0.5h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/40">#40</a></span><span class="what">새 기획표 충돌 9건 기획팀에 전달<small>마감일(아래 표)까지 같이 적어 보낸다</small></span><span class="h">2h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/41">#41</a></span><span class="what">치트 에디터 <span class="tag t-tool">도구</span><small>아이템 · 골드 · 레벨 · 구역 상태 강제 · 시간 배율</small></span><span class="h">6h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/51">#51</a></span><span class="what">모델 임포트 자동화 · 아트 전달 규격 <span class="tag t-tool">도구</span><small>규격 문서를 오늘 아트팀에 넘겨야 다음 모델부터 적용된다</small></span><span class="h">3h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/52">#52</a></span><span class="what">라이팅 1차<small>키라이트 · 그라디언트 앰비언트 · 그림자 거리/캐스케이드만. 볼륨 · 셰이더는 폴리싱에서</small></span><span class="h">3h</span></li>
+  </ul>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>2일차</h3><span class="date">11/11 수</span><span class="theme">수치 · 모델</span></div>
+  <div class="load"><div class="bar"><i style="width:93%"></i></div>14h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/42">#42</a></span><span class="what">기획 수치 표 → 에셋 임포터 <span class="tag t-tool">도구</span><small>CSV 형식은 1일차에 기획과 합의해 둔다</small></span><span class="h">8h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/43">#43</a></span><span class="what">광물 · 레벨 수치를 새 표로 <span class="tag t-wait">답 ①③</span><small>임포터로 넣는 첫 표. 판매가 · 경험치 · 재생성 · 최대 레벨 25</small></span><span class="h">2h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/50">#50</a></span><span class="what">곡괭이 · 첫 들판 바닥 모델 연결<small>도구 단계별 텍스처 교체 · 바닥 새 버전 판단</small></span><span class="h">4h</span></li>
+  </ul>
+  <div class="fallback"><b>답이 없으면</b> — #43은 새 표 값으로 넣되 광물 체력만 그대로 둔다. 체력은 곡괭이 공격력 축(①)과 묶여 있어 혼자 바꾸면 채집 시간이 틀어진다.</div>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>3일차</h3><span class="date">11/12 목</span><span class="theme">구역 진행 뼈대</span></div>
+  <div class="load"><div class="bar"><i style="width:93%"></i></div>14h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/25">#25</a></span><span class="what">구역 잠금 → 점령 → 확보<small>꺼둔 스포너 3개를 여기서 켠다 · 치트로 상태 강제해 확인</small></span><span class="h">8h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/26">#26</a></span><span class="what">경계 이탈 · 사망 시 전투 초기화<small>시작 구역 부활, 아이템 · 골드 유지</small></span><span class="h">6h</span></li>
+  </ul>
+  <div class="done"><b>여기까지 되면</b> 1구역을 점령 → 확보까지 한 판 플레이할 수 있다.</div>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>4일차</h3><span class="date">11/13 금</span><span class="theme">개방 · 시설</span></div>
+  <div class="load"><div class="bar"><i style="width:80%"></i></div>12h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/46">#46</a></span><span class="what">지도 테이블 구역 개방 · 구역 5개 <span class="tag t-wait">답 ⑤</span></span><span class="h">6h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/45">#45</a></span><span class="what">스킬로 시설 소환 <span class="tag t-wait">답 ⑥</span><small>소환 틀만 먼저. 스킬 연결은 5일차 스킬 트리와 함께</small></span><span class="h">6h</span></li>
+  </ul>
+  <div class="fallback"><b>답이 없으면</b> — <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/27">#27</a> 1·2구역 스포너 연결(5h) + <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/53">#53</a> 공격 예고 바닥 표시(6h)로 바꾼다. 둘 다 기획 답과 무관하다.</div>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>5일차</h3><span class="date">11/14 토</span><span class="theme">스킬 25개</span></div>
+  <div class="load"><div class="bar"><i style="width:93%"></i></div>14h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/44">#44</a></span><span class="what">스킬 트리 25개 재구성 <span class="tag t-wait">답 ④</span> <span class="tag t-art">아이콘 20개</span><small>4루트 · "또는" 선행 · 효과 20여 종 · 스킬 창 다시 그리기. 아이콘이 없는 칸은 색 칸으로 먼저 간다</small></span><span class="h">14h</span></li>
+  </ul>
+  <div class="fallback"><b>가장 큰 덩어리.</b> 하루에 안 끝나면 효과 중 방어 루트(쉴드 의존)를 7일차로 넘긴다. 쉴드가 7일차에 들어오므로 그쪽이 자연스럽다.</div>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>6일차</h3><span class="date">11/15 일</span><span class="theme">재료 흐름 ①</span></div>
+  <div class="load"><div class="bar"><i style="width:87%"></i></div>13h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/31">#31</a></span><span class="what">용광로 재련<small>주괴 3 + 가공 수정 아이템 · 대기열 99 · 6초 · 수령 · 저장 · on/off 모델</small></span><span class="h">10h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/57">#57</a></span><span class="what">플레이테스트 계측<small>7일차 팀 플레이테스트 전에 넣어 둔다</small></span><span class="h">3h</span></li>
+  </ul>
+</section>
+
+<section class="day">
+  <div class="day-head"><h3>7일차</h3><span class="date">11/16 월</span><span class="theme">재료 흐름 ② · 확인</span></div>
+  <div class="load"><div class="bar"><i style="width:93%"></i></div>14h</div>
+  <ul class="tasks">
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/47">#47</a></span><span class="what">제작대 목록 개편 <span class="tag t-wait">답 ①②</span><small>답이 "상점"이면 대신 <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/32">#32</a>를 하고 #47을 닫는다</small></span><span class="h">6h</span></li>
+    <li><span class="num"><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/48">#48</a></span><span class="what">쉴드 · 보호 장비 <span class="tag t-wait">답 ②</span></span><span class="h">6h</span></li>
+    <li><span class="num">—</span><span class="what">빌드 · 팀 플레이테스트 한 판<small>계측 결과로 다음 주 우선순위 조정</small></span><span class="h">2h</span></li>
+  </ul>
+  <div class="fallback"><b>답이 없으면</b> — <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/49">#49</a> 저장 규칙 보강(6h) + <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/34">#34</a> 창 열면 시간 정지(3h) + <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/29">#29</a> 퀵슬롯 드래그(3h).</div>
+</section>
+
+<h2>기획 답변 마감</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>충돌</th><th>내용</th><th>필요한 날</th><th>마감</th></tr></thead>
+  <tbody>
+    <tr><td>① ③</td><td>곡괭이 공격력 축 · 최대 레벨 15/25</td><td>2일차 #43</td><td><b>11/11 오전</b></td></tr>
+    <tr><td>⑤ ⑥</td><td>지도 테이블 개방 · 시설을 스킬로 소환</td><td>4일차 #46 #45</td><td><b>11/12</b></td></tr>
+    <tr><td>④</td><td>스킬 25개 각 1회 습득</td><td>5일차 #44</td><td>11/13</td></tr>
+    <tr><td>②</td><td>무기 · 방어구 제작대 이전 · 보호 장비(쉴드)</td><td>7일차 #47 #48</td><td>11/15</td></tr>
+    <tr><td>⑦ ⑧ ⑨</td><td>상점 판매 탭 · 회복량 · E키</td><td>7일 이후 #33</td><td>다음 주</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>7일 뒤에 남는 것</h2>
+<ul class="later">
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/33">#33</a> 상점 개편 · 소모품 4종</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/49">#49</a> 저장 규칙 보강 (7일차 대체 작업이 안 쓰였다면)</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/34">#34</a> 창 열면 시간 정지 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/29">#29</a> 퀵슬롯</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/28">#28</a> 몬스터 모션 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/54">#54</a> 애니메이션 파이프라인 (아트 대기)</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/53">#53</a> 공격 예고 바닥 표시 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/55">#55</a> 카메라 가림</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/56">#56</a> 맵 바닥 · 바다</li>
+  <li>3·4구역 블록아웃 · 배치 (초안 이슈)</li>
+  <li>5구역 · 보스 · 엔딩 (초안 이슈 6개)</li>
+  <li><a href="https://github.com/cafefolkblues-del/ForagerCP/issues/52">#52</a> 라이팅 2차 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/58">#58</a> VFX · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/59">#59</a> 사운드 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/60">#60</a> 강조 · <a href="https://github.com/cafefolkblues-del/ForagerCP/issues/61">#61</a> 자동 빌드</li>
+</ul>
+
+<footer>
+  작성 2026-11-09 · 하루 처리량은 10/12(약 7시간, 커밋 26개) · 10/19(약 4시간, 커밋 16개) 기록에서 잡은 추정이다.
+  1~3일차 실제 처리량을 보고 4일차 이후를 다시 맞춘다.
+</footer>
+
+</main>
+</body>
+</html>
