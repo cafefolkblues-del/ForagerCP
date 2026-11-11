@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ForagerCP
@@ -14,6 +15,29 @@ namespace ForagerCP
 
         public event Action<Monster> Died;
         public event Action<Monster> Respawned;
+
+        /// 지금 월드에 켜져 있는 몬스터. 몬스터가 스스로 들고 나간다.
+        ///
+        /// 머리 위 체력바처럼 "몬스터마다 하나씩" 붙는 쪽이 씬을 훑지 않게 하려고 둔다.
+        /// 씬을 시작할 때 한 번 훑으면 그 뒤에 생긴 몬스터(스포너·소환)를 영영 모른다.
+        public static IReadOnlyList<Monster> Active => _active;
+
+        /// 켜졌을 때. 스포너는 종류를 끼운 뒤에 켜므로 이 시점엔 Definition과 체력이 채워져 있다.
+        public static event Action<Monster> Appeared;
+
+        /// 꺼지거나 파괴될 때. 죽음은 여기 해당하지 않는다 — 죽어도 오브젝트는 남는다.
+        public static event Action<Monster> Vanished;
+
+        static readonly List<Monster> _active = new List<Monster>();
+
+        /// 도메인 리로드를 끈 채 플레이하면 static이 지난 판 값을 들고 온다.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetOnPlay()
+        {
+            _active.Clear();
+            Appeared = null;
+            Vanished = null;
+        }
 
         /// 머리 위 체력바가 구독한다.
         public event Action<Monster> HealthChanged;
@@ -90,6 +114,18 @@ namespace ForagerCP
         /// 스폰 위치는 Awake가 아니라 Start에서 잡는다.
         /// GridPlacement가 OnEnable에서 칸 좌표로 위치를 맞추기 때문에, Awake 시점 값은 배치 전 좌표일 수 있다.
         void Start() => HomePosition = transform.position;
+
+        void OnEnable()
+        {
+            _active.Add(this);
+            Appeared?.Invoke(this);
+        }
+
+        void OnDisable()
+        {
+            _active.Remove(this);
+            Vanished?.Invoke(this);
+        }
 
         /// 몬스터는 막는 수단이 없어 kind를 보지 않는다. 인터페이스를 맞추기 위해서만 받는다.
         public void TakeDamage(int amount, GameObject source, DamageKind kind = DamageKind.Normal)

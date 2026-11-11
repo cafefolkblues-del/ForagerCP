@@ -4,8 +4,9 @@ using UnityEngine;
 namespace ForagerCP
 {
     /// 몬스터마다 머리 위 체력바를 붙여준다. 바는 오브젝트 풀에서 꺼내 쓴다.
-    /// 지금은 맵의 몬스터가 고정이라 시작할 때 한 번 붙이면 되고,
-    /// 나중에 몬스터를 동적으로 스폰하게 되면 여기서 Spawn 이벤트만 구독하면 된다.
+    ///
+    /// 체력바 수는 여기서 정하지 않는다. 몬스터가 켜지고 꺼질 때 스스로 알리고(Monster.Appeared/Vanished),
+    /// 여기는 듣고 붙였다 뗄 뿐이다. 씬을 훑으면 그 뒤에 생긴 몬스터(스포너·소환)를 놓친다.
     public class MonsterHealthBarSpawner : MonoBehaviour
     {
         [SerializeField] GameObject _barPrefab;
@@ -13,17 +14,27 @@ namespace ForagerCP
         [SerializeField] Camera _viewCamera;
 
         readonly Dictionary<Monster, GameObject> _bars = new Dictionary<Monster, GameObject>();
+        bool _started;
+
+        // 구독은 Start부터. 그 전엔 PoolManager.Awake가 안 끝났을 수 있어 풀 없이 Instantiate된다.
+        // 다시 켜질 때는 OnEnable에서 이어 받는다.
+        void OnEnable()
+        {
+            if (_started) Hook();
+        }
 
         void Start()
         {
             if (_viewCamera == null) _viewCamera = Camera.main;
-            if (_barPrefab == null || _barParent == null) return;
-
-            foreach (Monster monster in FindObjectsByType<Monster>(FindObjectsSortMode.None)) Attach(monster);
+            _started = true;
+            Hook();
         }
 
-        void OnDestroy()
+        void OnDisable()
         {
+            Monster.Appeared -= Attach;
+            Monster.Vanished -= Detach;
+
             foreach (KeyValuePair<Monster, GameObject> pair in _bars)
             {
                 if (pair.Value != null) PoolManager.Despawn(pair.Value);
@@ -31,7 +42,19 @@ namespace ForagerCP
             _bars.Clear();
         }
 
-        public void Attach(Monster monster)
+        /// 듣기 시작하기 전에 이미 켜진 몬스터는 이벤트를 놓쳤으므로, 몬스터 쪽 명단으로 한 번 따라잡는다.
+        void Hook()
+        {
+            if (_barPrefab == null || _barParent == null) return;
+
+            Monster.Appeared += Attach;
+            Monster.Vanished += Detach;
+
+            IReadOnlyList<Monster> active = Monster.Active;
+            for (int i = 0; i < active.Count; i++) Attach(active[i]);
+        }
+
+        void Attach(Monster monster)
         {
             if (monster == null || _bars.ContainsKey(monster)) return;
 
@@ -44,7 +67,7 @@ namespace ForagerCP
             _bars.Add(monster, bar);
         }
 
-        public void Detach(Monster monster)
+        void Detach(Monster monster)
         {
             if (monster == null || !_bars.TryGetValue(monster, out GameObject bar)) return;
 
