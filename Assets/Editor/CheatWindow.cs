@@ -307,7 +307,12 @@ namespace ForagerCP.EditorTools
 
                     using (new EditorGUI.DisabledScope(open))
                     {
-                        if (GUILayout.Button("열기", GUILayout.Width(50)) && !access.DebugUnlock(region))
+                        // 정식 경로: 조건을 보고 대가(골드 등)를 치른다. 지도 테이블이 들어오기 전 개방 검증용.
+                        var unlock = new GUIContent("해금", "실제 개방과 같은 경로 — 조건 확인 후 골드를 치른다");
+                        if (GUILayout.Button(unlock, GUILayout.Width(50))) Unlock(access, region);
+
+                        var force = new GUIContent("강제", "조건·대가 없이 연다");
+                        if (GUILayout.Button(force, GUILayout.Width(50)) && !access.DebugUnlock(region))
                             _status = $"{region.DisplayName}: PermanentUnlock이 꺼져 있어 강제로 열 수 없습니다";
                     }
                     using (new EditorGUI.DisabledScope(!open))
@@ -322,6 +327,20 @@ namespace ForagerCP.EditorTools
             {
                 for (int i = 0; i < _regionList.Count; i++) access.DebugUnlock(_regionList[i]);
             }
+        }
+
+        void Unlock(RegionAccess access, RegionDefinition region)
+        {
+            if (!access.CanEnter(region, out RegionRequirement blocking))
+            {
+                _status = $"{region.DisplayName} 해금 불가 — {(blocking != null ? blocking.Describe() : "조건 미충족")}";
+                return;
+            }
+
+            int goldBefore = Find(ref _gold) != null ? _gold.Gold : 0;
+            access.TryUnlock(region);
+            int paid = _gold != null ? goldBefore - _gold.Gold : 0;
+            _status = paid > 0 ? $"{region.DisplayName} 해금 — {paid:N0}G 지불" : $"{region.DisplayName} 해금";
         }
 
         // ---------------- 스킬 ----------------

@@ -608,7 +608,10 @@ namespace ForagerCP.EditorTools
                 };
             }
 
-            // 잠긴 지역인데 막아둔 것이 없으면 조건이 무의미해진다
+            // 잠긴 지역인데 막아둔 것이 없으면 조건이 무의미해진다.
+            // 투명 경계벽(ShoreBoundary)이 있으면 열리지 않은 지역은 전부 그쪽이 막는다.
+            if (UnityEngine.Object.FindFirstObjectByType<ShoreBoundary>(FindObjectsInactive.Include) != null) yield break;
+
             var guarded = new HashSet<RegionDefinition>();
             foreach (RegionBarrier barrier in UnityEngine.Object.FindObjectsByType<RegionBarrier>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))

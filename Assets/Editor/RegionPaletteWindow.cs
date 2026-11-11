@@ -21,9 +21,6 @@ namespace ForagerCP.EditorTools
         [SerializeField] Mode _mode = Mode.Off;
         [SerializeField] string _newRegionName = "";
 
-        /// 구획을 고칠 때마다 경계를 다시 두를지. 꺼두면 손으로 쌓은 벽이 날아가지 않는다.
-        [SerializeField] bool _autoWalls = true;
-
         readonly List<RegionDefinition> _regions = new List<RegionDefinition>();
         Vector2 _scroll;
         string _status = "";
@@ -31,9 +28,6 @@ namespace ForagerCP.EditorTools
         Vector2Int _hoveredCell;
         Vector2Int _dragStart;
         bool _dragging;
-
-        /// 손잡이로 크기를 고치는 동안에는 벽을 다시 두르지 않는다. 끌 때마다 수십 개가 생겼다 없어진다.
-        readonly HashSet<RegionDefinition> _pendingWalls = new HashSet<RegionDefinition>();
 
         [MenuItem("Tools/ForagerCP/지역 편집 %#r")]
         static void Open() => GetWindow<RegionPaletteWindow>("지역 편집");
@@ -84,21 +78,9 @@ namespace ForagerCP.EditorTools
                 DrawModeButton(Mode.Erase, "구획 지우기", new Color(1f, 0.55f, 0.5f));
             }
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                _autoWalls = EditorGUILayout.ToggleLeft("구획을 고치면 경계도 같이 두르기", _autoWalls);
-                if (GUILayout.Button("지금 다시 두르기", GUILayout.Width(120f)))
-                {
-                    int made = RegionWallBuilder.RebuildAll();
-                    MarkDirty();
-                    _status = $"경계를 다시 둘렀습니다. {made}개.";
-                }
-            }
-
             if (GUILayout.Button("구획 정리하기 (쪼개진 것 합치기)"))
             {
                 int saved = Tidy();
-                RegionWallBuilder.RebuildAll();
                 _status = saved > 0 ? $"구획 {saved}개를 합쳤습니다." : "합칠 것이 없습니다.";
                 GUIUtility.ExitGUI();
             }
@@ -217,10 +199,8 @@ namespace ForagerCP.EditorTools
 
                     if (GUILayout.Button("지우기", GUILayout.Width(56f)))
                     {
-                        RegionDefinition region = volume.Region;
                         Undo.DestroyObjectImmediate(volume.gameObject);
                         MarkDirty();
-                        RebuildWalls(new[] { region });
                         GUIUtility.ExitGUI();
                     }
                 }
@@ -259,8 +239,7 @@ namespace ForagerCP.EditorTools
                 "다른 지역 위에 겹쳐 그리면 그만큼 덮어씁니다 — 고치려고 다 지울 필요 없습니다.\n" +
                 "구획 지우기: 지울 칸을 클릭하세요.\n" +
                 "크기 고치기: 구획을 고르면 네 변에 손잡이가 생깁니다. 끌면 칸 단위로 맞춰집니다.\n\n" +
-                "조건이 있는 지역은 둘레에 벽이 서고, 이웃 지역마다 문이 한 칸씩 뚫립니다.\n" +
-                "벽과 문의 모양은 지역 에셋의 '경계'에서 바꿀 수 있습니다(비우면 기본 모양).",
+                "경계는 따로 세우지 않습니다. 플레이 중 열린 지역의 바깥은 투명벽(ShoreBoundary)이 막습니다.",
                 MessageType.None);
         }
 
@@ -279,12 +258,6 @@ namespace ForagerCP.EditorTools
                 : null;
 
             if (selected != null) DrawResizeHandles(grid, selected);
-
-            if (_pendingWalls.Count > 0 && Event.current.type == EventType.MouseUp)
-            {
-                RebuildWalls(new List<RegionDefinition>(_pendingWalls));
-                _pendingWalls.Clear();
-            }
 
             if (_mode == Mode.Off) return;
 
@@ -357,11 +330,9 @@ namespace ForagerCP.EditorTools
             }
 
             string regionName = hit.Region != null ? hit.Region.DisplayName : "(지역 없음)";
-            RegionDefinition region = hit.Region;
 
             Undo.DestroyObjectImmediate(hit.gameObject);
             MarkDirty();
-            RebuildWalls(new[] { region });
 
             _status = $"{regionName} 구획 하나를 지웠습니다.";
         }
@@ -391,9 +362,6 @@ namespace ForagerCP.EditorTools
             Undo.RecordObject(volume, "구획 크기 고치기");
             volume.Configure(volume.Region, new Vector2Int(next.xMin, next.yMin), new Vector2Int(next.width, next.height));
             MarkDirty();
-
-            // 끄는 동안 매 프레임 두르면 벽 수십 개가 생겼다 없어진다. 손을 뗄 때 한 번만 한다.
-            if (volume.Region != null) _pendingWalls.Add(volume.Region);
         }
 
         /// 경계선 b는 칸 중심 좌표계에서 (b - 0.5)칸 자리에 있다.
@@ -521,7 +489,6 @@ namespace ForagerCP.EditorTools
 
             Selection.activeGameObject = go;
             MarkDirty();
-            RebuildWalls(touched);
 
             _status = carved > 0
                 ? $"{_selectedRegion.DisplayName} {area.width}x{area.height} 구획을 만들고 겹친 {carved}곳을 덮어썼습니다."
@@ -667,32 +634,6 @@ namespace ForagerCP.EditorTools
 
             MarkDirty();
             return before - after;
-        }
-
-        /// 경계를 다시 두른다. 벽은 구획에서 나오는 것이라 구획이 바뀌면 같이 바뀌어야 한다.
-        void RebuildWalls(IEnumerable<RegionDefinition> regions)
-        {
-            if (!_autoWalls) return;
-
-            foreach (RegionDefinition region in regions)
-            {
-                if (region == null) continue;
-
-                // 칸이 하나도 안 남은 지역은 벽도 치운다.
-                if (HasCells(region)) RegionWallBuilder.Rebuild(region);
-                else RegionWallBuilder.ClearFor(region);
-            }
-
-            MarkDirty();
-        }
-
-        static bool HasCells(RegionDefinition region)
-        {
-            foreach (RegionVolume volume in FindObjectsByType<RegionVolume>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                if (volume.Region == region) return true;
-            }
-            return false;
         }
 
         static Transform ResolveRoot()

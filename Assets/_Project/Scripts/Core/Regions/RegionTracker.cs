@@ -57,7 +57,8 @@ namespace ForagerCP
 
             RegionDefinition region = RegionMap.At(cell);
 
-            if (_pushBackFromLocked && _access != null && !_access.IsUnlocked(region))
+            // 구역이 없는 칸은 바다다. 투명벽(ShoreBoundary)이 먼저 막지만, 넉백·대시로 넘어가면 여기서 되돌린다.
+            if (_pushBackFromLocked && _access != null && (region == null || !_access.IsUnlocked(region)))
             {
                 PushBack(region);
                 return;

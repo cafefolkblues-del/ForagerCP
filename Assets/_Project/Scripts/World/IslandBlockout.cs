@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 구역 모양 그대로의 임시 섬 몸통: 윗면 + 바다 밑까지 내려가는 절벽. 그리고 발 딛는 충돌.
+    /// 구역 모양 그대로의 임시 섬 몸통: 윗면 + 바다 밑까지 내려가는 절벽. 보이기만 한다.
     ///
-    /// 섬 모델이 오기 전까지 자리를 채우고, 모델이 온 뒤에도 "보이기"만 끄고 충돌은 계속 쓴다 —
-    /// 모델마다 충돌을 손으로 맞추지 않아도 걷는 면이 구역 칸과 정확히 일치한다.
+    /// 충돌은 없다. 높이는 GroundLock이 고정하므로 바닥 충돌을 쓰는 곳이 없고,
+    /// 바다로 나가는 것은 ShoreBoundary(투명벽)가 막는다. 임시 모양에 물리를 얹으면 모델이 바뀔 때 같이 흔들린다.
     /// 모양은 구역 볼륨(RegionMap)에서 오고, 볼륨이 바뀌면 다시 만든다. 메시는 씬에 저장하지 않는다.
     /// 전달 규격: docs/notes/섬_바닥_모델_규격.md
     [ExecuteAlways]
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class IslandBlockout : MonoBehaviour
     {
         [Tooltip("비우면 부모의 RegionLand에서 가져온다.")]
@@ -22,7 +22,7 @@ namespace ForagerCP
         [Tooltip("절벽이 내려가는 깊이. 잠긴 섬이 가라앉는 깊이(3m)보다 깊어야 솟기 전에 바닥이 안 보인다.")]
         [SerializeField] float _bottom = -4f;
 
-        [Tooltip("섬 모델이 오면 끈다. 충돌은 계속 남는다.")]
+        [Tooltip("섬 모델이 오면 끈다.")]
         [SerializeField] bool _visible = true;
 
         [SerializeField] Material _topMaterial;
@@ -143,11 +143,6 @@ namespace ForagerCP
             _mesh.RecalculateBounds();
 
             GetComponent<MeshFilter>().sharedMesh = _mesh;
-
-            // 충돌은 같은 메시로. 섬과 함께 솟아야 하므로 이 오브젝트(몸통 밑)에 붙어 있어야 한다.
-            var meshCollider = GetComponent<MeshCollider>();
-            meshCollider.sharedMesh = null;
-            meshCollider.sharedMesh = vertices.Count > 0 ? _mesh : null;
 
             // 정점이 월드 좌표로 놓였으니 이 오브젝트는 부모 기준 원점에 있어야 한다.
             // (부모가 솟을 때 같이 움직이는 것은 그대로 된다.)
