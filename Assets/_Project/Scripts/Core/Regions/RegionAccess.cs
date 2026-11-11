@@ -18,6 +18,9 @@ namespace ForagerCP
 
         public event Action<RegionDefinition> Unlocked;
 
+        /// 다시 잠겼을 때. 지금은 치트만 부른다 — 벽이 이걸 듣고 다시 선다.
+        public event Action<RegionDefinition> Locked;
+
         /// 구역 개방은 골드를 치르는 일이라 되돌릴 수 없다.
         public event Action<string> Milestone;
 
@@ -147,6 +150,26 @@ namespace ForagerCP
 
                 TryUnlock(region);
             }
+        }
+
+        /// 디버그 전용. 조건도 대가도 따지지 않고 연다.
+        /// PermanentUnlock이 꺼진 지역은 열린 상태를 들고 있지 않으므로 열 수 없다(false).
+        public bool DebugUnlock(RegionDefinition region)
+        {
+            if (region == null || !region.IsLockable) return true;
+            if (!region.PermanentUnlock) return false;
+            if (!_unlocked.Add(region)) return true;
+
+            Unlocked?.Invoke(region);
+            return true;
+        }
+
+        /// 디버그 전용. 열린 지역을 다시 잠근다. 치른 대가는 돌려주지 않는다.
+        /// 조건 없이 열리는 지역은 다음 ReevaluateAll에서 다시 열린다.
+        public void DebugLock(RegionDefinition region)
+        {
+            if (region == null || !_unlocked.Remove(region)) return;
+            Locked?.Invoke(region);
         }
 
         static bool HasCost(RegionDefinition region)

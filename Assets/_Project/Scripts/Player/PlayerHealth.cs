@@ -54,6 +54,9 @@ namespace ForagerCP
         int _hp;
         float _invulnerableUntil;
 
+        /// 디버그 전용(치트 창). 직렬화하지 않는다 — 켠 채로 씬에 저장되면 빌드까지 따라간다.
+        [NonSerialized] public bool DebugInvulnerable;
+
         void Awake()
         {
             _hp = MaxHp;
@@ -71,6 +74,7 @@ namespace ForagerCP
         {
             if (!IsAlive || amount <= 0) return;
             if (Time.time < _invulnerableUntil) return;
+            if (DebugInvulnerable) return;
 
             // 대시 무적(기본 꺼짐). 기획이 원하면 PlayerDash에서 시간만 올리면 여기 코드는 그대로다.
             if (_dash != null && _dash.IsInvulnerable) return;

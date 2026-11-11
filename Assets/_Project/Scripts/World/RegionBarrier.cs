@@ -52,6 +52,7 @@ namespace ForagerCP
             if (_access == null) return;
 
             _access.Unlocked += OnUnlocked;
+            _access.Locked += OnUnlocked;
             Refresh();
         }
 
@@ -59,6 +60,7 @@ namespace ForagerCP
         {
             if (_access == null) return;
             _access.Unlocked -= OnUnlocked;
+            _access.Locked -= OnUnlocked;
         }
 
         public void Interact()

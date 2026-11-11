@@ -176,6 +176,27 @@ namespace ForagerCP
             return true;
         }
 
+        /// 디버그 전용. 포인트·이웃 조건 없이 트리 전체를 배운다. 포인트는 건드리지 않는다.
+        public int DebugLearnAll()
+        {
+            if (_tree == null) return 0;
+
+            int learned = 0;
+            IReadOnlyList<SkillDefinition> skills = _tree.Skills;
+            for (int i = 0; i < skills.Count; i++)
+            {
+                SkillDefinition skill = skills[i];
+                if (skill == null || !_learned.Add(skill)) continue;
+
+                skill.Apply(Context);
+                Learned?.Invoke(skill);
+                learned++;
+            }
+
+            if (learned > 0) Changed?.Invoke(this);
+            return learned;
+        }
+
         /// 디버그·테스트용. 효과는 되돌리지 않는다(효과마다 되돌리는 법이 달라서,
         /// 되감기가 필요해지면 SkillEffect에 Revert를 열어야 한다).
         public void ResetLearned()

@@ -52,6 +52,15 @@ namespace ForagerCP
             Changed?.Invoke(this);
         }
 
+        /// 디버그 전용. 레벨을 그 값으로 맞추고 경험치는 0으로 둔다(내리는 것도 된다).
+        /// 내려도 스킬 포인트는 회수하지 않는다 — SkillBoard는 오른 칸만 센다.
+        public void DebugSetLevel(int level)
+        {
+            Level = Mathf.Clamp(level, 1, _maxLevel);
+            Exp = 0;
+            Changed?.Invoke(this);
+        }
+
         // ---------------- 저장 ----------------
 
         [Serializable]
