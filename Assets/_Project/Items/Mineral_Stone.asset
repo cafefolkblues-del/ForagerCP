@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Mineral_Stone
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uB3CC"
+  _description: 
   _icon: {fileID: 21300000, guid: d055e9f28c464a44aa5355687e3e08cd, type: 3}
   _maxStack: 99
-  _goldValue: 10
+  _goldValue: 2
   _sortOrder: 0
   _sellable: 1
   _uiColor: {r: 0.62, g: 0.62, b: 0.6, a: 1}
@@ -24,5 +25,5 @@ MonoBehaviour:
   _maxPerRegion: 0
   _maxHp: 30
   _harvestYield: 1
-  _expReward: 1
-  _respawnDelay: 10
+  _expReward: 2
+  _respawnDelay: 30

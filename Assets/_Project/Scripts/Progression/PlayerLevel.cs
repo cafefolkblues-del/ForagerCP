@@ -3,12 +3,15 @@ using UnityEngine;
 
 namespace ForagerCP
 {
-    /// 필요 경험치 = _expBase + 현재 레벨 (Lv1→2: 6, Lv2→3: 7 ...). 사양 1-5.
+    /// 필요 경험치 = _expBase × _expGrowth^(현재 레벨 − 1), _expRound 단위로 반올림.
+    /// 기획 경험치표(새 표, #43): 80 × 1.08^(레벨−1), 10 단위 → Lv1→2: 80, Lv2→3: 90, Lv10→11: 160 ... 최대 25.
     public class PlayerLevel : MonoBehaviour, ISaveable, ISaveSummary, ISaveMilestone
     {
         [SerializeField] int _startLevel = 1;
-        [SerializeField] int _maxLevel = 10;
-        [SerializeField] int _expBase = 5;
+        [SerializeField] int _maxLevel = 25;
+        [SerializeField] int _expBase = 80;
+        [SerializeField] float _expGrowth = 1.08f;
+        [SerializeField] int _expRound = 10;
 
         public event Action<PlayerLevel> Changed;
 
@@ -21,7 +24,15 @@ namespace ForagerCP
         public bool IsMaxLevel => Level >= _maxLevel;
 
         /// 최대 레벨에서는 다음 요구치가 의미 없으므로 0을 돌려주고 UI가 '-'로 찍는다.
-        public int ExpToNext => IsMaxLevel ? 0 : _expBase + Level;
+        public int ExpToNext => IsMaxLevel ? 0 : ExpFor(Level);
+
+        /// 이 레벨에서 다음 레벨로 가는 데 필요한 경험치. 밸런스 표·검증 도구도 같은 식을 쓰도록 공개한다.
+        public int ExpFor(int level)
+        {
+            float raw = _expBase * Mathf.Pow(_expGrowth, Mathf.Max(0, level - 1));
+            int step = Mathf.Max(1, _expRound);
+            return Mathf.Max(1, Mathf.RoundToInt(raw / step) * step);
+        }
 
         void Awake() => Level = Mathf.Max(1, _startLevel);
 

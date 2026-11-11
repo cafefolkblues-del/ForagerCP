@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Mineral_Iron
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uCCA0 \uAD11\uC11D"
+  _description: 
   _icon: {fileID: 21300000, guid: 133acc66e03f4e6aab32d5428c34931c, type: 3}
   _maxStack: 99
-  _goldValue: 30
+  _goldValue: 5
   _sortOrder: 1
   _sellable: 1
   _uiColor: {r: 0.72, g: 0.74, b: 0.78, a: 1}
@@ -24,5 +25,5 @@ MonoBehaviour:
   _maxPerRegion: 0
   _maxHp: 60
   _harvestYield: 1
-  _expReward: 2
-  _respawnDelay: 10
+  _expReward: 5
+  _respawnDelay: 45

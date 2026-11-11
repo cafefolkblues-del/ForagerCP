@@ -25859,8 +25859,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.PlayerLevel
   _startLevel: 1
-  _maxLevel: 10
-  _expBase: 5
+  _maxLevel: 25
+  _expBase: 80
+  _expGrowth: 1.08
+  _expRound: 10
 --- !u!114 &890792606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26061,7 +26063,7 @@ MonoBehaviour:
   _flags: {fileID: 890792615}
   _inventory: {fileID: 890792609}
   _pointsPerLevel: 1
-  _startingPoints: 0
+  _startingPoints: 1
   _catalog: {fileID: 11400000, guid: f510a63e9745b50489d0d706d8b328aa, type: 2}
 --- !u!114 &890792618
 MonoBehaviour:

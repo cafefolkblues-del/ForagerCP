@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Mineral_Crystal
   m_EditorClassIdentifier: Assembly-CSharp::ForagerCP.MineralDefinition
   _displayName: "\uC218\uC815"
+  _description: 
   _icon: {fileID: 0}
   _maxStack: 99
-  _goldValue: 75
+  _goldValue: 60
   _sortOrder: 4
   _sellable: 1
   _uiColor: {r: 0.72, g: 0.55, b: 0.95, a: 1}
@@ -24,5 +25,5 @@ MonoBehaviour:
   _maxPerRegion: 0
   _maxHp: 100
   _harvestYield: 1
-  _expReward: 5
-  _respawnDelay: 10
+  _expReward: 30
+  _respawnDelay: 120
