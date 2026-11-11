@@ -33,6 +33,10 @@ namespace ForagerCP
         {
             if (placement == null) return;
 
+            // 프리팹 에셋은 씬에 없다. [ExecuteAlways]라 에디터가 프리팹을 불러올 때도 OnEnable이 돌아서,
+            // 막지 않으면 프리팹의 기본 칸((0,0) 등)이 '차 있음'으로 남아 배치 팔레트가 그 칸을 거부한다.
+            if (!placement.gameObject.scene.IsValid()) return;
+
             // 셀이 바뀌었을 수 있으므로 옛 자리를 먼저 비운다. Apply()가 바뀔 때마다 이리로 온다.
             Unregister(placement);
 
@@ -75,6 +79,22 @@ namespace ForagerCP
 
             _cells.Remove(cell);
             return null;
+        }
+
+        /// 이 구역에 앉아 있는 배치물. 앵커 칸(최소 코너)이 그 구역이면 소속으로 친다.
+        ///
+        /// 소속을 따로 적어두지 않고 위치로 묻는다 — 적어두면 옮겼을 때 옛 구역이 남는다.
+        /// 섬이 솟을 때처럼 "그 순간" 한 번 묻는 용도. 매 프레임 부르지 말 것(명부 전체를 훑는다).
+        public static void CollectInRegion(RegionDefinition region, List<GridPlacement> into)
+        {
+            into.Clear();
+            if (region == null) return;
+
+            foreach (KeyValuePair<GridPlacement, RectInt> pair in _footprints)
+            {
+                if (pair.Key == null) continue;
+                if (RegionMap.At(pair.Value.position) == region) into.Add(pair.Key);
+            }
         }
 
         /// ignore는 자기 자신을 옮길 때 쓴다 — 지금 자리와 겹친다고 거부당하면 한 칸도 못 움직인다.
