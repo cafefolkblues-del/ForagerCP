@@ -48,7 +48,7 @@ namespace ForagerCP
             if (_access == null) return;
 
             _access.Refused += OnRefused;
-            _access.Unlocked += OnUnlocked;
+            _access.Opened += OnOpened;
         }
 
         void OnDisable()
@@ -64,7 +64,7 @@ namespace ForagerCP
             if (_access == null) return;
 
             _access.Refused -= OnRefused;
-            _access.Unlocked -= OnUnlocked;
+            _access.Opened -= OnOpened;
         }
 
         /// 거부 사유 대부분은 미리보기가 빨개져서 보인다. 구역 규칙만은 눈에 안 보여 글로 알린다.
@@ -83,7 +83,7 @@ namespace ForagerCP
             Show(region.DisplayName, _regionColor);
         }
 
-        void OnUnlocked(RegionDefinition region) => Show($"{region.DisplayName} 개방", _regionColor);
+        void OnOpened(RegionDefinition region) => Show($"{region.DisplayName} 개방", _regionColor);
 
         void OnRefused(RegionDefinition region, RegionRequirement blocking)
             => Show(blocking != null ? blocking.Describe() : $"{region.DisplayName} 잠김", _refusedColor);

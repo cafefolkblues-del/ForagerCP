@@ -16,7 +16,12 @@ namespace ForagerCP
         [SerializeField] ProgressFlags _flags;
         [SerializeField] SaveCatalog _catalog;
 
+        /// 열린 상태가 됐을 때. 플레이 중 개방이든 저장 불러오기든 같이 온다 — 벽처럼 "상태"만 보면 되는 쪽이 쓴다.
         public event Action<RegionDefinition> Unlocked;
+
+        /// 플레이 중에 지금 막 열었을 때만. 저장 불러오기(Restore)에서는 오지 않는다.
+        /// 섬 솟아오름·개방 배너처럼 "사건"을 보여주는 쪽이 쓴다 — 불러올 때마다 섬이 다시 솟으면 안 된다.
+        public event Action<RegionDefinition> Opened;
 
         /// 다시 잠겼을 때. 지금은 치트만 부른다 — 벽이 이걸 듣고 다시 선다.
         public event Action<RegionDefinition> Locked;
@@ -128,6 +133,7 @@ namespace ForagerCP
             if (region.PermanentUnlock) _unlocked.Add(region);
 
             Unlocked?.Invoke(region);
+            Opened?.Invoke(region);
             Milestone?.Invoke($"구역 개방: {region.DisplayName}");
             return true;
         }
@@ -161,6 +167,7 @@ namespace ForagerCP
             if (!_unlocked.Add(region)) return true;
 
             Unlocked?.Invoke(region);
+            Opened?.Invoke(region);
             return true;
         }
 
