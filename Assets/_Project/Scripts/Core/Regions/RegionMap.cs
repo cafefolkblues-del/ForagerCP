@@ -80,6 +80,18 @@ namespace ForagerCP
             return grid == null ? null : At(grid.WorldToCell(world));
         }
 
+        /// 이 지역을 이루는 볼륨 사각형들. 섬 몸통처럼 "지역 모양"을 그리는 쪽이 쓴다.
+        public static void CollectAreas(RegionDefinition region, List<RectInt> into)
+        {
+            into.Clear();
+            if (region == null) return;
+
+            foreach (KeyValuePair<RegionVolume, RectInt> pair in _areas)
+            {
+                if (pair.Key != null && pair.Key.Region == region) into.Add(pair.Value);
+            }
+        }
+
         /// 검사기가 쓴다 — 씬에 깔린 지역 목록.
         public static void CollectRegions(List<RegionDefinition> into)
         {

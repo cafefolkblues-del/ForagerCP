@@ -193,6 +193,9 @@ Shader "ForagerCP/Water"
                 float shore = max(0, shoreSigned);
                 float underLand = step(shoreSigned, -0.05);
 
+                // 땅 칸 안의 물은 그리지 않는다. 파도 마루(+0.1m 남짓)가 몸통 윗면이나 바닥 타일 틈을 뚫고 올라온다.
+                clip(shoreSigned + 0.05);
+
                 // 보조: 물 표면부터 그 뒤에 보이는 것까지의 거리. 셀 밖 물체(떨어진 아이템 등)에 닿는 거품용.
                 float2 screenUV = input.screenPos.xy / input.screenPos.w;
                 float sceneEye = LinearEyeDepth(SampleSceneDepth(screenUV), _ZBufferParams);
