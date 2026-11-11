@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +19,11 @@ namespace ForagerCP
         {
             _cells.Clear();
             _areas.Clear();
+            Changed = null;
         }
+
+        /// 볼륨이 등록·해제되거나 범위가 바뀌었을 때. 바다의 해안 거리처럼 "땅 모양"에 기대는 쪽이 듣는다.
+        public static event Action Changed;
 
         public static int VolumeCount => _areas.Count;
 
@@ -36,6 +41,7 @@ namespace ForagerCP
             }
 
             _areas[volume] = area;
+            Changed?.Invoke();
         }
 
         public static void Unregister(RegionVolume volume)
@@ -55,6 +61,7 @@ namespace ForagerCP
             }
 
             _areas.Remove(volume);
+            Changed?.Invoke();
         }
 
         /// 어느 지역에도 속하지 않는 셀이면 null. 맵 바깥이나 아직 구획하지 않은 땅이다.
